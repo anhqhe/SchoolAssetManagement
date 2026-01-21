@@ -5,7 +5,6 @@
 
 package controller.auth;
 
-import dao.UserDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -13,6 +12,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import dao.UserDAO;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
@@ -20,10 +20,9 @@ import model.User;
  *
  * @author Quang Anh
  */
-@WebServlet(name="LoginServlet", urlPatterns={"/auth/login"})
-public class LoginServlet extends HttpServlet {
-    private UserDAO userDAO = new UserDAO();
-   
+@WebServlet(name="ChangePasswordServlet", urlPatterns={"/change-password"})
+public class ChangePasswordServlet extends HttpServlet {
+   private final UserDAO userDAO = new UserDAO();
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
      * @param request servlet request
@@ -33,16 +32,17 @@ public class LoginServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
+        
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet LoginServlet</title>");  
+            out.println("<title>Servlet ChangePasswordServlet</title>");  
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet LoginServlet at " + request.getContextPath () + "</h1>");
+            out.println("<h1>Servlet ChangePasswordServlet at " + request.getContextPath () + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -57,9 +57,10 @@ public class LoginServlet extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
+        
+        processRequest(request, response);
     } 
 
     /** 
@@ -70,40 +71,35 @@ public class LoginServlet extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        String username = req.getParameter("username");
-        String password = req.getParameter("password");
+        HttpSession session = request.getSession(false);
+        User user = (User) session.getAttribute("currentUser");
 
-        try {
-            User user = userDAO.authenticate(username, password);
-            if (user == null) {
-                req.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng.");
-                req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
-                return;
-            }
-
-            // Lưu vào session
-            HttpSession session = req.getSession(true);
-            session.setAttribute("currentUser", user);
-            session.setMaxInactiveInterval(30*60); // 30 phút
-
-            // Chuyển hướng tuỳ vai trò (ví dụ)
-            if (user.getRoles() != null && user.getRoles().contains("ADMIN")) {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
-            } else if (user.getRoles().contains("ASSET_STAFF")) {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
-            }else if (user.getRoles().contains("TEACHER")) {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
-            } else {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            req.setAttribute("error", "Có lỗi hệ thống, thử lại.");
-            req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+            return;
         }
+
+        String oldPass = request.getParameter("oldPassword");
+        String newPass = request.getParameter("newPassword");
+        String confirm = request.getParameter("confirmPassword");
+
+        if (!newPass.equals(confirm)) {
+            request.setAttribute("error", "Mật khẩu xác nhận không khớp");
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
+            return;
+        }
+
+        if (!userDAO.checkOldPassword(user.getUserId(), oldPass)) {
+            request.setAttribute("error", "Mật khẩu hiện tại không đúng");
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
+            return;
+        }
+
+        userDAO.updatePassword(user.getUserId(), newPass);
+        request.setAttribute("success", "Đổi mật khẩu thành công");
+        request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
     }
     
 

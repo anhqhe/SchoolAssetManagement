@@ -72,4 +72,34 @@ public class UserDAO {
             }
         }
     }
+    public boolean checkOldPassword(long userId, String oldPassword) {
+        String sql = "SELECT 1 FROM Users WHERE UserId=? AND PasswordHash=?";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, userId);
+            ps.setString(2, oldPassword);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updatePassword(long userId, String newPassword) {
+        String sql = "UPDATE Users SET PasswordHash=? WHERE UserId=?";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, newPassword);
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

@@ -17,23 +17,83 @@
     <li class="nav-item active">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span>
+            <span>Trang tổng quan</span>
         </a>
     </li>
 
     <hr class="sidebar-divider">
 
-    <!-- Asset Management -->
+    <!-- ADMIN ONLY -->
+    <% 
+        model.User sidebarUser = (model.User) session.getAttribute("currentUser");
+        java.util.List<String> sidebarRoles = (sidebarUser != null) ? sidebarUser.getRoles() : null;
+        if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { 
+    %>
+    
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/assets">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Quản lý tài sản</span>
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/user">
+            <i class="fas fa-fw fa-users"></i>
+            <span>Quản lý người dùng</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
+            <i class="fas fa-fw fa-cogs"></i>
+            <span>Cài đặt</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Báo cáo</span>
+        </a>
+    </li>
+    <% } %>
+    
+    <!-- Staff ONLY -->
+    <%if (sidebarRoles != null && sidebarRoles.contains("ASSET_STAFF")) { %>
+        <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Báo cáo</span>
+        </a>
+    </li>
+       <% }%>
+       
+       
+       <!-- Teacher ONLY -->
+    <%if (sidebarRoles != null && sidebarRoles.contains("TEACHER")) { %>
+        <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Báo cáo</span>
+        </a>
+    </li>
+       <% }%>
+       
+       <!-- Board ONLY -->
+    <%if (sidebarRoles != null && sidebarRoles.contains("BOARD")) { %>
+        <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Báo cáo</span>
+        </a>
+    </li>
+       <% }%>
+    
+    
+
+    <!-- ALL USERS -->
+    <li class="nav-item">
+        <a class="nav-link"
+           href="${pageContext.request.contextPath}/views/auth/change-password.jsp">
+            <i class="fas fa-key"></i>
+            <span>Thay đổi mật khẩu</span>
         </a>
     </li>
 
     <hr class="sidebar-divider d-none d-md-block">
 
-    <!-- Toggle -->
     <div class="text-center d-none d-md-inline">
         <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>

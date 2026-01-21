@@ -1,4 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="model.User" %>
+<%@ page import="java.util.List" %>
+
+<%
+    User currentUser = (User) session.getAttribute("currentUser");
+    List<String> roles = null;
+    if (currentUser != null) {
+        roles = currentUser.getRoles();
+    }
+%>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
