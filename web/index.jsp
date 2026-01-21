@@ -1,1 +1,4 @@
-<jsp:forward page="/views/admin/dashboard.jsp"/>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%
+    response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+%>
