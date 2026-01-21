@@ -25,7 +25,7 @@
 
     <!-- Asset Management -->
     <li class="nav-item">
-        <a class="nav-link" href="../views/admin/asset.jsp">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/assets">
             <i class="fas fa-fw fa-table"></i>
             <span>Quản lý tài sản</span>
         </a>
