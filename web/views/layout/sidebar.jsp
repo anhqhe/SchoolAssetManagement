@@ -58,12 +58,30 @@
             <span>Báo cáo</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Quản lý tài sản</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Quản lý danh mục</span>
+        </a>
+    </li>
        <% }%>
        
        
        <!-- Teacher ONLY -->
     <%if (sidebarRoles != null && sidebarRoles.contains("TEACHER")) { %>
         <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Danh sách đánh giá</span>
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
             <i class="fas fa-fw fa-chart-line"></i>
             <span>Báo cáo</span>
@@ -76,7 +94,13 @@
         <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
             <i class="fas fa-fw fa-chart-line"></i>
-            <span>Báo cáo</span>
+            <span>Quản lý tài sản</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Báo cáo</span>
         </a>
     </li>
        <% }%>
