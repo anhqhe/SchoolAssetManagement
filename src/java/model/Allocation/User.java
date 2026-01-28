@@ -1,0 +1,23 @@
+package model;
+
+import java.util.List;
+
+public class User {
+    private long userId;
+    private String username;
+    private String fullName;
+    private boolean isActive;
+    private List<String> roles; // store role codes like "ADMIN", "TEACHER"
+
+    // getters / setters
+    public long getUserId() { return userId; }
+    public void setUserId(long userId) { this.userId = userId; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+    public List<String> getRoles() { return roles; }
+    public void setRoles(List<String> roles) { this.roles = roles; }
+}
