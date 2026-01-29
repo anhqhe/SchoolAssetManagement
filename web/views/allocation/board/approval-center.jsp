@@ -11,12 +11,12 @@
 <body id="page-top">
 <div id="wrapper">
 
-    <%@ include file="../layout/sidebar.jsp" %>
+    <%@ include file="/views/layout/sidebar.jsp" %>
 
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
 
-            <%@ include file="../layout/topbar.jsp" %>
+            <%@ include file="/views/layout/topbar.jsp" %>
 
             <!-- Page Content -->
             <div class="container mt-5">
@@ -72,26 +72,10 @@
 
         </div>
 
-        <%@ include file="../layout/footer.jsp" %>
+        <%@ include file="/views/layout/footer.jsp" %>
 
     </div>
 </div>
-
-
-
-<script>
-    function addItem() {
-        const itemList = document.getElementById('itemList');
-        const firstRow = itemList.querySelector('.item-row');
-        const newRow = firstRow.cloneNode(true);
-
-        // Reset giá trị các input trong dòng mới
-        newRow.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? 1 : ''));
-        newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-
-        itemList.appendChild(newRow);
-    }
-</script>
 
 </body>
 </html>

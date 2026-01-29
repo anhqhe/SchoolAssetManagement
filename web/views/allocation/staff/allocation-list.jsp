@@ -14,12 +14,12 @@
 <body id="page-top">
 <div id="wrapper">
 
-    <%@ include file="../layout/sidebar.jsp" %>
+    <%@ include file="/views/layout/sidebar.jsp" %>
 
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
 
-            <%@ include file="../layout/topbar.jsp" %>
+            <%@ include file="/views/layout/topbar.jsp" %>
 
             <!-- Page Content -->
             <div class="container-fluid mt-4">
@@ -107,7 +107,7 @@
 
         </div>
 
-        <%@ include file="../layout/footer.jsp" %>
+        <%@ include file="/views/layout/footer.jsp" %>
 
     </div>
 </div>

@@ -5,79 +5,48 @@
 
 package controller.allocation.staff;
 
+import dao.allocation.AssetRequestDAO;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
+import model.AssetRequest;
 
 /**
  *
  * @author Leo
  */
-@WebServlet(name="ManageRequest", urlPatterns={"/staff/ManageRequest"})
+@WebServlet(name="ManageRequest", urlPatterns={"/staff/allocation-list"})
 public class ManageAllocationRequest extends HttpServlet {
+    
+    private AssetRequestDAO assetRequestDAO = new AssetRequestDAO();
    
-    /** 
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ManageRequest</title>");  
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ManageRequest at " + request.getContextPath () + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    } 
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /** 
-     * Handles the HTTP <code>GET</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        processRequest(request, response);
+        // 1. Gọi Service lấy danh sách phiếu PENDING
+        // Lưu ý: Service nên dùng DAO có JOIN để lấy TeacherName và RoomName
+        List<AssetRequest> list = assetRequestDAO.getPendingRequests();
+
+        // 2. Đẩy dữ liệu ra JSP
+        request.setAttribute("pendingRequests", list);
+
+        // Nhận thông báo từ các thao tác trước đó (nếu có)
+        String msg = request.getParameter("msg");
+        if ("success".equals(msg)) request.setAttribute("msg", "Gửi duyệt thành công!");
+        if ("out_of_stock".equals(msg)) request.setAttribute("error", "Kho không đủ tài sản!");
+
+        request.getRequestDispatcher("/views/allocation/staff/allocation-list.jsp")
+                .forward(request, response);
     } 
 
-    /** 
-     * Handles the HTTP <code>POST</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        processRequest(request, response);
+        
     }
-
-    /** 
-     * Returns a short description of the servlet.
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
 
 }

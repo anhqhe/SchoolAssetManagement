@@ -44,9 +44,7 @@
                                             <tr>
                                                 <td><strong>${req.requestCode}</strong></td>
                                                 <td> ${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</td>
-                                                <!--<td>{req.roomName}</td>-->
-
-                                                <td>${req.requestedRoomId}</td>
+                                                <td>${roomDAO.getRoomById(req.requestedRoomId).roomName}</td>
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${req.status == 'PENDING'}"><span class="badge bg-secondary text-white">Chờ Staff kiểm tra</span></c:when>

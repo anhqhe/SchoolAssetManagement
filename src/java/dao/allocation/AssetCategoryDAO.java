@@ -5,7 +5,12 @@
 package dao.allocation;
 
 import java.util.List;
-import model.Allocation.AssetCategory;
+import model.AssetCategory;
+import util.DBUtil;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 
 /**
  *
@@ -13,21 +18,86 @@ import model.Allocation.AssetCategory;
  */
 public class AssetCategoryDAO {
 
-    public List<AssetCategory> getAllActiveCategories() {
-        //demo
-        List<AssetCategory> list = List.of(
-                new AssetCategory(1L, "CAT-001", "Chung", null, true),
-                new AssetCategory(2L, "CAT-002", "Văn phòng", 1L, true),
-                new AssetCategory(3L, "CAT-003", "Thiết bị", 1L, true),
-                new AssetCategory(4L, "CAT-004", "Văn phòng - Ghế", 2L, true),
-                new AssetCategory(5L, "CAT-005", "Văn phòng - Bàn", 2L, true),
-                new AssetCategory(6L, "CAT-006", "Thiết bị - Mạng", 3L, true),
-                new AssetCategory(7L, "CAT-007", "Thiết bị - PC", 3L, false),
-                new AssetCategory(8L, "CAT-008", "Phụ kiện", 1L, true),
-                new AssetCategory(9L, "CAT-009", "Phụ kiện - Cáp", 8L, true),
-                new AssetCategory(10L,"CAT-010", "Khác", null, true)
-        );
-        return  list;
+    public List<AssetCategory> getAllCategories() {
+        List<AssetCategory> list = new ArrayList<>();
+        String sql = "SELECT * FROM AssetCategories";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                AssetCategory cat = new AssetCategory();
+                cat.setCategoryId(rs.getLong("CategoryId"));
+                cat.setCategoryCode(rs.getNString("CategoryCode"));
+                cat.setCategoryName(rs.getNString("CategoryName"));
+
+                // check null
+                long parentId = rs.getLong("ParentCategoryId");
+                cat.setParentCategoryId(rs.wasNull() ? null : parentId);
+
+                cat.setIsActive(rs.getBoolean("IsActive"));
+                list.add(cat);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
-    
+
+    public boolean insertCategory(AssetCategory cat) {
+        String sql = "INSERT INTO AssetCategories (CategoryCode, CategoryName, ParentCategoryId, IsActive) "
+                + "VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+
+            ps.setNString(1, cat.getCategoryCode());
+            ps.setNString(2, cat.getCategoryName());
+
+            // check null
+            if (cat.getParentCategoryId() != null) {
+                ps.setLong(3, cat.getParentCategoryId());
+            } else {
+                ps.setNull(3, java.sql.Types.BIGINT);
+            }
+
+            ps.setBoolean(4, cat.isIsActive());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error-AssetCategoryDAO.insertCategory: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<AssetCategory> getAllActiveCategories() {
+        List<AssetCategory> activeList = new ArrayList<>();
+
+        String sql = "SELECT CategoryId, CategoryCode, CategoryName, ParentCategoryId, IsActive "
+                + "FROM AssetCategories "
+                + "WHERE IsActive = 1";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); 
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                AssetCategory cat = new AssetCategory();
+                cat.setCategoryId(rs.getLong("CategoryId"));
+                cat.setCategoryCode(rs.getNString("CategoryCode"));
+                cat.setCategoryName(rs.getNString("CategoryName"));
+
+                // check null
+                long parentId = rs.getLong("ParentCategoryId");
+                if (rs.wasNull()) {
+                    cat.setParentCategoryId(null);
+                } else {
+                    cat.setParentCategoryId(parentId);
+                }
+
+                cat.setIsActive(rs.getBoolean("IsActive"));
+                activeList.add(cat);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error-AssetCategoryDAO.getAllActiveCategories: " + e.getMessage());
+        }
+        return activeList;
+    }
+
 }

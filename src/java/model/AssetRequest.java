@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package model.Allocation;
+package model;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +18,7 @@ public class AssetRequest {
     private String purpose;
     private String status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public AssetRequest() {
     }
@@ -60,6 +61,10 @@ public class AssetRequest {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
     
     //setters
 
@@ -89,6 +94,10 @@ public class AssetRequest {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
     

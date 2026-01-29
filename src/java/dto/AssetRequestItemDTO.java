@@ -2,32 +2,36 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package model.Allocation;
+package dto;
 
 /**
  *
  * @author Leo
  */
-public class AssetRequestItem {
+public class AssetRequestItemDTO {
     private Long requestItemId;
     private Long requestId;
     private Long categoryId;
     private String assetNameHint;
     private int quantity;
     private String note;
+    
+    private String CategoryName;
 
-    public AssetRequestItem() {
+    public AssetRequestItemDTO() {
     }
 
-    public AssetRequestItem(Long requestItemId, Long requestId, Long categoryId, String assetNameHint, int quantity, String note) {
+    public AssetRequestItemDTO(Long requestItemId, Long requestId, Long categoryId, String assetNameHint, int quantity, String note, String CategoryName) {
         this.requestItemId = requestItemId;
         this.requestId = requestId;
         this.categoryId = categoryId;
         this.assetNameHint = assetNameHint;
         this.quantity = quantity;
         this.note = note;
+        this.CategoryName = CategoryName;
     }
     
+
     //getters
 
     public Long getRequestItemId() {
@@ -52,6 +56,10 @@ public class AssetRequestItem {
 
     public String getNote() {
         return note;
+    }
+
+    public String getCategoryName() {
+        return CategoryName;
     }
     
     //setters
@@ -78,6 +86,10 @@ public class AssetRequestItem {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public void setCategoryName(String CategoryName) {
+        this.CategoryName = CategoryName;
     }
     
 }

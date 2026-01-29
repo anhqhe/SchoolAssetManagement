@@ -6,6 +6,7 @@
 package controller.allocation.teacher;
 
 import dao.allocation.AssetRequestDAO;
+import dao.allocation.RoomDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,7 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import model.Allocation.AssetRequest;
+import model.AssetRequest;
 import model.Allocation.User;
 
 /**
@@ -25,6 +26,7 @@ import model.Allocation.User;
 public class RequestList extends HttpServlet {
     
     private AssetRequestDAO AssetRequestDAO = new AssetRequestDAO();
+    private RoomDAO roomDAO = new RoomDAO();
    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -41,6 +43,7 @@ public class RequestList extends HttpServlet {
         if (currentUser != null) {
             List<AssetRequest> list = AssetRequestDAO.getRequestsByTeacher(currentUser.getUserId());
             
+            request.setAttribute("roomDAO", roomDAO);
             request.setAttribute("myRequests", list);
             request.getRequestDispatcher("/views/allocation/teacher/request-list.jsp")
                    .forward(request, response);

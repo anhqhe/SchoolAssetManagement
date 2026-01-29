@@ -6,6 +6,11 @@ package dao.allocation;
 
 import java.util.List;
 import model.Allocation.Room;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import util.DBUtil;
 
 /**
  *
@@ -13,21 +18,91 @@ import model.Allocation.Room;
  */
 public class RoomDAO {
 
-    public List<Room> getAllActiveRooms() {
-        //demo
-        List<Room> list = List.of(
-            new Room(1L, "RM-001", "Phòng họp A", "Tầng 1 - Tòa nhà A", true),
-            new Room(2L, "RM-002", "Phòng họp B", "Tầng 1 - Tòa nhà A", true),
-            new Room(3L, "RM-003", "Phòng họp C", "Tầng 2 - Tòa nhà A", true),
-            new Room(4L, "RM-004", "Phòng họp Lớn", "Tầng 3 - Tòa nhà B", true),
-            new Room(5L, "RM-005", "Phòng họp Nhỏ", "Tầng 3 - Tòa nhà B", true),
-            new Room(6L, "RM-006", "Phòng đào tạo 1", "Tầng 4 - Tòa nhà C", true),
-            new Room(7L, "RM-007", "Phòng đào tạo 2", "Tầng 4 - Tòa nhà C", false),
-            new Room(8L, "RM-008", "Phòng thư giãn", "Tầng 1 - Tòa nhà C", true),
-            new Room(9L, "RM-009", "Phòng Giám đốc", "Tầng 5 - Tòa nhà A", true),
-            new Room(10L, "RM-010", "Phòng Khách", "Tầng trệt - Tòa nhà A", true)
-        );
-        return list;
+    public List<Room> getAllRooms() {
+        List<Room> rooms = new ArrayList<>();
+        String sql = "SELECT * FROM Rooms";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Room room = new Room();
+                room.setRoomId(rs.getLong("RoomId"));
+                room.setRoomCode(rs.getNString("RoomCode"));
+                room.setRoomName(rs.getNString("RoomName"));
+                room.setLocation(rs.getNString("Location"));
+                room.setIsActive(rs.getBoolean("IsActive"));
+                rooms.add(room);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error: dao.allocation.RoomDAO.getAllRooms()- "+e.getMessage());
+        }
+        return rooms;
     }
-    
+
+    public boolean insertRoom(Room room) {
+        String sql = "INSERT INTO Rooms (RoomCode, RoomName, Location, IsActive) "
+                + "VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+
+            ps.setNString(1, room.getRoomCode());
+            ps.setNString(2, room.getRoomName());
+            ps.setNString(3, room.getLocation());
+            ps.setBoolean(4, room.isIsActive());
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error: dao.allocation.RoomDAO.insertRoom()- "+e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Room> getAllActiveRooms() {
+        List<Room> activeRooms = new ArrayList<>();
+        String sql = "SELECT RoomId, RoomCode, RoomName, Location, IsActive "
+                + "FROM Rooms WHERE IsActive = 1";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); 
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Room room = new Room();
+                room.setRoomId(rs.getLong("RoomId"));
+                room.setRoomCode(rs.getNString("RoomCode"));
+                room.setRoomName(rs.getNString("RoomName"));
+                room.setLocation(rs.getNString("Location"));
+                room.setIsActive(rs.getBoolean("IsActive"));
+
+                activeRooms.add(room);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: RoomDAO.getAllActiveRoom -" + e.getMessage());
+        }
+        return activeRooms;
+    }
+
+    public Room getRoomById(long id) {
+        Room room = null;
+        String sql = "SELECT RoomId, RoomCode, RoomName, Location, IsActive "
+                + "FROM Rooms WHERE RoomId = ?";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+            ps.setLong(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    room = new Room();
+                    room.setRoomId(rs.getLong("RoomId"));
+                    room.setRoomCode(rs.getNString("RoomCode"));
+                    room.setRoomName(rs.getNString("RoomName"));
+                    room.setLocation(rs.getNString("Location"));
+                    room.setIsActive(rs.getBoolean("IsActive"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error: dao.allocation.RoomDAO.getRoomById()- " + e.getMessage());
+        }
+        return room;
+    }
+
 }
