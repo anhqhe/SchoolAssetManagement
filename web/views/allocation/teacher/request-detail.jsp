@@ -1,3 +1,4 @@
+<%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
@@ -31,7 +32,9 @@
                                         <p><strong>Người yêu cầu:</strong> ${req.teacherName}</p>
                                         <p><strong>Phòng nhận:</strong> ${req.roomName}</p> </div>
                                     <div class="col-md-6 text-md-end">
-                                        <p><strong>Ngày tạo:</strong> ${req.createdAt}</p> 
+                                        <p><strong>Ngày tạo:</strong>
+                                            <td>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}</td>
+                                        </p> 
                                         <p><strong>Mục đích:</strong> ${req.purpose}</p> 
                                     </div>
                                 </div>

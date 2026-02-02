@@ -47,7 +47,7 @@ public class RequestDetail extends HttpServlet {
             request.getRequestDispatcher("/views/allocation/teacher/request-detail.jsp")
                     .forward(request, response);
         } catch (Exception e) {
-            //response.sendRedirect("request-list?error=notfound");
+            response.sendRedirect("request-list?error=notfound");
             System.err.println("Error in RequestDetail.doGet(): " + e);
             e.printStackTrace(System.err);
         }

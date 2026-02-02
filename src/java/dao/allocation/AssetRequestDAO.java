@@ -5,7 +5,6 @@
 package dao.allocation;
 
 import dto.AssetRequestDTO;
-import java.time.LocalDateTime;
 import java.util.List;
 import model.AssetRequest;
 import util.DBUtil;
@@ -18,6 +17,10 @@ import java.util.ArrayList;
 /**
  *
  * @author Leo
+ */
+/**
+ *
+ * DAO for AssetRequest and AssetRequestDTO
  */
 public class AssetRequestDAO {
 
@@ -49,60 +52,246 @@ public class AssetRequestDAO {
     }
 
     //update status
-    public void updateStatus(Connection conn, Long requestId, String status) throws SQLException {
-        String sql = "UPDATE AssetRequests "
-                + "SET Status = ?, "
-                + "UpdatedAt = SYSDATETIME() "
-                + "WHERE RequestId = ?";
+    public boolean updateStatus(Connection conn, long requestId, String status) throws SQLException {
+        String sql = """
+                     UPDATE AssetRequests 
+                     SET Status = ?, UpdatedAt = SYSDATETIME() 
+                     WHERE RequestId = ?
+                     """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setLong(2, requestId);
-            ps.executeUpdate();
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 
-    public List<AssetRequest> getRequestsByTeacher(long userId) {
-        List<AssetRequest> list = new ArrayList<>();
-        String sql = "SELECT * FROM AssetRequests WHERE TeacherId = ?";
+ 
+    /**
+     *
+     * AssetRequestDTO DAO
+     */
+    //Find Request By ID --> Show in request-detail, staff/allocate-asset
+    public AssetRequestDTO findById(long requestId) throws SQLException {
+
+        String sql = """
+                    SELECT r.*, u.FullName as TeacherName, rm.RoomName 
+                    FROM AssetRequests r 
+                    JOIN Users u ON r.TeacherId = u.UserId 
+                    LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                    WHERE r.RequestId = ?
+                    """;
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
-
-            ps.setLong(1, userId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                AssetRequest req = mapResultSetToEntity(rs);
-
-                list.add(req);
+            ps.setLong(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+                    return dto;
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Error: dao.allocation.AssetRequestDAO.getRequestsByTeacher(): " + e.getMessage());
+        }
+        return null;
+    }
+    
+    //view in teacher/request-list
+    public List<AssetRequestDTO> getRequestsByTeacher(long userId, String keyword, String status, String sortBy) throws SQLException {
+        
+        String orderClause;
+        if(sortBy ==null || sortBy.isEmpty()) {
+            orderClause = "r.CreatedAt DESC"; //default
+        } else {
+            orderClause = switch (sortBy) {
+                case "RequestCode ASC" -> "r.RequestCode ASC";
+                case "RequestCode DESC" -> "r.RequestCode DESC";
+                case "CreatedAt ASC" -> "r.CreatedAt ASC";
+                case "CreatedAt DESC" -> "r.CreatedAt DESC";
+                case "RoomName ASC" -> "rm.RoomName ASC";
+                case "RoomName DESC" -> "rm.RoomName DESC";
+                case "Status ASC" -> "r.Status ASC";
+                case "Status DESC" -> "r.Status DESC";
+
+                default -> "r.CreatedAt DESC";
+            }; 
+        }
+        
+        StringBuilder sql = new StringBuilder(
+                """
+                SELECT r.*, u.FullName AS TeacherName, rm.RoomName
+                FROM AssetRequests r
+                JOIN Users u ON r.TeacherId = u.UserId
+                LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                WHERE TeacherId = ? 
+                                                                 """);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+                        AND (r.RequestCode LIKE ?
+                            OR rm.RoomName LIKE ? )  
+                       """);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND r.Status = ? ");
+        }
+
+        sql.append(" ORDER BY ").append(orderClause);
+        
+        List<AssetRequestDTO> list = new ArrayList<>();
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            ps.setLong(idx++, userId);
+            
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchVal = "%" + keyword.trim() + "%";
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+            }
+            if (status != null && !status.isEmpty()) {
+                ps.setString(idx++, status);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+
+                    list.add(dto);
+                }
+            }
         }
         return list;
+           
     }
 
-    public List<AssetRequest> getPendingRequests() {
-        List<AssetRequest> pendingList = new ArrayList<>();
-
-        // Select 'Pending' Request, Sort DESC CreatedAt
-        String sql = "SELECT * FROM AssetRequests "
-                + "WHERE Status = 'PENDING' "
-                + "ORDER BY CreatedAt DESC";
+    // not use
+    public List<AssetRequestDTO> getRequestsForBoard() {
+        List<AssetRequestDTO> list = new ArrayList<>();
+        // query waiting_board request
+        String sql = """
+                 SELECT r.*, u.FullName AS TeacherName, rm.RoomName
+                 FROM AssetRequests r 
+                 JOIN Users u ON r.TeacherId = u.UserId 
+                 LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId 
+                 WHERE r.Status = 'WAITING_BOARD' 
+                 ORDER BY r.CreatedAt ASC
+                 """;
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                AssetRequest req = mapResultSetToEntity(rs);
+                AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
 
-                pendingList.add(req);
+                list.add(dto);
             }
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi lấy danh sách yêu cầu đang chờ duyệt: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("dao.allocation.AssetRequestDAO.getPendingForBoard()");
+            e.printStackTrace(System.err);
         }
-        return pendingList;
+        return list;
     }
 
+    
+    // not use
+    public List<AssetRequestDTO> getRequestsForStaff() {
+        List<AssetRequestDTO> list = new ArrayList<>();
+        String sql = "SELECT r.*, u.FullName AS TeacherName, rm.RoomName "
+                + "FROM AssetRequests r "
+                + "JOIN Users u ON r.TeacherId = u.UserId "
+                + "LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId "
+                + "WHERE r.Status = 'APPROVED_BY_BOARD' "
+                + "ORDER BY r.CreatedAt ASC";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+
+                list.add(dto);
+            }
+        } catch (SQLException e) {
+            System.err.println("dao.allocation.AssetRequestDAO.getRequestsForStaff()");
+            System.err.println(e);
+        }
+        return list;
+    }
+
+    //Filter in staff/allocation-list, board/approval-center
+    public List<AssetRequestDTO> getRequestsAdvanced(String keyword, String status, String sortBy) throws SQLException {
+        
+        String orderClause;
+        if(sortBy ==null || sortBy.isEmpty()) {
+            orderClause = "r.CreatedAt DESC"; //default
+        } else {
+            orderClause = switch (sortBy) {
+                case "RequestCode ASC" -> "r.RequestCode ASC";
+                case "RequestCode DESC" -> "r.RequestCode DESC";
+                case "TeacherName ASC" -> "u.FullName ASC";
+                case "TeacherName DESC" -> "u.FullName DESC";
+                case "CreatedAt ASC" -> "r.CreatedAt ASC";
+                case "CreatedAt DESC" -> "r.CreatedAt DESC";
+                case "RoomName ASC" -> "rm.RoomName ASC";
+                case "RoomName DESC" -> "rm.RoomName DESC";
+                case "Status ASC" -> "r.Status ASC";
+                case "Status DESC" -> "r.Status DESC";
+
+                default -> "r.CreatedAt DESC";
+            }; 
+        }
+        
+        StringBuilder sql = new StringBuilder(
+                """
+                SELECT r.*, u.FullName AS TeacherName, rm.RoomName
+                FROM AssetRequests r
+                JOIN Users u ON r.TeacherId = u.UserId 
+                LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                WHERE 1=1
+                                                                 """);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+                        AND (r.RequestCode LIKE ? 
+                            OR u.FullName LIKE ? 
+                            OR rm.RoomName LIKE ?
+                            OR r.Purpose LIKE ? )  
+                       """);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND r.Status = ? ");
+        }
+
+        sql.append(" ORDER BY ").append(orderClause);
+
+        List<AssetRequestDTO> list = new ArrayList<>();
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchVal = "%" + keyword.trim() + "%";
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+            }
+            if (status != null && !status.isEmpty()) {
+                ps.setString(idx++, status);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+
+                    list.add(dto);
+                }
+            }
+        }
+        return list;
+    }
+
+    /*
+    *
+    * Map data from ResultSet to AssetRequest, AssetRequestDTO
+     */
     // Map data from ResultSet to AssetRequest
     private AssetRequest mapResultSetToEntity(ResultSet rs) throws SQLException {
         AssetRequest req = new AssetRequest();
@@ -126,40 +315,31 @@ public class AssetRequestDAO {
         return req;
     }
 
-    //
-    // AssetRequestDTO DAO
-    //
-    //Find Request By ID --> Show in request-detail.jsp
-    public AssetRequestDTO findById(long requestId) throws SQLException {
+    // Map data from ResultSet to AssetRequestDTO
+    private AssetRequestDTO mapResultSetToRequestDTO(ResultSet rs) throws SQLException {
+        AssetRequestDTO req = new AssetRequestDTO();
+        req.setRequestId(rs.getLong("RequestId"));
+        req.setRequestCode(rs.getNString("RequestCode"));
+        req.setTeacherId(rs.getLong("TeacherId"));
 
-        String sql = """
-                    SELECT r.*, u.FullName as TeacherName, rm.RoomName 
-                    FROM AssetRequests r 
-                    JOIN Users u ON r.TeacherId = u.UserId 
-                    LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
-                    WHERE r.RequestId = ?
-                    """;
+        long roomId = rs.getLong("RequestedRoomId");
+        req.setRequestedRoomId(rs.wasNull() ? null : roomId);
 
-        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
-            ps.setLong(1, requestId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    AssetRequestDTO dto = new AssetRequestDTO();
-                    dto.setRequestId(rs.getLong("RequestId"));
-                    dto.setRequestCode(rs.getString("RequestCode"));
-                    dto.setTeacherId(rs.getLong("TeacherId"));
-                    dto.setRequestedRoomId(rs.getLong("RequestedRoomId"));
-                    dto.setPurpose(rs.getString("Purpose"));
-                    dto.setStatus(rs.getString("Status"));
-                    dto.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
+        req.setPurpose(rs.getNString("Purpose"));
+        req.setStatus(rs.getNString("Status"));
 
-                    dto.setTeacherName(rs.getString("TeacherName"));
-                    dto.setRoomName(rs.getString("RoomName"));
-                    return dto;
-                }
-            }
+        // Convert SQL Timestamp to Java LocalDateTime
+        if (rs.getTimestamp("CreatedAt") != null) {
+            req.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
         }
-        return null;
+        if (rs.getTimestamp("UpdatedAt") != null) {
+            req.setUpdatedAt(rs.getTimestamp("UpdatedAt").toLocalDateTime());
+        }
+
+        req.setTeacherName(rs.getString("TeacherName"));
+        req.setRoomName(rs.getString("RoomName"));
+
+        return req;
     }
 
 }

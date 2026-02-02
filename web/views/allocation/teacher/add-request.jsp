@@ -29,6 +29,22 @@
                     <%@ include file="/views/layout/topbar.jsp" %>
 
                     <!-- Page Content -->
+                    <c:if test="${param.msg eq 'success'}">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i>
+                            Gửi yêu cầu tài sản thành công!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </c:if>
+                    
+                    <c:if test="${param.msg eq 'error'}">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i>
+                            Gửi yêu cầu tài sản thành công!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </c:if>
+
                     <div class="container request-container">
                         <div class="card shadow">
                             <div class="card-header bg-primary text-white">
@@ -44,7 +60,7 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                     </div>
                                 </c:if>
-                                
+
                                 <c:if test="${not empty error}">
                                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                         <i class="fas fa-exclamation-triangle"></i>
@@ -104,7 +120,7 @@
                                     </div>
 
                                     <div class="mt-5 text-end">
-                                        <a href="${pageContext.request.contextPath}/teacher/dashboard" class="btn btn-light">Hủy bỏ</a>
+                                        <a href="${pageContext.request.contextPath}/teacher/request-list" class="btn btn-light">Hủy bỏ</a>
                                         <button type="submit" class="btn btn-success">Gửi yêu cầu (Submit)</button>
                                     </div>
                                 </form>

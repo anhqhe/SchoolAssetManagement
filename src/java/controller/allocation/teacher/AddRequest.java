@@ -104,7 +104,7 @@ public class AddRequest extends HttpServlet {
             request.setTeacherId(userId);
             request.setRequestedRoomId(roomId);
             request.setPurpose(purpose);
-            request.setStatus("PENDING"); // Default Status
+            request.setStatus("WAITING_BOARD"); // Default Status
 
             // Create RequestCode
             String requestCode = "REQ-" + System.currentTimeMillis();
@@ -127,13 +127,13 @@ public class AddRequest extends HttpServlet {
                 }
             }
 
-            conn.commit(); // XÁC NHẬN LƯU TẤT CẢ NẾU KHÔNG CÓ LỖI
+            conn.commit(); // End Transaction
             return true;
 
         } catch (Exception e) {
             if (conn != null) {
                 try {
-                    conn.rollback();
+                    conn.rollback();    //Rollback if have error
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }

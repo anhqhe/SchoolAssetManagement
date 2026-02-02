@@ -41,7 +41,7 @@ public class AssetRequestItemDAO {
     // AssetRequestDTO DAO
     //
     
-    //Find By RequestId --> show in teacher/request-detail.jsp
+    //Find By RequestId --> show in teacher/request-detail.jsp, staff/allocate-asset
     public List<AssetRequestItemDTO> findByRequestId(Long requestId) throws SQLException {
         List<AssetRequestItemDTO> items = new ArrayList<>();
         String sql = """
@@ -77,4 +77,6 @@ public class AssetRequestItemDAO {
         }
         return items;
     }
+
+ 
 }

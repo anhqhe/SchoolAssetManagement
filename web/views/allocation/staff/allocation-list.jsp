@@ -2,131 +2,168 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>Danh Sách Yêu Cầu Chờ Xử Lý</title>
-    <link href="${pageContext.request.contextPath}/assets/css/sb-admin-2.min.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
-</head>
-<body id="page-top">
-<div id="wrapper">
+    <head>
+        <meta charset="UTF-8">
+        <title>Danh Sách Yêu Cầu Chờ Xử Lý</title>
+        <link href="${pageContext.request.contextPath}/assets/css/sb-admin-2.min.css" rel="stylesheet">
+        <link href="${pageContext.request.contextPath}/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
 
-    <%@ include file="/views/layout/sidebar.jsp" %>
+    </head>
+    <body id="page-top">
+        <div id="wrapper">
 
-    <div id="content-wrapper" class="d-flex flex-column">
-        <div id="content">
+            <%@ include file="/views/layout/sidebar.jsp" %>
 
-            <%@ include file="/views/layout/topbar.jsp" %>
+            <div id="content-wrapper" class="d-flex flex-column">
+                <div id="content">
 
-            <!-- Page Content -->
-            <div class="container-fluid mt-4">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Phiếu Yêu Cầu Đang Chờ</h5>
-                    </div>
-                    <div class="card-body">
+                    <%@ include file="/views/layout/topbar.jsp" %>
 
-<%--                        <c:if test="${not empty msg}">--%>
-<%--                            <div class="alert alert-success">${msg}</div>--%>
-<%--                        </c:if>--%>
+                    <!-- Page Content -->
 
-    <c:choose>
-        <c:when test="${not empty param.msg}">
-            <c:set var="alertClass" value="alert-info"/>
-            <c:choose>
-                <c:when test="${param.msg == 'success'}"><c:set var="alertClass" value="alert-success"/></c:when>
-                <c:when test="${param.msg == 'out_of_stock'}"><c:set var="alertClass" value="alert-warning"/></c:when>
-                <c:when test="${param.msg == 'error'}"><c:set var="alertClass" value="alert-danger"/></c:when>
-            </c:choose>
-            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                <c:choose>
-                    <c:when test="${param.msg == 'success'}">Gửi BGH duyệt thành công.</c:when>
-                    <c:when test="${param.msg == 'out_of_stock'}">Không đủ hàng trong kho — không thể gửi BGH.</c:when>
-                    <c:when test="${param.msg == 'error'}">Đã xảy ra lỗi trong quá trình xử lý. Vui lòng thử lại sau.</c:when>
-                    <c:otherwise>${fn:escapeXml(param.msg)}</c:otherwise>
-                </c:choose>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:when>
+                    <!-- Message Begin -->
+                    <c:if test="${param.msg eq 'success'}">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i>
+                            Thành công!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </c:if>
 
-    </c:choose>
+                    <c:if test="${param.msg eq 'error'}">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i>
+                            Lỗi
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </c:if>
+                    <!-- Message End -->
+
+                    <!-- Main Content Begin -->
+                    <div class="container-fluid mt-5">
+
+                        <div class="card shadow border-0">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Yêu Cầu Chờ Phê Duyệt</h5>
+                            </div>
+
+                            <!--  Filter Begin -->
+                            <div class="card-body mt-4 mr-5">
+                                <form action="${pageContext.request.contextPath}/staff/allocation-list" method="get" id="filterForm" class="row gx-3 gy-2 align-items-center justify-content-end">
+                                    <div class="col-sm-4">
+                                        <label class="sr-only">Tìm kiếm</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text"><i class="fas fa-search"></i></div>
+                                            </div>
+                                            <input type="text" name="keyword" class="form-control" placeholder="Mã phiếu, tên GV..." value="${param.keyword}">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-2">
+                                        <select name="status" class="form-control">
+                                            <option value="">-- Trạng thái --</option>
+                                            <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
+                                            <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
+                                            <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-auto">
+                                        <button type="submit" class="btn btn-primary">Áp dụng</button>
+                                        <a href="allocation-list" class="btn btn-outline-secondary">Reset</a>
+                                    </div>
+                                </form>
+                            </div>
+                            <!-- Filter End -->
 
 
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-secondary">
-                                <tr>
-                                    <th>Mã Phiếu</th>
-                                    <th>Người Gửi</th>
-                                    <th>Ngày Tạo</th>
-                                    <th>Phòng Yêu Cầu</th>
-                                    <th>Mục Đích</th>
-                                    <th>Trạng Thái</th>
-                                    <th class="text-center">Thao Tác</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <c:forEach var="req" items="${pendingRequests}">
-                                    <tr>
-                                        <td class="fw-bold text-primary">${req.requestCode}</td>
-                                        <td>${req.teacherId}</td>
-                                        <td> ${req.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</td>
-                                        <td>${req.requestedRoomId}</td>
-                                        <td>${req.purpose}</td>
-                                        <td><span class="badge bg-light">${req.status}</span></td>
-                                        <td class="text-center">
-                                            <a href="request-detail?id=${req.requestId}" class="btn btn-sm btn-info text-white">
-                                                Chi tiết & Kiểm tra kho
-                                            </a>
+                            <div class="card-body">
+                                <c:if test="${not empty msg}">
+                                    <div class="alert alert-success">${msg}</div>
+                                </c:if>                                
 
-                                            <form action="${pageContext.request.contextPath}/staff/pending-requests" method="post" class="d-inline">
-                                                <input type="hidden" name="requestId" value="${req.requestId}">
-                                                <button type="submit" class="btn btn-sm btn-success"
-                                                        onclick="return confirm('Xác nhận đã kiểm tra kho và gửi lên Ban Giám Hiệu?')">
-                                                    Gửi BGH duyệt
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>
+                                                    <a href="?sortBy=${param.sortBy == 'RequestCode ASC' ? 'RequestCode DESC' : 'RequestCode ASC'}&status=${param.status}&keyword=${param.keyword}">
+                                                        Mã phiếu 
+                                                        <i class="fas ${param.sortBy.contains('RequestCode') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?sortBy=${param.sortBy == 'TeacherName ASC' ? 'TeacherName DESC' : 'TeacherName ASC'}&status=${param.status}&keyword=${param.keyword}">
+                                                        Người Yêu Cầu 
+                                                        <i class="fas ${param.sortBy.contains('TeacherName') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?sortBy=${param.sortBy == 'CreatedAt ASC' ? 'CreatedAt DESC' : 'CreatedAt ASC'}&status=${param.status}&keyword=${param.keyword}">
+                                                        Ngày Gửi 
+                                                        <i class="fas ${param.sortBy.contains('CreatedAt') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?sortBy=${param.sortBy == 'RoomName ASC' ? 'RoomName DESC' : 'RoomName ASC'}&status=${param.status}&keyword=${param.keyword}">
+                                                        Phòng Nhận 
+                                                        <i class="fas ${param.sortBy.contains('RoomName') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
+                                                    </a>
+                                                </th>
+                                                <th>Mục Đích</th>
+                                                <th>
+                                                    <a href="?sortBy=${param.sortBy == 'Status ASC' ? 'Status DESC' : 'Status ASC'}&status=${param.status}&keyword=${param.keyword}">
+                                                        Trạng Thái 
+                                                        <i class="fas ${param.sortBy.contains('Status') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
+                                                    </a>
+                                                </th>
+                                                <th class="text-center">Thao Tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach var="req" items="${pendingList}">
+                                                <tr>
+                                                    <td>${req.requestCode}</td>
+                                                    <td>${req.teacherName}</td>
+                                                    <td>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</td>
+                                                    <td>${req.roomName}</td>
+                                                    <td>${req.purpose}</td>
+                                                    <td><span class="badge badge-info">${req.status}</span></td>
 
-                                <c:if test="${empty pendingRequests}">
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted">Không có yêu cầu nào đang chờ xử lý.</td>
-                                    </tr>
-                                </c:if>
-                                </tbody>
-                            </table>
+                                                    <td>
+                                                        <a href="request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">
+                                                            Xem chi tiết
+                                                        </a>
+                                                        <c:if test="${req.status == 'APPROVED_BY_BOARD'}">
+                                                            <a href="allocate-assets?requestId=${req.requestId}" class="btn btn-primary btn-sm">
+                                                                <i class="fas fa-box-open"></i> Bàn giao
+                                                            </a>
+                                                        </c:if>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                            <c:if test="${empty pendingList}">
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted py-4">Hiện không có yêu cầu nào cần phê duyệt.</td>
+                                                </tr>
+                                            </c:if>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                    <!-- Main Content End -->
 
+                </div>
+
+                <%@ include file="/views/layout/footer.jsp" %>
+
+            </div>
         </div>
 
-        <%@ include file="/views/layout/footer.jsp" %>
-
-    </div>
-</div>
-
-
-
-<script>
-    function addItem() {
-        const itemList = document.getElementById('itemList');
-        const firstRow = itemList.querySelector('.item-row');
-        const newRow = firstRow.cloneNode(true);
-
-        // Reset giá trị các input trong dòng mới
-        newRow.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? 1 : ''));
-        newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-
-        itemList.appendChild(newRow);
-    }
-</script>
-
-</body>
+    </body>
 </html>

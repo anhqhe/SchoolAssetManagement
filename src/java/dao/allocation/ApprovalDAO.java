@@ -4,12 +4,13 @@
  */
 package dao.allocation;
 
-
 import dto.ApprovalDTO;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import model.Approval;
 import util.DBUtil;
@@ -20,35 +21,39 @@ import util.DBUtil;
  */
 public class ApprovalDAO {
 
-    public List<Approval> getPendingList() {
-        List<Approval> list = List.of(
-                new Approval(1L, "ASSET_REQUEST", 1001L, 101L, "APPROVED", "Checked and approved.", LocalDateTime.of(2025, 6, 1, 10, 30)),
-                new Approval(2L, "ASSET_REQUEST", 2002L, 102L, "REJECTED", "Missing invoice attachments.", LocalDateTime.of(2025, 6, 2, 14, 15)),
-                new Approval(3L, "ASSET_REQUEST", 3003L, 103L, "PENDING", "Waiting for budget confirmation.", LocalDateTime.of(2025, 6, 3, 9, 0)),
-                new Approval(4L, "ASSET_TRANSFER", 4004L, 104L, "APPROVED", "Expense within limit.", LocalDateTime.of(2025, 6, 4, 16, 45)),
-                new Approval(5L, "ASSET_TRANSFER", 5005L, 105L, "APPROVED", "Signed by legal.", LocalDateTime.of(2025, 6, 5, 11, 20))
-        );
-        //DEMO end
-        return list;
+    public boolean insertApproval(Connection conn, String refType, long refId, long approverId, String decision, String note) throws SQLException {
+        String sql = """
+                     INSERT INTO Approvals (RefType, RefId, ApproverId, Decision, DecisionNote, DecidedAt)
+                        VALUES (?, ?, ?, ?, ?, SYSDATETIME())
+                     """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, refType);
+            ps.setLong(2, refId);
+            ps.setLong(3, approverId);
+            ps.setString(4, decision);
+            ps.setString(5, note);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0; 
+        }
     }
 
-    public boolean processDecision(long refId, String refType, long userId, String decision, String note) {
-        return true;
-    }
-
-    
+    //
+    // ApprovalDTO DAO
+    //
     //Find Request by
     public ApprovalDTO findByRef(String refType, long refId) throws SQLException {
-        String sql = "SELECT a.*, u.FullName as ApproverName " +
-                     "FROM Approvals a " +
-                     "JOIN Users u ON a.ApproverId = u.UserId " +
-                     "WHERE a.RefType = ? AND a.RefId = ? " +
-                     "ORDER BY a.DecidedAt DESC"; // newest
+        String sql = "SELECT a.*, u.FullName as ApproverName "
+                + "FROM Approvals a "
+                + "JOIN Users u ON a.ApproverId = u.UserId "
+                + "WHERE a.RefType = ? AND a.RefId = ? "
+                + "ORDER BY a.DecidedAt DESC"; // newest
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
             ps.setString(1, refType);
             ps.setLong(2, refId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     ApprovalDTO dto = new ApprovalDTO();
@@ -59,7 +64,7 @@ public class ApprovalDAO {
                     dto.setDecision(rs.getString("Decision"));
                     dto.setDecisionNote(rs.getString("DecisionNote"));
                     dto.setDecidedAt(rs.getTimestamp("DecidedAt").toLocalDateTime());
-                    
+
                     dto.setApproverName(rs.getString("ApproverName"));
                     return dto;
                 }
@@ -67,5 +72,5 @@ public class ApprovalDAO {
         }
         return null;
     }
-    
+
 }
