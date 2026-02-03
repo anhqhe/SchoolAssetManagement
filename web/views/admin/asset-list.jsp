@@ -75,7 +75,7 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <form method="get" action="${pageContext.request.contextPath}/admin/assets" class="form-inline">
+                        <form method="get" action="${pageContext.request.contextPath}/assets/list" class="form-inline">
                             <div class="form-group mr-3 mb-2">
                                 <input type="text" 
                                        name="keyword" 
@@ -99,7 +99,7 @@
                                 <i class="fas fa-search"></i> Tìm kiếm
                             </button>
                             
-                            <a href="${pageContext.request.contextPath}/admin/assets" class="btn btn-secondary mb-2">
+                            <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-secondary mb-2">
                                 <i class="fas fa-redo"></i> Đặt lại
                             </a>
                         </form>
@@ -161,7 +161,7 @@
                                                         </span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <a href="${pageContext.request.contextPath}/admin/asset-detail?id=${asset.assetId}" 
+                                                        <a href="${pageContext.request.contextPath}/assets/detail?id=${asset.assetId}" 
                                                            class="btn btn-sm btn-info" title="Xem chi tiết">
                                                             <i class="fas fa-eye"></i>
                                                         </a>

@@ -32,7 +32,7 @@
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/assets">
+        <a class="nav-link" href="${pageContext.request.contextPath}/assets/list">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>
@@ -65,7 +65,7 @@
     <% if (sidebarRoles != null && sidebarRoles.contains("ASSET_STAFF") && !sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/assets">
+        <a class="nav-link" href="${pageContext.request.contextPath}/assets/list">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>

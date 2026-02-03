@@ -64,7 +64,7 @@
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-box text-primary"></i> Chi tiết tài sản
                     </h1>
-                    <a href="${pageContext.request.contextPath}/admin/assets" class="btn btn-secondary btn-sm">
+                    <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Quay lại danh sách
                     </a>
                 </div>
