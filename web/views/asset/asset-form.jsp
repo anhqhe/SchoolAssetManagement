@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="model.Asset" %>
+<%@ page import="model.asset.Asset" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 
 <%
