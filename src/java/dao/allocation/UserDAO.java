@@ -26,7 +26,7 @@ public class UserDAO {
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
 
-            ps.setString(1, roleCode); // 'BOARD', 'STAFF'
+            ps.setString(1, roleCode); // 'BOARD', 'ASSET_STAFF', 'TEACHER'
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

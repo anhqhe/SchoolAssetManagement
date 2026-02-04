@@ -15,12 +15,16 @@ public class NotificationEndPoint {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("userId") long userId) {
+        
+        System.out.println("WebSocket onOpen: userId=" + userId + ", sessionId=" + session.getId());
         // Nếu User chưa có trong Map, tạo mới một CopyOnWriteArraySet
         userSessions.computeIfAbsent(userId, k -> new CopyOnWriteArraySet<>()).add(session);
     }
 
     @OnClose
     public void onClose(Session session, @PathParam("userId") long userId) {
+        //
+        System.out.println("WebSocket onClose: userId=" + userId + ", sessionId=" + session.getId());
         CopyOnWriteArraySet<Session> sessions = userSessions.get(userId);
         if (sessions != null) {
             sessions.remove(session);

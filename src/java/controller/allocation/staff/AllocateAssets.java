@@ -79,20 +79,9 @@ public class AllocateAssets extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        // DEMO
-        HttpSession session = request.getSession();
-        if (session.getAttribute("user") == null) {
-            User demoUser = new User();
-            demoUser.setUserId(2L);              // demo Staff ID
-            demoUser.setUsername("Staff_demo");
-            demoUser.setFullName("Staff Demo");
-            session.setAttribute("user", demoUser);
-        }
-        // DEMO END
-
+      
         // Get Staff data
-        User staff = (User) request.getSession().getAttribute("user");
+        User staff = (User) request.getSession().getAttribute("currentUser");
 
         // Get RequestId, list asset, note
         long requestId = Long.parseLong(request.getParameter("requestId"));

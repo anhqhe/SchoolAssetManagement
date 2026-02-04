@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.allocation.AssetRequest;
-import model.allocation.User;
+import model.User;
 
 /**
  *
@@ -36,16 +36,11 @@ public class RequestList extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Get User Data from Session
-//        HttpSession session = request.getSession();
-//        User currentUser = (User) session.getAttribute("user");
-
-        //DEMO
-        List<String> roles = List.of("ADMIN", "TEACHER", "STAFF");
-        User currentUser = new User(1, "admin", "admin", true, roles);
-        //Demo end
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
 
         if (currentUser == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
         
@@ -57,7 +52,6 @@ public class RequestList extends HttpServlet {
         String status = request.getParameter("status");
         String sortBy = request.getParameter("sortBy");
 
-        //List<AssetRequest> list = AssetRequestDAO.getRequestsByTeacher(currentUser.getUserId());
 
         List<AssetRequestDTO> list = new ArrayList<>();
         try {

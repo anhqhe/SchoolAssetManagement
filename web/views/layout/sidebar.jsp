@@ -79,11 +79,12 @@
     </li>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/requests">
+        <a class="nav-link" href="${pageContext.request.contextPath}/staff/allocation-list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Yêu cầu tài sản</span>
         </a>
     </li>
+    
     
     <% } %>
        
@@ -97,6 +98,13 @@
         </a>
     </li>
     
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
+            <i class="fas fa-fw fa-comments"></i>
+            <span>Danh sách yêu cầu</span>
+        </a>
+    </li>
+    
     <% } %>
        
     <!-- BOARD ONLY -->
@@ -106,6 +114,13 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/board/approvals">
             <i class="fas fa-fw fa-check-square"></i>
             <span>Phê duyệt yêu cầu</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/board/approval-center">
+            <i class="fas fa-fw fa-check-square"></i>
+            <span>Danh sách yêu cầu</span>
         </a>
     </li>
     

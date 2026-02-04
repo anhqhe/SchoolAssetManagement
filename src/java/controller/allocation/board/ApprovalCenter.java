@@ -73,18 +73,7 @@ public class ApprovalCenter extends HttpServlet {
 
         // Get User data from session
         HttpSession session = request.getSession();
-
-        // DEMO
-        if (session.getAttribute("user") == null) {
-            User demoUser = new User();
-            demoUser.setUserId(1L);              // demo Board ID
-            demoUser.setUsername("board_demo");
-            demoUser.setFullName("Board Demo");
-            session.setAttribute("user", demoUser);
-        }
-        // DEMO END      
-
-        User user = (User) session.getAttribute("user");
+        User user = (User) session.getAttribute("currentUser");
 
         // Get data from form
         String requestIdStr = request.getParameter("requestId");
@@ -124,7 +113,7 @@ public class ApprovalCenter extends HttpServlet {
             NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
                     "Phiếu " + reqDTO.getRequestCode() + " đã được phê duyệt!");
             //send noti to staffs
-            List<Long> staffIds = userDAO.getIdsByRole("STAFF");
+            List<Long> staffIds = userDAO.getIdsByRole("ASSET_STAFF");
             NotificationEndPoint.sendToUsers(staffIds,
                     "Cần cấp phát tài sản cho phiếu: " + reqDTO.getRequestCode());
         }

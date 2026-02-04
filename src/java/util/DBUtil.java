@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class DBUtil {
     // THAY ĐỔI: sửa theo cấu hình SQL Server của bạn
-    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=SchoolAssetManagement2;encrypt=false;trustServerCertificate=true";
+    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=SchoolAssetManagement;encrypt=false;trustServerCertificate=true";
     private static final String DB_USER = "sa";         
     private static final String DB_PASS = "123";
 

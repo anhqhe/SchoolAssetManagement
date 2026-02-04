@@ -16,8 +16,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import model.allocation.User;
+import model.User;
 import util.DBUtil;
 import java.sql.Connection;
 import model.allocation.AssetRequest;
@@ -51,14 +52,9 @@ public class AddRequest extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        //        // Get user information from session
-//        HttpSession session = request.getSession();
-//        User currentUser = (User) session.getAttribute("user");
-
-        //DEMO
-        List<String> roles = List.of("ADMIN", "TEACHER", "STAFF");
-        User currentUser = new User(1, "admin", "admin", true, roles);
-        //Demo end
+        // Get user information from session
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
 
         try {
             // Get data from Request Form
@@ -82,7 +78,6 @@ public class AddRequest extends HttpServlet {
             //Send Notification to Board
             List<Long> boardIds = userDAO.getIdsByRole("BOARD");
             NotificationEndPoint.sendToUsers(boardIds, "Có phiếu yêu cầu mới");
-            
 
             // Return result
             if (success) {
@@ -130,7 +125,7 @@ public class AddRequest extends HttpServlet {
                     item.setQuantity(Integer.parseInt(qtys[i]));
                     item.setNote(notes[i]);
 
-                    // Lưu từng dòng item
+                    // save data to table AssetRequestItem
                     requestItemDAO.insert(conn, item);
                 }
             }
