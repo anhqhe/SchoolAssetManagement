@@ -200,7 +200,7 @@
             </div>
         </div>
 
-
+        <%@ include file="/views/layout/allocation/notification.jsp" %>
 
         <script src="${pageContext.request.contextPath}/assets/allocation/bootstrap.bundle.min.js"></script>
         <script>

@@ -165,5 +165,6 @@
             </div>
         </div>
 
+        <%@ include file="/views/layout/allocation/notification.jsp" %>
     </body>
 </html>

@@ -5,7 +5,7 @@
 package dao.allocation;
 
 import dto.AssetRequestItemDTO;
-import model.AssetRequestItem;
+import model.allocation.AssetRequestItem;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;

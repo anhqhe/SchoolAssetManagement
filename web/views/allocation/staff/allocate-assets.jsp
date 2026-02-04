@@ -99,7 +99,7 @@
 
                             <div class="mb-5">
                                 <label class="form-label">Ghi chú phản hồi</label>
-                                <textarea name="note" class="form-control" rows="3" placeholder="Notes..."></textarea>
+                                <textarea name="note" class="form-control" rows="3" placeholder="Notes..." required></textarea>
                             </div>
 
                             <div class="mb-5">
@@ -117,6 +117,8 @@
 
             </div>
         </div>
+
+        <%@ include file="/views/layout/allocation/notification.jsp" %>
 
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

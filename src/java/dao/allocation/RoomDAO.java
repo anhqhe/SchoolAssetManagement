@@ -5,7 +5,7 @@
 package dao.allocation;
 
 import java.util.List;
-import model.Allocation.Room;
+import model.allocation.Room;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;

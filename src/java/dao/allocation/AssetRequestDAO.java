@@ -6,7 +6,7 @@ package dao.allocation;
 
 import dto.AssetRequestDTO;
 import java.util.List;
-import model.AssetRequest;
+import model.allocation.AssetRequest;
 import util.DBUtil;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -74,7 +74,7 @@ public class AssetRequestDAO {
      * AssetRequestDTO DAO
      */
     //Find Request By ID --> Show in request-detail, staff/allocate-asset
-    public AssetRequestDTO findById(long requestId) throws SQLException {
+    public AssetRequestDTO findById(long requestId) {
 
         String sql = """
                     SELECT r.*, u.FullName as TeacherName, rm.RoomName 
@@ -92,6 +92,9 @@ public class AssetRequestDAO {
                     return dto;
                 }
             }
+        } catch(SQLException e) {
+            System.out.println("dao.allocation.AssetRequestDAO.findById()");
+            System.err.println(e.getMessage());
         }
         return null;
     }

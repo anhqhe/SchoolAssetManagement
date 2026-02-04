@@ -4,6 +4,8 @@
  */
 package controller.allocation.teacher;
 
+import controller.allocation.websocket.NotificationEndPoint;
+import dao.allocation.UserDAO;
 import dao.allocation.AssetCategoryDAO;
 import dao.allocation.AssetRequestDAO;
 import dao.allocation.AssetRequestItemDAO;
@@ -15,11 +17,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import model.Allocation.User;
+import model.allocation.User;
 import util.DBUtil;
 import java.sql.Connection;
-import model.AssetRequest;
-import model.AssetRequestItem;
+import model.allocation.AssetRequest;
+import model.allocation.AssetRequestItem;
 import java.sql.SQLException;
 
 /**
@@ -30,6 +32,7 @@ import java.sql.SQLException;
 public class AddRequest extends HttpServlet {
 
     private RoomDAO roomDAO = new RoomDAO();
+    private UserDAO userDAO = new UserDAO();
     private AssetCategoryDAO assetCategoryDAO = new AssetCategoryDAO();
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO requestItemDAO = new AssetRequestItemDAO();
@@ -76,6 +79,11 @@ public class AddRequest extends HttpServlet {
                     quantities,
                     notes);
 
+            //Send Notification to Board
+            List<Long> boardIds = userDAO.getIdsByRole("BOARD");
+            NotificationEndPoint.sendToUsers(boardIds, "Có phiếu yêu cầu mới");
+            
+
             // Return result
             if (success) {
                 response.sendRedirect(request.getContextPath() + "/teacher/request-list?msg=success");
@@ -111,7 +119,7 @@ public class AddRequest extends HttpServlet {
             request.setRequestCode(requestCode);
 
             // Insert to table AssetRequest
-            long requestId = requestDAO.insert(conn,request);
+            long requestId = requestDAO.insert(conn, request);
 
             // Insert table AssetRequestItems
             if (requestId > 0 && catIds != null) {

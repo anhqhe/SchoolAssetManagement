@@ -1,0 +1,56 @@
+package controller.allocation.websocket;
+
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+@ServerEndpoint("/notifications/{userId}")
+public class NotificationEndPoint {
+
+    // Thread-safe map: UserId -> Tập hợp các Session của User đó
+    private static final ConcurrentHashMap<Long, CopyOnWriteArraySet<Session>> userSessions = new ConcurrentHashMap<>();
+
+    @OnOpen
+    public void onOpen(Session session, @PathParam("userId") long userId) {
+        // Nếu User chưa có trong Map, tạo mới một CopyOnWriteArraySet
+        userSessions.computeIfAbsent(userId, k -> new CopyOnWriteArraySet<>()).add(session);
+    }
+
+    @OnClose
+    public void onClose(Session session, @PathParam("userId") long userId) {
+        CopyOnWriteArraySet<Session> sessions = userSessions.get(userId);
+        if (sessions != null) {
+            sessions.remove(session);
+            if (sessions.isEmpty()) {
+                userSessions.remove(userId);
+            }
+        }
+    }
+
+    @OnError
+    public void onError(Throwable throwable) {
+        // Log lỗi nếu cần
+    }
+
+    // Gửi cho một User cụ thể (đến tất cả các tab họ đang mở)
+    public static void sendToUser(long userId, String message) {
+        CopyOnWriteArraySet<Session> sessions = userSessions.get(userId);
+        if (sessions != null) {
+            for (Session s : sessions) {
+                if (s.isOpen()) {
+                    s.getAsyncRemote().sendText(message);
+                }
+            }
+        }
+    }
+
+    // Gửi cho một nhóm người (ví dụ: tất cả Staff)
+    public static void sendToUsers(List<Long> userIds, String message) {
+        for (Long id : userIds) {
+            sendToUser(id, message);
+        }
+    }
+}

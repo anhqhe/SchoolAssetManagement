@@ -4,8 +4,10 @@
  */
 package controller.allocation.staff;
 
+import dao.allocation.AllocationDAO;
 import dao.allocation.AssetRequestDAO;
 import dao.allocation.AssetRequestItemDAO;
+import dto.AssetDTO;
 import dto.AssetRequestDTO;
 import dto.AssetRequestItemDTO;
 import java.io.IOException;
@@ -16,7 +18,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import model.AssetRequestItem;
 
 /**
  *
@@ -27,6 +28,7 @@ public class RequestDetailStaff extends HttpServlet {
     
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
+    private AllocationDAO allocationDAO = new AllocationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -40,15 +42,18 @@ public class RequestDetailStaff extends HttpServlet {
 
             long requestId = Long.parseLong(idParam);
 
-            // 1. Lấy thông tin chung của phiếu (Người mượn, ngày mượn, phòng...)
+            // Get AssetRequest Infor
             AssetRequestDTO requestDetail = requestDAO.findById(requestId);
 
-            // 2. Lấy danh sách chi tiết các món đồ cần (Ví dụ: 2 Laptop, 1 Máy chiếu)
+            // Get AssetRequestItem Infor
             List<AssetRequestItemDTO> itemList = reqItemDAO.findByRequestId(requestId);
+            
+            //Get asset infor after allocating
+            List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
             request.setAttribute("req", requestDetail);
             request.setAttribute("itemList", itemList);
-
+            request.setAttribute("allocatedAssets", allocatedAssets);
             request.getRequestDispatcher("/views/allocation/staff/request-detail-staff.jsp").forward(request, response);
 
         } catch (Exception e) {

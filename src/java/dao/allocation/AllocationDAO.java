@@ -4,11 +4,15 @@
  */
 package dao.allocation;
 
+import dto.AssetDTO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import model.AssetAllocation;
+import java.util.ArrayList;
+import java.util.List;
+import model.allocation.AssetAllocation;
+import util.DBUtil;
 
 /**
  *
@@ -48,7 +52,31 @@ public class AllocationDAO {
             }
         }
         return -1;
-
     }
 
+    
+    public List<AssetDTO> getAllocatedAssetsByRequestId(long requestId) throws SQLException {
+    List<AssetDTO> assets = new ArrayList<>();
+    String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, c.CategoryName " +
+                 "FROM AssetAllocations aa " +
+                 "JOIN AssetAllocationItems aai ON aa.AllocationId = aai.AllocationId " +
+                 "JOIN Assets a ON aai.AssetId = a.AssetId " +
+                 "JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
+                 "WHERE aa.RequestId = ?";
+    
+    try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+        ps.setLong(1, requestId);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                AssetDTO asset = new AssetDTO();
+                asset.setAssetId(rs.getLong("AssetId"));
+                asset.setAssetCode(rs.getString("AssetCode"));
+                asset.setAssetName(rs.getString("AssetName"));
+                asset.setCategoryName(rs.getString("CategoryName"));
+                assets.add(asset);
+            }
+        }
+    }
+    return assets;
+}
 }

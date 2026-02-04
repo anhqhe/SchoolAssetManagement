@@ -136,7 +136,7 @@
         </div>
 
 
-
+        <%@ include file="/views/layout/allocation/notification.jsp" %>
         <script>
             function addItem() {
                 const itemList = document.getElementById('itemList');

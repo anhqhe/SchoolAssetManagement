@@ -1,4 +1,4 @@
-package model.Allocation;
+package model.allocation;
 
 import java.time.LocalDateTime;
 import java.util.List;

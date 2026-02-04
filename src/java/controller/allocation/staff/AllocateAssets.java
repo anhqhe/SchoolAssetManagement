@@ -4,6 +4,7 @@
  */
 package controller.allocation.staff;
 
+import controller.allocation.websocket.NotificationEndPoint;
 import dao.allocation.AllocationDAO;
 import dao.allocation.AllocationItemDAO;
 import dao.allocation.AssetDAO;
@@ -24,13 +25,16 @@ import java.util.List;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
-import model.Allocation.User;
-import model.AssetAllocation;
+import model.allocation.User;
+import model.allocation.AssetAllocation;
+import model.allocation.AssetAllocation;
+import model.allocation.User;
 
 /**
  *
  * @author Leo
  */
+
 @WebServlet(name = "AllocateAsset", urlPatterns = {"/staff/allocate-assets"})
 public class AllocateAssets extends HttpServlet {
 
@@ -110,12 +114,20 @@ public class AllocateAssets extends HttpServlet {
         // Save data to database
         // Insert AssetAllocations, AssetAllocationItems & Update Status Assets + Request
         boolean success = processAllocation(requestId, staff.getUserId(), note, assetIds);
-
-        if (success) {
-            response.sendRedirect("allocation-list?msg=success");
-        } else {
+        
+        if (!success) {
             response.sendRedirect("allocate-assets?requestId=" + requestId + "&msg=error");
+            return;
         }
+        
+        //Save to database sucessfully
+        
+        //Send notification to teacher
+        AssetRequestDTO reqDTO = requestDAO.findById(requestId);
+        NotificationEndPoint.sendToUser(reqDTO.getTeacherId(), 
+                "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!");
+
+        response.sendRedirect("allocation-list?msg=success");
     }
 
     // Save data to database

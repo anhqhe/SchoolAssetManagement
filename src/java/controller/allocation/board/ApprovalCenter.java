@@ -5,6 +5,8 @@
 package controller.allocation.board;
 
 import controller.allocation.staff.AllocationList;
+import controller.allocation.websocket.NotificationEndPoint;
+import dao.UserDAO;
 import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
 import dto.AssetRequestDTO;
@@ -16,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import model.Allocation.User;
+import model.allocation.User;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -33,11 +35,12 @@ public class ApprovalCenter extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
+    private UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         //show msg if approved
         String msg = request.getParameter("msg");
         if ("success".equals(msg)) {
@@ -45,13 +48,13 @@ public class ApprovalCenter extends HttpServlet {
         } else if ("error".equals(msg)) {
             request.setAttribute("error", "Có lỗi xảy ra trong quá trình xử lý.");
         }
-        
+
         //Filter
         // Get parameters
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
         String sortBy = request.getParameter("sortBy");
-        
+
         List<AssetRequestDTO> list = new ArrayList<>();
         try {
             list = requestDAO.getRequestsAdvanced(keyword, status, sortBy);
@@ -75,12 +78,11 @@ public class ApprovalCenter extends HttpServlet {
         if (session.getAttribute("user") == null) {
             User demoUser = new User();
             demoUser.setUserId(1L);              // demo Board ID
-            demoUser.setUsername("board_demo");          
+            demoUser.setUsername("board_demo");
             demoUser.setFullName("Board Demo");
             session.setAttribute("user", demoUser);
         }
         // DEMO END      
-
 
         User user = (User) session.getAttribute("user");
 
@@ -100,12 +102,36 @@ public class ApprovalCenter extends HttpServlet {
         // Save to database
         boolean isSuccess = approveOrRejectRequest(requestId, approverId, decision, note);
 
-        // Return result
-        if (isSuccess) {
-            response.sendRedirect("approval-center?msg=success");
-        } else {
+        if (!isSuccess) {
             response.sendRedirect("approval-center?msg=error");
+            return;
         }
+
+        //Save to database sucessfully
+        // Send Notifications to Teacher, Staff 
+        
+        AssetRequestDTO reqDTO = requestDAO.findById(requestId);
+
+        //Board Reject
+        if ("REJECTED".equals(decision)) {
+            NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
+                    "Phiếu " + reqDTO.getRequestCode() + " của bạn đã bị từ chối.");
+        }
+
+        //Board  Approve
+        if ("APPROVED".equals(decision)) {
+            //Send noti to teacher
+            NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
+                    "Phiếu " + reqDTO.getRequestCode() + " đã được phê duyệt!");
+            //send noti to staffs
+            List<Long> staffIds = userDAO.getIdsByRole("STAFF");
+            NotificationEndPoint.sendToUsers(staffIds,
+                    "Cần cấp phát tài sản cho phiếu: " + reqDTO.getRequestCode());
+        }
+
+        // Return result
+        response.sendRedirect("approval-center?msg=success");
+
     }
 
     //save data to table Approval, update Status in table AssetRequest

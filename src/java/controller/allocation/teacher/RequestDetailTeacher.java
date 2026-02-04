@@ -17,14 +17,14 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import model.AssetRequestItem;
+import model.allocation.*;
 
 /**
  *
  * @author Leo
  */
 @WebServlet(name = "RequestDetail", urlPatterns = {"/teacher/request-detail"})
-public class RequestDetail extends HttpServlet {
+public class RequestDetailTeacher extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO itemDAO = new AssetRequestItemDAO();

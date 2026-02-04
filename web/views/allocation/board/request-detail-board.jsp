@@ -44,7 +44,7 @@
                     <div class="container mt-4">
                         <div class="d-sm-flex align-items-center justify-content-between mb-4">
                             <h1 class="h3 mb-0 text-gray-800">Chi tiết phiếu: ${req.requestCode}</h1>
-                            <a href="${pageContext.request.contextPath}/staff/allocation-list" class="btn btn-sm btn-secondary shadow-sm">
+                            <a href="${pageContext.request.contextPath}/board/approval-center" class="btn btn-sm btn-secondary shadow-sm">
                                 <i class="fas fa-arrow-left fa-sm"></i> Quay lại danh sách
                             </a>
                         </div>
@@ -146,30 +146,13 @@
                                     Tiến hành cấp phát tài sản
                                 </a>
                             </c:if>
-
-                            <c:if test="${req.status == 'COMPLETED'}">
-                                <div class="mt-3">
-                                    <button class="btn btn-primary" onclick="window.print()">
-                                        <i class="fas fa-print"></i> In biên bản bàn giao
-                                    </button>
-                                </div>
-                            </c:if>
                             -->
 
                             <!--  DEMO BEGIN-->
-                            <!--                            <button class="btn btn-danger" onclick="showRejectModal()">Từ chối</button>
-                                                        <button class="btn btn-success" onclick="approveRequest(${req.requestId})">Duyệt yêu cầu</button>-->
-
-                            <c:if test="${req.status == 'APPROVED_BY_BOARD'}">
-                                <a href="allocate-assets?requestId=${req.requestId}" class="btn btn-success">
-                                    Tiến hành cấp phát tài sản
-                                </a>
+                            <c:if test="${req.status == 'WAITING_BOARD'}">
+                                <button class="btn btn-danger" onclick="showRejectModal()">Từ chối</button>
+                                <button class="btn btn-success" onclick="approveRequest(${req.requestId})">Duyệt yêu cầu</button>
                             </c:if>
-                            <div class="mt-3">
-                                <button class="btn btn-primary" onclick="window.print()">
-                                    <i class="fas fa-print"></i> In biên bản bàn giao
-                                </button>
-                            </div>
                             <!--  DEMO END-->
                         </div>
                     </div>

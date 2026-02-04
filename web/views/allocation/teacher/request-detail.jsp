@@ -33,7 +33,7 @@
                                         <p><strong>Phòng nhận:</strong> ${req.roomName}</p> </div>
                                     <div class="col-md-6 text-md-end">
                                         <p><strong>Ngày tạo:</strong>
-                                            <td>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}</td>
+                                        <td>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}</td>
                                         </p> 
                                         <p><strong>Mục đích:</strong> ${req.purpose}</p> 
                                     </div>
@@ -82,5 +82,6 @@
             </div>
         </div>
 
+        <%@ include file="/views/layout/allocation/notification.jsp" %>
     </body>
 </html>

@@ -5,7 +5,7 @@
 package dao.allocation;
 
 import java.util.List;
-import model.AssetCategory;
+import model.allocation.AssetCategory;
 import util.DBUtil;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
