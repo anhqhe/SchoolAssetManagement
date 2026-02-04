@@ -3,7 +3,7 @@ package model.allocation;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class User {
+public class User2 {
     private long userId;
     private String username;
     private String passwordHash;
@@ -14,10 +14,10 @@ public class User {
     private LocalDateTime createdAt;
     private List<String> roles; // store role codes like "ADMIN", "TEACHER"
 
-    public User() {
+    public User2() {
     }
 
-    public User(long userId, String username, String passwordHash, String fullName, String email, String phone, boolean isActive, LocalDateTime createdAt, List<String> roles) {
+    public User2(long userId, String username, String passwordHash, String fullName, String email, String phone, boolean isActive, LocalDateTime createdAt, List<String> roles) {
         this.userId = userId;
         this.username = username;
         this.passwordHash = passwordHash;
@@ -29,7 +29,7 @@ public class User {
         this.roles = roles;
     }
     
-    public User(long userId, String username, String passwordHash, boolean isActive, List<String> roles) {
+    public User2(long userId, String username, String passwordHash, boolean isActive, List<String> roles) {
         this.userId = userId;
         this.username = username;
         this.passwordHash = passwordHash;

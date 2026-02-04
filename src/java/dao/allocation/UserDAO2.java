@@ -15,7 +15,7 @@ import java.sql.SQLException;
  *
  * @author Leo
  */
-public class UserDAO {
+public class UserDAO2 {
 
     public List<Long> getIdsByRole(String roleCode) {
         List<Long> userIds = new ArrayList<>();

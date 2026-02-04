@@ -103,10 +103,6 @@ public class UserDAO {
         return false;
     }
 
-    public List<Long> getIdsByRole(String staff) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-
-    }
     // ========== FORGOT PASSWORD METHODS ==========
     
     /**

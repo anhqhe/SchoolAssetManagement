@@ -6,7 +6,7 @@ package controller.allocation.board;
 
 import controller.allocation.staff.AllocationList;
 import controller.allocation.websocket.NotificationEndPoint;
-import dao.UserDAO;
+import dao.allocation.UserDAO2;
 import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
 import dto.AssetRequestDTO;
@@ -18,13 +18,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import model.allocation.User;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.User;
 
 /**
  *
@@ -35,7 +35,7 @@ public class ApprovalCenter extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
-    private UserDAO userDAO = new UserDAO();
+    private UserDAO2 userDAO = new UserDAO2();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

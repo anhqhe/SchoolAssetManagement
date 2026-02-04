@@ -25,10 +25,8 @@ import java.util.List;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
-import model.allocation.User;
+import model.User;
 import model.allocation.AssetAllocation;
-import model.allocation.AssetAllocation;
-import model.allocation.User;
 
 /**
  *

@@ -127,7 +127,13 @@
 
             </div>
         </div>
-                
+
         <%@ include file="/views/layout/allocation/notification.jsp" %>
+
+        <!-- Scripts -->
+        <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
     </body>
 </html>
