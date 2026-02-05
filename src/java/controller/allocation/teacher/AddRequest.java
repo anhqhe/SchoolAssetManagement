@@ -41,12 +41,34 @@ public class AddRequest extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Check authentication
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+        
+        // Check authorization - user must have TEACHER role
+        List<String> roles = currentUser.getRoles();
+        if (roles == null || !roles.contains("TEACHER")) {
+            response.sendRedirect("request-list");
+            return;
+        }
 
-        request.setAttribute("rooms", roomDAO.getAllActiveRooms());
-        request.setAttribute("categories", assetCategoryDAO.getAllActiveCategories());
-
-        request.getRequestDispatcher("/views/allocation/teacher/add-request.jsp")
-                .forward(request, response);
+        try {
+            request.setAttribute("rooms", roomDAO.getAllActiveRooms());
+            request.setAttribute("categories", assetCategoryDAO.getAllActiveCategories());
+            request.getRequestDispatcher("/views/allocation/teacher/add-request.jsp")
+                    .forward(request, response);
+        } catch (Exception e) {
+            System.err.println("Error loading add request page: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("error", "Không thể tải trang. Vui lòng thử lại!");
+            request.getRequestDispatcher("/views/allocation/teacher/request-list.jsp")
+                    .forward(request, response);
+        }
     }
 
     @Override
@@ -55,6 +77,12 @@ public class AddRequest extends HttpServlet {
         // Get user information from session
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
+        
+        // Check authentication
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
 
         try {
             // Get data from Request Form
@@ -75,12 +103,12 @@ public class AddRequest extends HttpServlet {
                     quantities,
                     notes);
 
-            //Send Notification to Board
-            List<Long> boardIds = userDAO.getIdsByRole("BOARD");
-            NotificationEndPoint.sendToUsers(boardIds, "Có phiếu yêu cầu mới");
-
-            // Return result
             if (success) {
+                //Send Notification to Board
+                List<Long> boardIds = userDAO.getIdsByRole("BOARD");
+                NotificationEndPoint.sendToUsers(boardIds, "Có phiếu yêu cầu mới từ: " + currentUser.getFullName());
+                
+                System.out.println("[AddRequest] User " + currentUser.getUserId() + " created new request successfully");
                 response.sendRedirect(request.getContextPath() + "/teacher/request-list?msg=success");
             } else {
                 request.setAttribute("error", "Không thể tạo yêu cầu. Vui lòng thử lại!");
@@ -88,6 +116,7 @@ public class AddRequest extends HttpServlet {
             }
 
         } catch (Exception e) {
+            System.err.println("[AddRequest] Error creating request: " + e.getMessage());
             e.printStackTrace();
             request.setAttribute("error", "Dữ liệu nhập vào không hợp lệ!");
             doGet(request, response);
@@ -133,14 +162,20 @@ public class AddRequest extends HttpServlet {
             conn.commit(); // End Transaction
             return true;
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            System.err.println("[AddRequest] Database error: " + e.getMessage());
+            e.printStackTrace();
             if (conn != null) {
                 try {
                     conn.rollback();    //Rollback if have error
                 } catch (SQLException ex) {
+                    System.err.println("[AddRequest] Rollback failed: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }
+            return false;
+        } catch (Exception e) {
+            System.err.println("[AddRequest] Unexpected error: " + e.getMessage());
             e.printStackTrace();
             return false;
         } finally {

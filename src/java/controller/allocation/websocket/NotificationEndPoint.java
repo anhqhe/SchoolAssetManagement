@@ -36,10 +36,10 @@ public class NotificationEndPoint {
 
     @OnError
     public void onError(Throwable throwable) {
-        // Log lỗi nếu cần
+        // Log lỗi 
     }
 
-    // Gửi cho một User cụ thể (đến tất cả các tab họ đang mở)
+    // Send to 1 user (all tab)
     public static void sendToUser(long userId, String message) {
         CopyOnWriteArraySet<Session> sessions = userSessions.get(userId);
         if (sessions != null) {
@@ -51,7 +51,6 @@ public class NotificationEndPoint {
         }
     }
 
-    // Gửi cho một nhóm người (ví dụ: tất cả Staff)
     public static void sendToUsers(List<Long> userIds, String message) {
         for (Long id : userIds) {
             sendToUser(id, message);
