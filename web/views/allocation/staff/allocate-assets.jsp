@@ -28,17 +28,21 @@
 
                     <c:if test="${param.msg eq 'success'}">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                             <i class="fas fa-check-circle"></i>
                             Thành công!
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     </c:if>
 
                     <c:if test="${param.msg eq 'error'}">
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <i class="fas fa-exclamation-triangle"></i>
                             Lỗi
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     </c:if>
 

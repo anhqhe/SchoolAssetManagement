@@ -30,6 +30,14 @@ public class AllocationList extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        //Handle message from redirect
+        String msg = request.getParameter("msg");
+        if ("success".equals(msg)) {
+            request.setAttribute("msg", "Cấp phát tài sản thành công!");
+        } else if ("error".equals(msg)) {
+            request.setAttribute("msg", "Có lỗi xảy ra.");
+        }
 
         //Filter
         

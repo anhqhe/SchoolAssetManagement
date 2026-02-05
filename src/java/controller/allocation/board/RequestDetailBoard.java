@@ -18,7 +18,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import model.User;
 
 /**
  *
@@ -31,46 +33,37 @@ public class RequestDetailBoard extends HttpServlet {
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
    
-    /** 
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet RequestDetailBoard</title>");  
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet RequestDetailBoard at " + request.getContextPath () + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    } 
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /** 
-     * Handles the HTTP <code>GET</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         try {
+            // Check authentication
+            HttpSession session = request.getSession();
+            User currentUser = (User) session.getAttribute("currentUser");
+            
+            if (currentUser == null) {
+                response.sendRedirect(request.getContextPath() + "/auth/login");
+                return;
+            }
+            
+            // Check authorization - user must have BOARD role
+            List<String> roles = currentUser.getRoles();
+            if (roles == null || !roles.contains("BOARD")) {
+                response.sendRedirect("approval-center");
+                return;
+            }
+            
             String idParam = request.getParameter("id");
             if (idParam == null) {
-                response.sendRedirect("allocation-list");
+                response.sendRedirect("approval-center");
                 return;
+            }
+            
+            String msg = request.getParameter("msg");
+            if ("success".equals(msg)) {
+                request.setAttribute("msg", "Thành công!");
+            } else if ("error".equals(msg)) {
+                request.setAttribute("msg", "Có lỗi xảy ra.");
             }
 
             long requestId = Long.parseLong(idParam);
@@ -87,34 +80,20 @@ public class RequestDetailBoard extends HttpServlet {
             request.setAttribute("req", requestDetail);
             request.setAttribute("itemList", itemList);
             request.setAttribute("allocatedAssets", allocatedAssets);
-            request.getRequestDispatcher("/views/allocation/board/request-detail-board.jsp").forward(request, response);
+            
+            request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("allocation-list?msg=error");
+            response.sendRedirect("approval-center?msg=error");
         }
     } 
 
-    /** 
-     * Handles the HTTP <code>POST</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        processRequest(request, response);
+        
     }
 
-    /** 
-     * Returns a short description of the servlet.
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
 
 }

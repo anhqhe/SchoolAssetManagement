@@ -23,23 +23,16 @@
 
                     <!-- Page Content -->
 
-                    <!-- Message Begin -->
-                    <c:if test="${param.msg eq 'success'}">
+                    <c:if test="${not empty msg}">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                             <i class="fas fa-check-circle"></i>
-                            Thành công!
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            ${msg}
                         </div>
-                    </c:if>
+                    </c:if>  
 
-                    <c:if test="${param.msg eq 'error'}">
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i>
-                            Lỗi
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    </c:if>
-                    <!-- Message End -->
 
                     <!-- Main Content Begin -->
                     <div class="container-fluid mt-5">
@@ -81,10 +74,6 @@
 
 
                             <div class="card-body">
-                                <c:if test="${not empty msg}">
-                                    <div class="alert alert-success">${msg}</div>
-                                </c:if>                                
-
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle">
                                         <thead class="table-light">
@@ -134,7 +123,7 @@
                                                     <td><span class="badge badge-info">${req.status}</span></td>
 
                                                     <td>
-                                                        <a href="request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">
+                                                        <a href="${pageContext.request.contextPath}/staff/request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">
                                                             Xem chi tiết
                                                         </a>
                                                         <c:if test="${req.status == 'APPROVED_BY_BOARD'}">
@@ -166,5 +155,11 @@
         </div>
 
         <%@ include file="/views/layout/allocation/notification.jsp" %>
+
+        <!-- Scripts -->
+        <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
     </body>
 </html>

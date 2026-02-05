@@ -40,6 +40,22 @@ public class ApprovalCenter extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        // Check authentication
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+        
+        // Check authorization - user must have BOARD role
+        List<String> roles = currentUser.getRoles();
+        if (roles == null || !roles.contains("BOARD")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
 
         //show msg if approved
         String msg = request.getParameter("msg");

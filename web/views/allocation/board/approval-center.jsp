@@ -52,15 +52,23 @@
                     <%@ include file="/views/layout/topbar.jsp" %>
 
                     <!-- Page Content -->
+
+                    <c:if test="${not empty msg}">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <i class="fas fa-check-circle"></i>
+                            ${msg}
+                        </div>
+                    </c:if> 
+
                     <div class="container-fluid mt-5">
                         <div class="card shadow border-0">
                             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">Danh Sách Yêu Cầu</h5>
                             </div>
                             <div class="card-body">
-                                <c:if test="${not empty msg}">
-                                    <div class="alert alert-success">${msg}</div>
-                                </c:if>  
 
                                 <!--  Filter Begin -->
                                 <div class="card-body">
@@ -140,7 +148,7 @@
                                                     <td><span class="text-truncate" style="max-width: 200px; display: inline-block;">${req.purpose}</span></td>
                                                     <td><span class="badge badge-info">${req.status}</span></td>
                                                     <td>
-                                                        <a href="request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">
+                                                        <a href="${pageContext.request.contextPath}/board/request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">
                                                             Xem chi tiết
                                                         </a>
                                                         <c:if test="${req.status == 'WAITING_BOARD'}">

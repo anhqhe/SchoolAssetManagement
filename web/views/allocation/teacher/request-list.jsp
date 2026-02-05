@@ -21,7 +21,29 @@
                     <%@ include file="/views/layout/topbar.jsp" %>
 
                     <!-- Page Content -->
-                    <!--   <div class="container-fluid">-->
+
+                    <!-- Message Begin -->
+                    <c:if test="${param.msg eq 'success'}">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <i class="fas fa-check-circle"></i>
+                            Gửi yêu cầu tài sản thành công!
+                        </div>
+                    </c:if>
+
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            ${error}
+                        </div>
+                    </c:if>
+                    <!-- Message End -->
+
                     <div class="container mt-5">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h3>Lịch Sử Yêu Cầu Của Tôi</h3>
@@ -43,9 +65,9 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-2">
+                                    <div class="col-sm-3">
                                         <select name="status" class="form-control">
-                                            <option value="">-- Trạng thái --</option>
+                                            <option value="">-- Tất cả trạng thái --</option>
                                             <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
@@ -108,7 +130,7 @@
                                                     </c:choose>
                                                 </td>
                                                 <td>
-                                                    <a href="request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                                                    <a href="${pageContext.request.contextPath}/teacher/request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
                                                 </td>
                                             </tr>
                                         </c:forEach>
