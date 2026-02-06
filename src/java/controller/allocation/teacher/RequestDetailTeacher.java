@@ -68,11 +68,11 @@ public class RequestDetailTeacher extends HttpServlet {
                 return;
             }
             
-            List<AssetRequestItemDTO> items = itemDAO.findByRequestId(requestId);
+            List<AssetRequestItemDTO> itemList = itemDAO.findByRequestId(requestId);
             ApprovalDTO approval = approvalDAO.findByRef("ASSET_REQUEST", requestId);            
             
             request.setAttribute("req", req);
-            request.setAttribute("items", items);
+            request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
 
             request.getRequestDispatcher("/views/allocation/request-detail.jsp")

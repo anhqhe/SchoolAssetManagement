@@ -54,7 +54,7 @@ public class RequestListStaff extends HttpServlet {
             Logger.getLogger(RequestListStaff.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        request.setAttribute("pendingList", list);
+        request.setAttribute("requestList", list);
         request.getRequestDispatcher("/views/allocation/request-list.jsp").forward(request, response);
     }
 

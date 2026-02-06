@@ -13,8 +13,6 @@
     <c:if test="${role eq 'BOARD'}"><c:set var="isBoard" value="true"/></c:if>
 </c:forEach>
 
-<!-- Unify list attribute: use myRequests if teacher, otherwise pendingList -->
-<c:set var="requestList" value="${isTeacher ? myRequests : pendingList}"/>
 
 <!DOCTYPE html>
 <html>
@@ -30,6 +28,7 @@
         </title>
         <link href="${pageContext.request.contextPath}/assets/css/sb-admin-2.min.css" rel="stylesheet">
         <link href="${pageContext.request.contextPath}/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
+        <link href="${pageContext.request.contextPath}/assets/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     </head>
 
     <body id="page-top">
@@ -42,264 +41,237 @@
 
                     <%@ include file="/views/layout/topbar.jsp" %>
 
-                    <!-- Page Content -->
-
-                    <!-- Message Alerts (COMMON) -->
-                    <c:if test="${param.msg eq 'success'}">
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            <i class="fas fa-check-circle"></i>
-                            <c:choose>
-                                <c:when test="${isTeacher}">Gửi yêu cầu tài sản thành công!</c:when>
-                                <c:otherwise>Xử lý thành công!</c:otherwise>
-                            </c:choose>
-                        </div>
-                    </c:if>
-
+                    <!-- Error/Success Messages -->
                     <c:if test="${not empty error}">
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <i class="fas fa-exclamation-circle"></i> ${error}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
                             </button>
-                            <i class="fas fa-exclamation-triangle"></i>
-                            ${error}
                         </div>
                     </c:if>
 
                     <c:if test="${not empty msg}">
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <i class="fas fa-check-circle"></i> ${msg}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
                             </button>
-                            <i class="fas fa-check-circle"></i>
-                            ${msg}
                         </div>
                     </c:if>
 
                     <!-- Main Content -->
-                    <div class="container-fluid mt-5">
+                    <div class="container-fluid">
 
-                        <!-- Header: Title + Add Button (TEACHER ONLY) -->
-                        <c:if test="${isTeacher}">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3>Danh Sách Yêu Cầu Của Tôi</h3>
-                                <a href="${pageContext.request.contextPath}/teacher/add-request" class="btn btn-primary">+ Tạo Yêu Cầu Mới</a>
-                            </div>
-                        </c:if>
-
-                        <div class="card shadow-sm">
-
-                            <!-- Card Header with Title (STAFF & BOARD) -->
-                            <c:if test="${isStaff || isBoard}">
-                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">
-                                        <c:choose>
-                                            <c:when test="${isStaff}">Yêu Cầu Chờ Phê Duyệt</c:when>
-                                            <c:when test="${isBoard}">Danh Sách Yêu Cầu</c:when>
-                                        </c:choose>
-                                    </h5>
-                                </div>
+                        <!-- Page Heading -->
+                        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                            <h1 class="h3 mb-0 text-gray-800">
+                                <i class="fas fa-list text-primary"></i>
+                                <c:choose>
+                                    <c:when test="${isTeacher}">Lịch Sử Yêu Cầu Tài Sản</c:when>
+                                    <c:when test="${isStaff}">Danh Sách Yêu Cầu Chờ Xử Lý</c:when>
+                                    <c:when test="${isBoard}">Trung Tâm Phê Duyệt</c:when>
+                                    <c:otherwise>Danh Sách Yêu Cầu</c:otherwise>
+                                </c:choose>
+                            </h1>
+                            
+                            <!-- Add Request Button (TEACHER ONLY) -->
+                            <c:if test="${isTeacher}">
+                                <a href="${pageContext.request.contextPath}/teacher/add-request" class="btn btn-primary btn-icon-split shadow-sm">
+                                    <span class="icon text-white-50">
+                                        <i class="fas fa-plus"></i>
+                                    </span>
+                                    <span class="text">Tạo Yêu Cầu Mới</span>
+                                </a>
                             </c:if>
+                        </div>
 
-                            <!-- Filter Section (COMMON) -->
-                            <div class="card-body mt-4 mr-5">
+                        <!-- Filter Card -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-filter"></i> Tìm kiếm & Lọc
+                                </h6>
+                            </div>
+                            <div class="card-body">
                                 <c:choose>
                                     <c:when test="${isTeacher}">
-                                        <form action="${pageContext.request.contextPath}/teacher/request-list" method="get" id="filterForm" class="row gx-3 gy-2 align-items-center justify-content-end">
+                                        <form action="${pageContext.request.contextPath}/teacher/request-list" method="get" id="filterForm" class="form-inline">
                                     </c:when>
                                     <c:when test="${isStaff}">
-                                        <form action="${pageContext.request.contextPath}/staff/allocation-list" method="get" id="filterForm" class="row gx-3 gy-2 align-items-center justify-content-end">
+                                        <form action="${pageContext.request.contextPath}/staff/allocation-list" method="get" id="filterForm" class="form-inline">
                                     </c:when>
                                     <c:when test="${isBoard}">
-                                        <form action="${pageContext.request.contextPath}/board/approval-center" method="get" id="filterForm" class="row gx-3 gy-2 align-items-center justify-content-end">
+                                        <form action="${pageContext.request.contextPath}/board/approval-center" method="get" id="filterForm" class="form-inline">
                                     </c:when>
                                 </c:choose>
-                                    <div class="col-sm-4">
-                                        <label class="sr-only">Tìm kiếm</label>
-                                        <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <div class="input-group-text"><i class="fas fa-search"></i></div>
-                                            </div>
-                                            <input type="text" name="keyword" class="form-control" placeholder="Mã phiếu, tên GV..." value="${param.keyword}">
-                                        </div>
+                                    <div class="form-group mr-3 mb-2">
+                                        <input type="text" 
+                                               name="keyword" 
+                                               class="form-control" 
+                                               placeholder="Tìm kiếm ..."
+                                               value="${param.keyword}">
                                     </div>
-
-                                    <div class="col-sm-3">
+                                    
+                                    <div class="form-group mr-3 mb-2">
                                         <select name="status" class="form-control">
-                                            <c:choose>
-                                                <c:when test="${isTeacher}">
-                                                    <option value="">-- Tất cả trạng thái --</option>
-                                                    <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
-                                                    <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
-                                                    <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <option value="">-- Trạng thái --</option>
-                                                    <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
-                                                    <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
-                                                    <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <option value="">-- Tất cả trạng thái --</option>
+                                            <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
+                                            <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
+                                            <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                         </select>
                                     </div>
 
-                                    <div class="col-auto">
-                                        <button type="submit" class="btn btn-primary">Áp dụng</button>
-                                        <c:choose>
-                                            <c:when test="${isTeacher}">
-                                                <a href="request-list" class="btn btn-outline-secondary">Reset</a>
-                                            </c:when>
-                                            <c:when test="${isStaff}">
-                                                <a href="allocation-list" class="btn btn-outline-secondary">Reset</a>
-                                            </c:when>
-                                            <c:when test="${isBoard}">
-                                                <a href="approval-center" class="btn btn-outline-secondary">Reset</a>
-                                            </c:when>
-                                        </c:choose>
-                                    </div>
+                                    <button type="submit" class="btn btn-primary mb-2 mr-2">
+                                        <i class="fas fa-search"></i> Tìm kiếm
+                                    </button>
+                                    
+                                    <c:choose>
+                                        <c:when test="${isTeacher}">
+                                            <a href="${pageContext.request.contextPath}/teacher/request-list" class="btn btn-secondary mb-2">
+                                                <i class="fas fa-redo"></i> Đặt lại
+                                            </a>
+                                        </c:when>
+                                        <c:when test="${isStaff}">
+                                            <a href="${pageContext.request.contextPath}/staff/allocation-list" class="btn btn-secondary mb-2">
+                                                <i class="fas fa-redo"></i> Đặt lại
+                                            </a>
+                                        </c:when>
+                                        <c:when test="${isBoard}">
+                                            <a href="${pageContext.request.contextPath}/board/approval-center" class="btn btn-secondary mb-2">
+                                                <i class="fas fa-redo"></i> Đặt lại
+                                            </a>
+                                        </c:when>
+                                    </c:choose>
                                 </form>
                             </div>
+                        </div>
 
-                            <!-- Table Section (COMMON) -->
+                        <!-- Requests Table Card -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-tasks"></i> Danh sách yêu cầu
+                                    <span class="badge badge-primary">${requestList != null ? requestList.size() : 0}</span>
+                                </h6>
+                            </div>
+
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle">
-                                        <thead class="table-light">
+                                    <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                                        <thead class="thead-light">
                                             <tr>
-                                                <th>
-                                                    <c:choose>
-                                                        <c:when test="${isTeacher}">
-                                                            <a href="?sortBy=${param.sortBy == 'RequestCode ASC' ? 'RequestCode DESC' : 'RequestCode ASC'}&status=${param.status}&keyword=${param.keyword}">
-                                                                Mã Phiếu <i class="fas ${param.sortBy.contains('RequestCode') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
-                                                            </a>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <a href="?sortBy=${param.sortBy == 'RequestCode ASC' ? 'RequestCode DESC' : 'RequestCode ASC'}&status=${param.status}&keyword=${param.keyword}">
-                                                                Mã phiếu <i class="fas ${param.sortBy.contains('RequestCode') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
-                                                            </a>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </th>
-
+                                                <th>Mã Phiếu</th>
                                                 <!-- STAFF & BOARD: Show Người Yêu Cầu column -->
                                                 <c:if test="${isStaff || isBoard}">
-                                                    <th>
-                                                        <a href="?sortBy=${param.sortBy == 'TeacherName ASC' ? 'TeacherName DESC' : 'TeacherName ASC'}&status=${param.status}&keyword=${param.keyword}">
-                                                            Người Yêu Cầu <i class="fas ${param.sortBy.contains('TeacherName') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
-                                                        </a>
-                                                    </th>
+                                                    <th>Người Yêu Cầu</th>
                                                 </c:if>
-
-                                                <!-- Ngày / CreatedAt Column -->
+                                                <th>Ngày Gửi</th>
                                                 <th>
-                                                    <a href="?sortBy=${param.sortBy == 'CreatedAt ASC' ? 'CreatedAt DESC' : 'CreatedAt ASC'}&status=${param.status}&keyword=${param.keyword}">
-                                                        <c:choose>
-                                                            <c:when test="${isTeacher}">Ngày Tạo</c:when>
-                                                            <c:otherwise>Ngày Gửi</c:otherwise>
-                                                        </c:choose>
-                                                        <i class="fas ${param.sortBy.contains('CreatedAt') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
-                                                    </a>
+                                                    <c:choose>
+                                                        <c:when test="${isTeacher}">Phòng Yêu Cầu</c:when>
+                                                        <c:otherwise>Phòng Nhận</c:otherwise>
+                                                    </c:choose>
                                                 </th>
-
-                                                <!-- TEACHER: Phòng Yêu Cầu, others: Phòng Nhận -->
-                                                <th>
-                                                    <a href="?sortBy=${param.sortBy == 'RoomName ASC' ? 'RoomName DESC' : 'RoomName ASC'}&status=${param.status}&keyword=${param.keyword}">
-                                                        <c:choose>
-                                                            <c:when test="${isTeacher}">Phòng Yêu Cầu</c:when>
-                                                            <c:otherwise>Phòng Nhận</c:otherwise>
-                                                        </c:choose>
-                                                        <i class="fas ${param.sortBy.contains('RoomName') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
-                                                    </a>
-                                                </th>
-
                                                 <!-- STAFF & BOARD: Show Purpose column -->
                                                 <c:if test="${isStaff || isBoard}">
                                                     <th>Mục Đích</th>
                                                 </c:if>
-
-                                                <!-- Status Column -->
-                                                <th>
-                                                    <a href="?sortBy=${param.sortBy == 'Status ASC' ? 'Status DESC' : 'Status ASC'}&status=${param.status}&keyword=${param.keyword}">
-                                                        Trạng Thái <i class="fas ${param.sortBy.contains('Status') ? (param.sortBy.contains('ASC') ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}"></i>
-                                                    </a>
-                                                </th>
-
-                                                <!-- Actions Column -->
+                                                <th>Trạng Thái</th>
                                                 <th class="text-center">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <c:forEach var="req" items="${requestList}">
-                                                <tr>
-                                                    <td><strong>${req.requestCode}</strong></td>
-
-                                                    <!-- STAFF & BOARD: Người Yêu Cầu -->
-                                                    <c:if test="${isStaff || isBoard}">
-                                                        <td>${req.teacherName}</td>
-                                                    </c:if>
-
-                                                    <!-- Date -->
-                                                    <td>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</td>
-
-                                                    <!-- Room -->
-                                                    <td>${req.roomName}</td>
-
-                                                    <!-- STAFF & BOARD: Purpose -->
-                                                    <c:if test="${isStaff || isBoard}">
-                                                        <td><span class="text-truncate" style="max-width: 200px; display: inline-block;">${req.purpose}</span></td>
-                                                    </c:if>
-
-                                                    <!-- Status -->
-                                                    <td>
-                                                        <c:choose>
-                                                            <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-info">Chờ duyệt</span></c:when>
-                                                            <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge bg-success">Đã duyệt</span></c:when>
-                                                            <c:when test="${req.status == 'COMPLETED'}"><span class="badge bg-success text-white">Đã hoàn thành</span></c:when>
-                                                            <c:when test="${req.status == 'REJECTED'}"><span class="badge bg-danger text-white">Bị từ chối</span></c:when>
-                                                            <c:otherwise><span class="badge bg-dark text-white">${req.status}</span></c:otherwise>
-                                                        </c:choose>
-                                                    </td>
-
-                                                    <!-- Actions (role-specific) -->
-                                                    <td class="text-center">
-                                                        <!-- All roles: View detail button -->
-                                                        <c:choose>
-                                                            <c:when test="${isTeacher}">
-                                                                <a href="${pageContext.request.contextPath}/teacher/request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
-                                                            </c:when>
-                                                            <c:when test="${isStaff}">
-                                                                <a href="${pageContext.request.contextPath}/staff/request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
-                                                                <c:if test="${req.status == 'APPROVED_BY_BOARD'}">
-                                                                    <a href="allocate-assets?requestId=${req.requestId}" class="btn btn-primary btn-sm">
-                                                                        <i class="fas fa-box-open"></i> Bàn giao
-                                                                    </a>
-                                                                </c:if>
-                                                            </c:when>
-                                                            <c:when test="${isBoard}">
-                                                                <a href="${pageContext.request.contextPath}/board/request-detail?id=${req.requestId}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
-                                                                <c:if test="${req.status == 'WAITING_BOARD'}">
-                                                                    <button type="button" class="btn btn-sm btn-success" 
-                                                                            onclick="openApproveModal('${req.requestId}', '${req.requestCode}')">
-                                                                        Duyệt / Từ chối
-                                                                    </button>
-                                                                </c:if>
-                                                            </c:when>
-                                                        </c:choose>
-                                                    </td>
-                                                </tr>
-                                            </c:forEach>
-                                            <c:if test="${empty requestList}">
-                                                <tr>
-                                                    <td colspan="7" class="text-center text-muted py-4">
-                                                        <c:choose>
-                                                            <c:when test="${isTeacher}">Bạn chưa có yêu cầu nào.</c:when>
-                                                            <c:otherwise>Hiện không có yêu cầu nào cần phê duyệt.</c:otherwise>
-                                                        </c:choose>
-                                                    </td>
-                                                </tr>
-                                            </c:if>
+                                            <c:choose>
+                                                <c:when test="${empty requestList}">
+                                                    <tr>
+                                                        <td colspan="${(isStaff || isBoard) ? 7 : 6}" class="text-center text-muted py-5">
+                                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                                            <p>
+                                                                <c:choose>
+                                                                    <c:when test="${isTeacher}">Bạn chưa có yêu cầu nào</c:when>
+                                                                    <c:otherwise>Hiện không có yêu cầu nào cần phê duyệt</c:otherwise>
+                                                                </c:choose>
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:forEach var="req" items="${requestList}">
+                                                        <tr>
+                                                            <td>
+                                                                <strong>${req.requestCode}</strong>
+                                                            </td>
+                                                            <!-- STAFF & BOARD: Người Yêu Cầu -->
+                                                            <c:if test="${isStaff || isBoard}">
+                                                                <td>${req.teacherName}</td>
+                                                            </c:if>
+                                                            <!-- Date -->
+                                                            <td>
+                                                                <small>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
+                                                            </td>
+                                                            <!-- Room -->
+                                                            <td>
+                                                                ${req.roomName}
+                                                            </td>
+                                                            <!-- STAFF & BOARD: Purpose -->
+                                                            <c:if test="${isStaff || isBoard}">
+                                                                <td>
+                                                                    <span class="text-truncate" style="max-width: 150px; display: inline-block;" title="${req.purpose}">
+                                                                        <small>${req.purpose}</small>
+                                                                    </span>
+                                                                </td>
+                                                            </c:if>
+                                                            <!-- Status -->
+                                                            <td>
+                                                                <c:choose>
+                                                                    <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">Chờ duyệt</span></c:when>
+                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-success">Đã duyệt</span></c:when>
+                                                                    <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Đã hoàn thành</span></c:when>
+                                                                    <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Bị từ chối</span></c:when>
+                                                                    <c:otherwise><span class="badge badge-secondary">${req.status}</span></c:otherwise>
+                                                                </c:choose>
+                                                            </td>
+                                                            <!-- Actions (role-specific) -->
+                                                            <td class="text-center">
+                                                                <c:choose>
+                                                                    <c:when test="${isTeacher}">
+                                                                        <a href="${pageContext.request.contextPath}/teacher/request-detail?id=${req.requestId}" 
+                                                                           class="btn btn-sm btn-info" title="Xem chi tiết">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </a>
+                                                                    </c:when>
+                                                                    <c:when test="${isStaff}">
+                                                                        <a href="${pageContext.request.contextPath}/staff/request-detail?id=${req.requestId}" 
+                                                                           class="btn btn-sm btn-info" title="Xem chi tiết">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </a>
+                                                                        <c:if test="${req.status == 'APPROVED_BY_BOARD'}">
+                                                                            <a href="allocate-assets?requestId=${req.requestId}" 
+                                                                               class="btn btn-sm btn-success" title="Bàn giao tài sản">
+                                                                                <i class="fas fa-box-open"></i>
+                                                                            </a>
+                                                                        </c:if>
+                                                                    </c:when>
+                                                                    <c:when test="${isBoard}">
+                                                                        <a href="${pageContext.request.contextPath}/board/request-detail?id=${req.requestId}" 
+                                                                           class="btn btn-sm btn-info" title="Xem chi tiết">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </a>
+                                                                        <c:if test="${req.status == 'WAITING_BOARD'}">
+                                                                            <button type="button" class="btn btn-sm btn-warning" 
+                                                                                    onclick="openApproveModal('${req.requestId}', '${req.requestCode}')"
+                                                                                    title="Phê duyệt / Từ chối">
+                                                                                <i class="fas fa-check"></i>
+                                                                            </button>
+                                                                        </c:if>
+                                                                    </c:when>
+                                                                </c:choose>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </tbody>
                                     </table>
                                 </div>
@@ -356,7 +328,35 @@
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
 
+        <!-- DataTables -->
+        <script src="${pageContext.request.contextPath}/assets/vendor/datatables/jquery.dataTables.min.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
         <script>
+            $(document).ready(function() {
+                $('#dataTable').DataTable({
+                    "language": {
+                        "lengthMenu": "Hiển thị _MENU_ yêu cầu mỗi trang",
+                        "zeroRecords": "Không tìm thấy yêu cầu nào",
+                        "info": "Trang _PAGE_ / _PAGES_",
+                        "infoEmpty": "Không có dữ liệu",
+                        "infoFiltered": "(lọc từ _MAX_ yêu cầu)",
+                        "search": "Tìm kiếm:",
+                        "paginate": {
+                            "first": "Đầu",
+                            "last": "Cuối",
+                            "next": "Sau",
+                            "previous": "Trước"
+                        }
+                    },
+                    "pageLength": 10,
+                    "order": [[0, "desc"]]
+                });
+
+                // Reinitialize Bootstrap dropdowns after DataTables loads
+                $('[data-toggle="dropdown"]').dropdown();
+            });
+
             function openApproveModal(id, code) {
                 document.getElementById('modalReqId').value = id;
                 document.getElementById('modalReqCode').innerText = code;

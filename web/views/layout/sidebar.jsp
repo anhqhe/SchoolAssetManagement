@@ -80,7 +80,7 @@
     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/staff/allocation-list">
-            <i class="fas fa-fw fa-clipboard-list"></i>
+            <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
@@ -100,7 +100,7 @@
     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
-            <i class="fas fa-fw fa-comments"></i>
+            <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
@@ -119,7 +119,7 @@
     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/approval-center">
-            <i class="fas fa-fw fa-check-square"></i>
+            <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>

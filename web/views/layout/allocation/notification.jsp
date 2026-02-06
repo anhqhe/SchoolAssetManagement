@@ -53,7 +53,8 @@
 
         connect();
     } else {
-        console.log("No user in session - WebSocket notifications disabled");
+        console.log("No user </script>
+Socket notifications disabled");
     }
-</script>
+</script>/body>
 </html>

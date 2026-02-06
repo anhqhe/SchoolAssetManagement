@@ -61,7 +61,7 @@ public class RequestListTeacher extends HttpServlet {
         }
         
         request.setAttribute("roomDAO", roomDAO);
-        request.setAttribute("myRequests", list);
+        request.setAttribute("requestList", list);
         request.getRequestDispatcher("/views/allocation/request-list.jsp")
                 .forward(request, response);
     }
