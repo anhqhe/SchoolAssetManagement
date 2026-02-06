@@ -46,7 +46,7 @@
 
                     <div class="container mt-5">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3>Lịch Sử Yêu Cầu Của Tôi</h3>
+                            <h3>Danh Sách Yêu Cầu Của Tôi</h3>
                             <a href="${pageContext.request.contextPath}/teacher/add-request" class="btn btn-primary">+ Tạo Yêu Cầu Mới</a>
                         </div>
 

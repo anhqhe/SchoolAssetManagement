@@ -2,6 +2,17 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ page import="model.User" %>
+<%@ page import="java.util.List" %>
+
+<%
+    User currentUser = (User) session.getAttribute("currentUser");
+    List<String> roles = null;
+    if (currentUser != null) {
+        roles = currentUser.getRoles();
+    }
+%>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -23,6 +34,7 @@
 
                     <!-- Page Content -->
 
+                    <!-- Message Begin -->
                     <c:if test="${not empty msg}">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -32,7 +44,7 @@
                             ${msg}
                         </div>
                     </c:if>  
-
+                    <!-- Message End -->
 
                     <!-- Main Content Begin -->
                     <div class="container-fluid mt-5">
@@ -57,7 +69,7 @@
 
                                     <div class="col-sm-2">
                                         <select name="status" class="form-control">
-                                            <option value="">-- Trạng thái --</option>
+                                            <option value="">Tất cả trạng thái</option>
                                             <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>

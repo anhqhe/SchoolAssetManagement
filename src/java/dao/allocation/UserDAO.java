@@ -10,12 +10,13 @@ import util.DBUtil;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import model.User;
 
 /**
  *
  * @author Leo
  */
-public class UserDAO2 {
+public class UserDAO {
 
     public List<Long> getIdsByRole(String roleCode) {
         List<Long> userIds = new ArrayList<>();
@@ -39,4 +40,28 @@ public class UserDAO2 {
         return userIds;
     }
 
+    public User getByUserId(long userId) {
+        User user = null;
+        String sql = "SELECT UserId, Username, FullName, Email, IsActive "
+                + "FROM Users WHERE UserId = ?";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+
+            ps.setLong(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    user = new User();
+                    user.setUserId(rs.getLong("UserId"));
+                    user.setUsername(rs.getString("Username"));
+                    user.setFullName(rs.getString("FullName"));
+                    user.setEmail(rs.getString("Email"));
+                    user.setActive(rs.getBoolean("IsActive"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
 }

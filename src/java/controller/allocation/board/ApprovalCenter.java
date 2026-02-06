@@ -6,7 +6,7 @@ package controller.allocation.board;
 
 import controller.allocation.staff.AllocationList;
 import controller.allocation.websocket.NotificationEndPoint;
-import dao.allocation.UserDAO2;
+import dao.allocation.UserDAO;
 import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
 import dto.AssetRequestDTO;
@@ -35,7 +35,7 @@ public class ApprovalCenter extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
-    private UserDAO2 userDAO = new UserDAO2();
+    private UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

@@ -5,7 +5,7 @@
 package controller.allocation.teacher;
 
 import controller.allocation.websocket.NotificationEndPoint;
-import dao.allocation.UserDAO2;
+import dao.allocation.UserDAO;
 import dao.allocation.AssetCategoryDAO;
 import dao.allocation.AssetRequestDAO;
 import dao.allocation.AssetRequestItemDAO;
@@ -33,7 +33,7 @@ import java.sql.SQLException;
 public class AddRequest extends HttpServlet {
 
     private RoomDAO roomDAO = new RoomDAO();
-    private UserDAO2 userDAO = new UserDAO2();
+    private UserDAO userDAO = new UserDAO();
     private AssetCategoryDAO assetCategoryDAO = new AssetCategoryDAO();
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO requestItemDAO = new AssetRequestItemDAO();
