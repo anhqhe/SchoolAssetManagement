@@ -55,5 +55,5 @@
     } else {
         console.log("No user in session - WebSocket notifications disabled");
     }
-</script>/body>
+</script>
 </html>

@@ -6,8 +6,10 @@
 package controller.allocation.board;
 
 import dao.allocation.AllocationDAO;
+import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
 import dao.allocation.AssetRequestItemDAO;
+import dto.ApprovalDTO;
 import dto.AssetDTO;
 import dto.AssetRequestDTO;
 import dto.AssetRequestItemDTO;
@@ -32,6 +34,7 @@ public class RequestDetailBoard extends HttpServlet {
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
+    private ApprovalDAO approvalDAO = new ApprovalDAO();
    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -74,11 +77,14 @@ public class RequestDetailBoard extends HttpServlet {
             // Get AssetRequestItem Infor
             List<AssetRequestItemDTO> itemList = reqItemDAO.findByRequestId(requestId);
             
+            ApprovalDTO approval = approvalDAO.findByRef("ASSET_REQUEST", requestId);
+            
             //Get asset infor after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
             request.setAttribute("req", requestDetail);
             request.setAttribute("itemList", itemList);
+            request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
             
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);

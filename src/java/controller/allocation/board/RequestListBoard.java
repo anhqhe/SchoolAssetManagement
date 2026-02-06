@@ -4,7 +4,6 @@
  */
 package controller.allocation.board;
 
-import controller.allocation.staff.AllocationList;
 import controller.allocation.websocket.NotificationEndPoint;
 import dao.allocation.UserDAO;
 import dao.allocation.ApprovalDAO;
@@ -31,7 +30,7 @@ import model.User;
  * @author Leo
  */
 @WebServlet(name = "Approval", urlPatterns = {"/board/approval-center"})
-public class ApprovalCenter extends HttpServlet {
+public class RequestListBoard extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
@@ -75,11 +74,11 @@ public class ApprovalCenter extends HttpServlet {
         try {
             list = requestDAO.getRequestsAdvanced(keyword, status, sortBy);
         } catch (SQLException ex) {
-            Logger.getLogger(AllocationList.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RequestListBoard.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         request.setAttribute("pendingList", list);
-        request.getRequestDispatcher("/views/allocation/board/approval-center.jsp")
+        request.getRequestDispatcher("/views/allocation/request-list.jsp")
                 .forward(request, response);
     }
 

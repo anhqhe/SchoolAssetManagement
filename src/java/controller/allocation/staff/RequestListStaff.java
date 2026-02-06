@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  * @author Leo
  */
 @WebServlet(name = "AllocationList", urlPatterns = {"/staff/allocation-list"})
-public class AllocationList extends HttpServlet {
+public class RequestListStaff extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
 
@@ -51,11 +51,11 @@ public class AllocationList extends HttpServlet {
         try {
             list = requestDAO.getRequestsAdvanced(keyword, status, sortBy);
         } catch (SQLException ex) {
-            Logger.getLogger(AllocationList.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RequestListStaff.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         request.setAttribute("pendingList", list);
-        request.getRequestDispatcher("/views/allocation/staff/allocation-list.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/allocation/request-list.jsp").forward(request, response);
     }
 
     @Override

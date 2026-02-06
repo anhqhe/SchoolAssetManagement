@@ -27,7 +27,7 @@ import model.User;
  * @author Leo
  */
 @WebServlet(name = "RequestList", urlPatterns = {"/teacher/request-list"})
-public class RequestList extends HttpServlet {
+public class RequestListTeacher extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private RoomDAO roomDAO = new RoomDAO();
@@ -57,12 +57,12 @@ public class RequestList extends HttpServlet {
         try {
             list = requestDAO.getRequestsByTeacher(currentUser.getUserId(), keyword, status, sortBy);
         } catch (SQLException ex) {
-            Logger.getLogger(RequestList.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RequestListTeacher.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         request.setAttribute("roomDAO", roomDAO);
         request.setAttribute("myRequests", list);
-        request.getRequestDispatcher("/views/allocation/teacher/request-list.jsp")
+        request.getRequestDispatcher("/views/allocation/request-list.jsp")
                 .forward(request, response);
     }
 
