@@ -37,6 +37,13 @@
             <span>Quản lý tài sản</span>
         </a>
     </li>
+
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/rooms">
+            <i class="fas fa-fw fa-door-open"></i>
+            <span>Room management</span>
+        </a>
+    </li>
     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/user">
