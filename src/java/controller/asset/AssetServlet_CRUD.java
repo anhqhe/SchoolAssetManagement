@@ -23,7 +23,7 @@ import model.asset.Asset;
  * @author An
  */
 @WebServlet(name = "AssetServlet", urlPatterns = {"/assets"})
-public class AssetServlet extends HttpServlet {
+public class AssetServlet_CRUD extends HttpServlet {
 
     private AssetDao assetDao = new AssetDao();
 
@@ -66,7 +66,7 @@ public class AssetServlet extends HttpServlet {
         try {
             List<Asset> assets = assetDao.findAll();
             request.setAttribute("assets", assets);
-            request.getRequestDispatcher("/views/asset/asset-list.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/admin/asset-list.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException(e);
         }
