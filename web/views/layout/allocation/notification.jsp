@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
-<div id="notification-toast" class="toast" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+<div id="notification-toast" class="toast" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
     <div class="toast-header bg-primary text-white">
         <strong class="mr-auto">Thông báo mới</strong>
         <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
@@ -53,8 +53,7 @@
 
         connect();
     } else {
-        console.log("No user </script>
-Socket notifications disabled");
+        console.log("No user in session - WebSocket notifications disabled");
     }
-</script>/body>
+</script>
 </html>

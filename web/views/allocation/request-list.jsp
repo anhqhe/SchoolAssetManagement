@@ -233,7 +233,7 @@
                                                                 </c:choose>
                                                             </td>
                                                             <!-- Actions (role-specific) -->
-                                                            <td class="text-center">
+                                                            <td class="text-left">
                                                                 <c:choose>
                                                                     <c:when test="${isTeacher}">
                                                                         <a href="${pageContext.request.contextPath}/teacher/request-detail?id=${req.requestId}" 
@@ -352,11 +352,9 @@
                     "pageLength": 10,
                     "order": [[0, "desc"]]
                 });
-
-                // Reinitialize Bootstrap dropdowns after DataTables loads
-                $('[data-toggle="dropdown"]').dropdown();
             });
-
+        </script>
+        <script>
             function openApproveModal(id, code) {
                 document.getElementById('modalReqId').value = id;
                 document.getElementById('modalReqCode').innerText = code;
