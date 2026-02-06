@@ -102,4 +102,110 @@ public class UserDAO {
         }
         return false;
     }
+
+    // ========== FORGOT PASSWORD METHODS ==========
+    
+    /**
+     * Tìm user theo email
+     */
+    public User findByEmail(String email) throws SQLException {
+        String sql = "SELECT UserId, Username, FullName, Email, IsActive FROM Users WHERE Email = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setUserId(rs.getLong("UserId"));
+                    user.setUsername(rs.getString("Username"));
+                    user.setFullName(rs.getString("FullName"));
+                    user.setEmail(rs.getString("Email"));
+                    user.setActive(rs.getBoolean("IsActive"));
+                    user.setRoles(getRolesByUserId(conn, user.getUserId()));
+                    return user;
+                }
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Lưu reset token và thời gian hết hạn vào database
+     */
+    public boolean saveResetToken(long userId, String resetToken, Timestamp expiryTime) {
+        String sql = "UPDATE Users SET ResetToken=?, ResetTokenExpiry=? WHERE UserId=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, resetToken);
+            ps.setTimestamp(2, expiryTime);
+            ps.setLong(3, userId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Tìm user theo reset token và kiểm tra xem token còn hợp lệ không
+     */
+    public User findByResetToken(String resetToken) throws SQLException {
+        String sql = "SELECT UserId, Username, FullName, Email, IsActive, ResetToken, ResetTokenExpiry " +
+                     "FROM Users WHERE ResetToken = ? AND ResetTokenExpiry > GETDATE()";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, resetToken);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setUserId(rs.getLong("UserId"));
+                    user.setUsername(rs.getString("Username"));
+                    user.setFullName(rs.getString("FullName"));
+                    user.setEmail(rs.getString("Email"));
+                    user.setActive(rs.getBoolean("IsActive"));
+                    user.setResetToken(rs.getString("ResetToken"));
+                    user.setResetTokenExpiry(rs.getTimestamp("ResetTokenExpiry"));
+                    user.setRoles(getRolesByUserId(conn, user.getUserId()));
+                    return user;
+                }
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Reset password và xóa reset token
+     */
+    public boolean resetPassword(long userId, String newPassword) {
+        String sql = "UPDATE Users SET PasswordHash=?, ResetToken=NULL, ResetTokenExpiry=NULL WHERE UserId=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, newPassword);
+            ps.setLong(2, userId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Xóa reset token (sử dụng khi user cancel hoặc token expired)
+     */
+    public boolean clearResetToken(long userId) {
+        String sql = "UPDATE Users SET ResetToken=NULL, ResetTokenExpiry=NULL WHERE UserId=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setLong(1, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
