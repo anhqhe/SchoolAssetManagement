@@ -1,4 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="dao.allocation.NotificationDAO, model.allocation.Notification, java.util.List" %>
+
+<%
+    model.User topbarUser = (model.User) session.getAttribute("currentUser");
+    List<Notification> unreadNotis = java.util.Collections.emptyList();
+    int unreadCount = 0;
+    if (topbarUser != null) {
+        try {
+            NotificationDAO notiDao = new NotificationDAO();
+            unreadNotis = notiDao.getUnreadByUserId(topbarUser.getUserId());
+            unreadCount = unreadNotis != null ? unreadNotis.size() : 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+%>
 
 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
 
@@ -9,13 +25,19 @@
             <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown"
                role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-bell fa-fw"></i>
-                <span class="badge badge-danger badge-counter" id="notiCount" style="display: none;">1</span>
+                <span class="badge badge-danger badge-counter" id="notiCount" style="<%= unreadCount > 0 ? "" : "display: none;" %>"><%= unreadCount %></span>
             </a>
             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                  aria-labelledby="alertsDropdown" style="min-width: 320px;">
                 <h6 class="dropdown-header">Thông báo</h6>
-                <div class="dropdown-item text-wrap text-gray-700" id="notiDropdownMessage">
-                    Không có thông báo mới
+                <div id="notiList">
+                    <% if (unreadCount == 0) { %>
+                        <div class="dropdown-item text-wrap text-gray-700" id="notiEmpty">Không có thông báo mới</div>
+                    <% } else { %>
+                        <% for (Notification noti : unreadNotis) { %>
+                            <div class="dropdown-item text-wrap text-gray-700"><%= noti.getContent() %></div>
+                        <% } %>
+                    <% } %>
                 </div>
             </div>
         </li>
@@ -27,10 +49,7 @@
 
                 <!-- USER NAME -->
                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                    <% 
-                        model.User topbarUser = (model.User) session.getAttribute("currentUser");
-                        out.print(topbarUser != null ? topbarUser.getFullName() : "");
-                    %>
+                    <% out.print(topbarUser != null ? topbarUser.getFullName() : ""); %>
                 </span>
 
                 <!-- AVATAR (SBAdmin mặc định) -->
@@ -62,7 +81,7 @@
 
 <script>
     const userId = "${sessionScope.currentUser.userId}";
-    let unreadCount = 0;
+    let unreadCount = <%= unreadCount %>;
     if (userId) {
         const protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://';
         const socketUrl = protocol + location.host + '${pageContext.request.contextPath}/notifications/' + userId;
@@ -92,9 +111,16 @@
 
             socket.onmessage = function (event) {
                 console.log("WebSocket message:", event.data);
-                const dropdownMsg = document.getElementById('notiDropdownMessage');
-                if (dropdownMsg) {
-                    dropdownMsg.innerText = event.data;
+                const list = document.getElementById('notiList');
+                const empty = document.getElementById('notiEmpty');
+                if (empty) {
+                    empty.remove();
+                }
+                if (list) {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item text-wrap text-gray-700';
+                    item.textContent = event.data;
+                    list.prepend(item);
                 }
                 unreadCount += 1;
                 updateBadge();

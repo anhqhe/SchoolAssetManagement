@@ -1,11 +1,13 @@
 package controller.allocation.websocket;
 
+import dao.allocation.NotificationDAO;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import model.allocation.Notification;
 
 @ServerEndpoint("/notifications/{userId}")
 public class NotificationEndPoint {
@@ -41,11 +43,16 @@ public class NotificationEndPoint {
 
     // Send to 1 user (all tab)
     public static void sendToUser(long userId, String message) {
+        sendToUser(userId, "Thông báo", message, "SYSTEM", 0);
+    }
+
+    public static void sendToUser(long userId, String title, String content, String refType, long refId) {
+        insertNotification(userId, title, content, refType, refId);
         CopyOnWriteArraySet<Session> sessions = userSessions.get(userId);
         if (sessions != null) {
             for (Session s : sessions) {
                 if (s.isOpen()) {
-                    s.getAsyncRemote().sendText(message);
+                    s.getAsyncRemote().sendText(content);
                 }
             }
         }
@@ -54,6 +61,27 @@ public class NotificationEndPoint {
     public static void sendToUsers(List<Long> userIds, String message) {
         for (Long id : userIds) {
             sendToUser(id, message);
+        }
+    }
+
+    public static void sendToUsers(List<Long> userIds, String title, String content, String refType, long refId) {
+        for (Long id : userIds) {
+            sendToUser(id, title, content, refType, refId);
+        }
+    }
+
+    private static void insertNotification(long userId, String title, String content, String refType, long refId) {
+        try {
+            Notification noti = new Notification();
+            noti.setReceiverId(userId);
+            noti.setTitle(title);
+            noti.setContent(content);
+            noti.setRefType(refType);
+            noti.setRefId(refId);
+
+            new NotificationDAO().insertNotification(noti);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
