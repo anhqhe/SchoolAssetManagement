@@ -52,13 +52,13 @@ public class RequestDetailBoard extends HttpServlet {
             // Check authorization - user must have BOARD role
             List<String> roles = currentUser.getRoles();
             if (roles == null || !roles.contains("BOARD")) {
-                response.sendRedirect("approval-center");
+                response.sendRedirect("request-list");
                 return;
             }
             
             String idParam = request.getParameter("id");
             if (idParam == null) {
-                response.sendRedirect("approval-center");
+                response.sendRedirect("request-list");
                 return;
             }
             
@@ -91,7 +91,7 @@ public class RequestDetailBoard extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("approval-center?msg=error");
+            response.sendRedirect("request-list?msg=error");
         }
     } 
 

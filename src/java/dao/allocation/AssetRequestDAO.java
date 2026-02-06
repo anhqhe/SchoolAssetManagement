@@ -68,6 +68,25 @@ public class AssetRequestDAO {
         }
     }
 
+    //update request info (room, purpose)
+    public boolean updateRequest(Connection conn, long requestId, Long requestedRoomId, String purpose) throws SQLException {
+        String sql = """
+                     UPDATE AssetRequests
+                     SET RequestedRoomId = ?, Purpose = ?, UpdatedAt = SYSDATETIME()
+                     WHERE RequestId = ?
+                     """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (requestedRoomId == null) {
+                ps.setNull(1, java.sql.Types.BIGINT);
+            } else {
+                ps.setLong(1, requestedRoomId);
+            }
+            ps.setString(2, purpose);
+            ps.setLong(3, requestId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
  
     /**
      *

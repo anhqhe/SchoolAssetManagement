@@ -35,7 +35,7 @@
             <div id="content-wrapper" class="d-flex flex-column">
                 <div id="content">
 
-                    <%@ include file="/views/layout/topbar.jsp" %>
+                    <%@ include file="/views/layout/allocation/topbar2.jsp" %>
 
                     <!-- Page Content -->
                     <div class="container mt-4">
@@ -50,12 +50,12 @@
                                     </a>
                                 </c:when>
                                 <c:when test="${isStaff}">
-                                    <a href="${pageContext.request.contextPath}/staff/allocation-list" class="btn btn-sm btn-secondary shadow-sm">
+                                    <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-sm btn-secondary shadow-sm">
                                         <i class="fas fa-arrow-left fa-sm"></i> Quay lại danh sách
                                     </a>
                                 </c:when>
                                 <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/board/approval-center" class="btn btn-sm btn-secondary shadow-sm">
+                                    <a href="${pageContext.request.contextPath}/board/request-list" class="btn btn-sm btn-secondary shadow-sm">
                                         <i class="fas fa-arrow-left fa-sm"></i> Quay lại danh sách
                                     </a>
                                 </c:otherwise>
@@ -187,7 +187,7 @@
                             </div>
                         </c:if>
 
-                        <!-- BOARD ONLY: Approve/Reject Buttons (use modal like approval-center) -->
+                        <!-- BOARD ONLY: Approve/Reject Buttons -->
                         <c:if test="${isBoard && req.status == 'WAITING_BOARD'}">
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3 bg-primary text-white">
@@ -227,7 +227,7 @@
         <!-- Approval modal + helper for board actions -->
         <div class="modal fade" id="approveModal" tabindex="-1">
             <div class="modal-dialog">
-                <form action="${pageContext.request.contextPath}/board/approval-center" method="post" class="modal-content">
+                <form action="${pageContext.request.contextPath}/board/request-list" method="post" class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Xử lý yêu cầu: <span id="modalReqCode"></span></h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -255,8 +255,6 @@
                 </form>
             </div>
         </div>
-
-        <%@ include file="/views/layout/allocation/notification.jsp" %>
 
         <!-- Scripts -->
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>

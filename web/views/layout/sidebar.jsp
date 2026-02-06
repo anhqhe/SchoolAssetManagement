@@ -79,7 +79,7 @@
     </li>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/staff/allocation-list">
+        <a class="nav-link" href="${pageContext.request.contextPath}/staff/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
@@ -118,7 +118,7 @@
     </li>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/board/approval-center">
+        <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>

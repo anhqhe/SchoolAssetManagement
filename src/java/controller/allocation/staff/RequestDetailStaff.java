@@ -51,13 +51,13 @@ public class RequestDetailStaff extends HttpServlet {
             // Check authorization - user must have ASSET_STAFF role
             List<String> roles = currentUser.getRoles();
             if (roles == null || !roles.contains("ASSET_STAFF")) {
-                response.sendRedirect("allocation-list");
+                response.sendRedirect("request-list");
                 return;
             }
             
             String idParam = request.getParameter("id");
             if (idParam == null) {
-                response.sendRedirect("allocation-list");
+                response.sendRedirect("request-list");
                 return;
             }
             
@@ -91,7 +91,7 @@ public class RequestDetailStaff extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("allocation-list?msg=error");
+            response.sendRedirect("request-list?msg=error");
         }
     }
 

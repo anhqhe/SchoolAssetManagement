@@ -53,7 +53,7 @@ public class AllocateAssets extends HttpServlet {
             
             //Only request approved_by_board can allocate asset
             if (!requestDetail.getStatus().equals("APPROVED_BY_BOARD")) {
-                response.sendRedirect("allocation-list?error=true");
+                response.sendRedirect("request-list?error=true");
                 return;
             }
 
@@ -70,7 +70,7 @@ public class AllocateAssets extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("allocation-list?error=true");
+            response.sendRedirect("request-list?error=true");
         }
     }
 
@@ -114,7 +114,7 @@ public class AllocateAssets extends HttpServlet {
         NotificationEndPoint.sendToUser(reqDTO.getTeacherId(), 
                 "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!");
 
-        response.sendRedirect("allocation-list?msg=success");
+        response.sendRedirect("request-list?msg=success");
     }
 
     // Save data to database

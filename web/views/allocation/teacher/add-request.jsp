@@ -26,7 +26,7 @@
             <div id="content-wrapper" class="d-flex flex-column">
                 <div id="content">
 
-                    <%@ include file="/views/layout/topbar.jsp" %>
+                    <%@ include file="/views/layout/allocation/topbar2.jsp" %>
 
                     <!-- Page Content -->
 
@@ -84,7 +84,7 @@
 
                                     <div id="itemList">
                                         <div class="row item-row mb-3 align-items-end">
-                                            <div class="col-md-5">
+                                            <div class="col-md-4">
                                                 <label class="form-label">Loại tài sản:</label>
                                                 <select name="categoryIds" class="form-select" required>
                                                     <option value="">-- Chọn loại --</option>
@@ -93,13 +93,18 @@
                                                     </c:forEach>
                                                 </select>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="form-label">Số lượng:</label>
                                                 <input type="number" name="quantities" class="form-control" min="1" value="1" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="form-label">Ghi chú:</label>
                                                 <input type="text" name="notes" class="form-control" placeholder="Mô tả thêm">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger deleteBtn d-none" onclick="deleteItem(this)" title="Xóa dòng">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -125,8 +130,6 @@
         </div>
 
 
-        <%@ include file="/views/layout/allocation/notification.jsp" %>
-
         <!-- Scripts -->
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -143,7 +146,44 @@
                                                 newRow.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? 1 : ''));
                                                 newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
 
+                                                // Hiện nút xóa cho dòng mới
+                                                const deleteBtn = newRow.querySelector('.deleteBtn');
+                                                if (deleteBtn) {
+                                                    deleteBtn.classList.remove('d-none');
+                                                }
+
                                                 itemList.appendChild(newRow);
+                                                updateDeleteButtons();
+                                            }
+
+                                            function deleteItem(button) {
+                                                const itemRow = button.closest('.item-row');
+                                                const itemList = document.getElementById('itemList');
+                                                const itemCount = itemList.querySelectorAll('.item-row').length;
+
+                                                // Ngăn xóa nếu chỉ còn 1 dòng yêu cầu
+                                                if (itemCount <= 1) {
+                                                    alert('Phải có ít nhất 1 dòng yêu cầu!');
+                                                    return;
+                                                }
+
+                                                itemRow.remove();
+                                                updateDeleteButtons();
+                                            }
+
+                                            function updateDeleteButtons() {
+                                                const itemList = document.getElementById('itemList');
+                                                const items = itemList.querySelectorAll('.item-row');
+
+                                                items.forEach((item, index) => {
+                                                    const deleteBtn = item.querySelector('.deleteBtn');
+                                                    // Ẩn nút xóa nếu chỉ còn 1 dòng
+                                                    if (items.length === 1) {
+                                                        deleteBtn.classList.add('d-none');
+                                                    } else {
+                                                        deleteBtn.classList.remove('d-none');
+                                                    }
+                                                });
                                             }
         </script>
 

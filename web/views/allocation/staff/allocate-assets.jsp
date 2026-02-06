@@ -24,7 +24,7 @@
             <div id="content-wrapper" class="d-flex flex-column">
                 <div id="content">
 
-                    <%@ include file="/views/layout/topbar.jsp" %>
+                    <%@ include file="/views/layout/allocation/topbar2.jsp" %>
 
                     <c:if test="${param.msg eq 'success'}">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -107,7 +107,7 @@
                             </div>
 
                             <div class="mb-5">
-                                <a href="allocation-list" class="btn btn-secondary">Quay lại</a>
+                                <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-secondary">Quay lại</a>
                                 <button type="submit" id="btnSubmit" class="btn btn-primary shadow-sm">
                                     <i class="fas fa-check fa-sm text-white-50"></i> Xác nhận bàn giao
                                 </button>
@@ -122,12 +122,10 @@
             </div>
         </div>
 
-        <%@ include file="/views/layout/allocation/notification.jsp" %>
-
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-        <!--<!-- Đang lỗi, không chặn được check quá số lượng -->
+        <!-- Đang lỗi, không chặn được check quá số lượng -->
         <script>
             $(document).ready(function () {
 

@@ -36,6 +36,15 @@ public class AssetRequestItemDAO {
             ps.executeUpdate();
         }
     }
+
+    //Delete RequestItem --> use for teacher update request
+    public boolean deleteByRequestId(Connection conn, long requestId) throws SQLException {
+        String sql = "DELETE FROM AssetRequestItems WHERE RequestId = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, requestId);
+            return ps.executeUpdate() >= 0;
+        }
+    }
     
     //
     // AssetRequestDTO DAO

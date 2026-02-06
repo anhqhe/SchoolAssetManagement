@@ -39,21 +39,21 @@
             <div id="content-wrapper" class="d-flex flex-column">
                 <div id="content">
 
-                    <%@ include file="/views/layout/topbar.jsp" %>
+                    <%@ include file="/views/layout/allocation/topbar2.jsp" %>
 
                     <!-- Error/Success Messages -->
-                    <c:if test="${not empty error}">
+                    <c:if test="${not empty param.error}">
                         <div class="alert alert-danger alert-dismissible fade show">
-                            <i class="fas fa-exclamation-circle"></i> ${error}
+                            <i class="fas fa-exclamation-circle"></i> ${param.error}
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
                         </div>
                     </c:if>
 
-                    <c:if test="${not empty msg}">
+                    <c:if test="${not empty param.msg}">
                         <div class="alert alert-success alert-dismissible fade show">
-                            <i class="fas fa-check-circle"></i> ${msg}
+                            <i class="fas fa-check-circle"></i> ${param.msg}
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
@@ -99,10 +99,10 @@
                                         <form action="${pageContext.request.contextPath}/teacher/request-list" method="get" id="filterForm" class="form-inline">
                                     </c:when>
                                     <c:when test="${isStaff}">
-                                        <form action="${pageContext.request.contextPath}/staff/allocation-list" method="get" id="filterForm" class="form-inline">
+                                        <form action="${pageContext.request.contextPath}/staff/request-list" method="get" id="filterForm" class="form-inline">
                                     </c:when>
                                     <c:when test="${isBoard}">
-                                        <form action="${pageContext.request.contextPath}/board/approval-center" method="get" id="filterForm" class="form-inline">
+                                        <form action="${pageContext.request.contextPath}/board/request-center" method="get" id="filterForm" class="form-inline">
                                     </c:when>
                                 </c:choose>
                                     <div class="form-group mr-3 mb-2">
@@ -133,12 +133,12 @@
                                             </a>
                                         </c:when>
                                         <c:when test="${isStaff}">
-                                            <a href="${pageContext.request.contextPath}/staff/allocation-list" class="btn btn-secondary mb-2">
+                                            <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-secondary mb-2">
                                                 <i class="fas fa-redo"></i> Đặt lại
                                             </a>
                                         </c:when>
                                         <c:when test="${isBoard}">
-                                            <a href="${pageContext.request.contextPath}/board/approval-center" class="btn btn-secondary mb-2">
+                                            <a href="${pageContext.request.contextPath}/board/request-list" class="btn btn-secondary mb-2">
                                                 <i class="fas fa-redo"></i> Đặt lại
                                             </a>
                                         </c:when>
@@ -162,11 +162,11 @@
                                         <thead class="thead-light">
                                             <tr>
                                                 <th>Mã Phiếu</th>
+                                                <th>Ngày Gửi</th>
                                                 <!-- STAFF & BOARD: Show Người Yêu Cầu column -->
                                                 <c:if test="${isStaff || isBoard}">
                                                     <th>Người Yêu Cầu</th>
                                                 </c:if>
-                                                <th>Ngày Gửi</th>
                                                 <th>
                                                     <c:choose>
                                                         <c:when test="${isTeacher}">Phòng Yêu Cầu</c:when>
@@ -202,14 +202,14 @@
                                                             <td>
                                                                 <strong>${req.requestCode}</strong>
                                                             </td>
+                                                            <!-- Date -->
+                                                            <td data-sort="${req.createdAt}">
+                                                                <small>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
+                                                            </td>
                                                             <!-- STAFF & BOARD: Người Yêu Cầu -->
                                                             <c:if test="${isStaff || isBoard}">
                                                                 <td>${req.teacherName}</td>
                                                             </c:if>
-                                                            <!-- Date -->
-                                                            <td>
-                                                                <small>${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
-                                                            </td>
                                                             <!-- Room -->
                                                             <td>
                                                                 ${req.roomName}
@@ -225,10 +225,10 @@
                                                             <!-- Status -->
                                                             <td>
                                                                 <c:choose>
-                                                                    <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">Chờ duyệt</span></c:when>
-                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-success">Đã duyệt</span></c:when>
-                                                                    <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Đã hoàn thành</span></c:when>
-                                                                    <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Bị từ chối</span></c:when>
+                                                                    <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">WAITING_BOARD</span></c:when>
+                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-success">APPROVED_BY_BOARD</span></c:when>
+                                                                    <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">COMPLETED</span></c:when>
+                                                                    <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">REJECTED</span></c:when>
                                                                     <c:otherwise><span class="badge badge-secondary">${req.status}</span></c:otherwise>
                                                                 </c:choose>
                                                             </td>
@@ -240,6 +240,12 @@
                                                                            class="btn btn-sm btn-info" title="Xem chi tiết">
                                                                             <i class="fas fa-eye"></i>
                                                                         </a>
+                                                                        <c:if test="${req.status == 'WAITING_BOARD'}">
+                                                                            <a href="${pageContext.request.contextPath}/teacher/update-request?id=${req.requestId}" 
+                                                                               class="btn btn-sm btn-warning" title="Cập nhật">
+                                                                                <i class="fas fa-edit"></i>
+                                                                            </a>
+                                                                        </c:if>
                                                                     </c:when>
                                                                     <c:when test="${isStaff}">
                                                                         <a href="${pageContext.request.contextPath}/staff/request-detail?id=${req.requestId}" 
@@ -286,13 +292,11 @@
             </div>
         </div>
 
-        <%@ include file="/views/layout/allocation/notification.jsp" %>
-
         <!-- Approval Modal (BOARD ONLY) -->
         <c:if test="${isBoard}">
             <div class="modal fade" id="approveModal" tabindex="-1">
                 <div class="modal-dialog">
-                    <form action="${pageContext.request.contextPath}/board/approval-center" method="post" class="modal-content">
+                    <form action="${pageContext.request.contextPath}/board/request-list" method="post" class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Xử lý yêu cầu: <span id="modalReqCode"></span></h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -350,7 +354,7 @@
                         }
                     },
                     "pageLength": 10,
-                    "order": [[0, "desc"]]
+                    "order": [[1, "desc"]]
                 });
             });
         </script>

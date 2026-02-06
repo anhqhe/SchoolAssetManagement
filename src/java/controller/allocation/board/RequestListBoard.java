@@ -29,7 +29,7 @@ import model.User;
  *
  * @author Leo
  */
-@WebServlet(name = "Approval", urlPatterns = {"/board/approval-center"})
+@WebServlet(name = "RequestListBoard", urlPatterns = {"/board/request-list"})
 public class RequestListBoard extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
@@ -96,7 +96,7 @@ public class RequestListBoard extends HttpServlet {
         String note = request.getParameter("note");
 
         if (user == null || requestIdStr == null) {
-            response.sendRedirect("approval-center?msg=error");
+            response.sendRedirect("request-list?msg=error");
             return;
         }
 
@@ -107,7 +107,7 @@ public class RequestListBoard extends HttpServlet {
         boolean isSuccess = approveOrRejectRequest(requestId, approverId, decision, note);
 
         if (!isSuccess) {
-            response.sendRedirect("approval-center?msg=error");
+            response.sendRedirect("request-list?msg=error");
             return;
         }
 
@@ -134,7 +134,7 @@ public class RequestListBoard extends HttpServlet {
         }
 
         // Return result
-        response.sendRedirect("approval-center?msg=success");
+        response.sendRedirect("request-list?msg=success");
 
     }
 

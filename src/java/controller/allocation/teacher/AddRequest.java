@@ -123,6 +123,7 @@ public class AddRequest extends HttpServlet {
         }
     }
 
+    //Save to database
     public boolean createAssetRequest(long userId, long roomId, String purpose,
             String[] catIds, String[] qtys, String[] notes) {
         Connection conn = null;

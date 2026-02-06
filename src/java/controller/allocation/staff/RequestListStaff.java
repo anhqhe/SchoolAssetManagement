@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  *
  * @author Leo
  */
-@WebServlet(name = "AllocationList", urlPatterns = {"/staff/allocation-list"})
+@WebServlet(name = "RequestListStaff", urlPatterns = {"/staff/request-list"})
 public class RequestListStaff extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
