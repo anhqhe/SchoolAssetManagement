@@ -7,6 +7,7 @@
     Room room = (Room) request.getAttribute("room");
     String error = (String) request.getAttribute("error");
     String success = (String) request.getAttribute("success");
+    String locationValue = (room != null && room.getLocation() != null) ? room.getLocation() : "";
 %>
 
 <!DOCTYPE html>
@@ -86,7 +87,7 @@
                                            id="location"
                                            name="location"
                                            class="form-control"
-                                           value="<%= room.getLocation() != null ? room.getLocation() : \"\" %>">
+                                           value="<%= locationValue %>">
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">
