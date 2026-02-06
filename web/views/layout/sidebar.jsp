@@ -85,6 +85,12 @@
         </a>
     </li>
     
+        <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>Điều chuyển tài sản</span>
+        </a>
+    </li>
     <% } %>
        
     <!-- TEACHER ONLY -->
