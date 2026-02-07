@@ -407,7 +407,7 @@
                                     <textarea name="reason" class="form-control" rows="3" required></textarea>
                                 </div>
                             </form>
-                        </div>
+                        </div> 
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                 <i class="fas fa-times"></i> Hủy
