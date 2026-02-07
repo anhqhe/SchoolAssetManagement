@@ -32,7 +32,7 @@
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/assets/list">
+        <a class="nav-link" href="${pageContext.request.contextPath}/assets?action=list">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>

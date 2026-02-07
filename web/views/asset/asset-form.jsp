@@ -1,6 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.asset.Asset" %>
+ <%@ page import="model.User" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
+
+<%
+    User currentUser = (User) session.getAttribute("currentUser");
+    boolean isAssetStaff = false;
+    if (currentUser != null && currentUser.getRoles() != null) {
+        isAssetStaff = currentUser.getRoles().contains("ASSET_STAFF") 
+            || currentUser.getRoles().contains("ADMIN");
+    }
+    if (!isAssetStaff) {
+        response.sendRedirect(request.getContextPath() + "/assets?action=list");
+        return;
+    }
+%>
 
 <%
     Asset asset = (Asset) request.getAttribute("asset");
@@ -20,6 +34,8 @@
         }
     }
 %>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -156,8 +172,7 @@
                                             <option value="">-- Chọn trạng thái --</option>
                                             <option value="IN_STOCK" <%= asset != null && "IN_STOCK".equals(asset.getStatus()) ? "selected" : "" %>>IN_STOCK - Trong kho</option>
                                             <option value="IN_USE" <%= asset != null && "IN_USE".equals(asset.getStatus()) ? "selected" : "" %>>IN_USE - Đang sử dụng</option>
-                                            <option value="RETIRED" <%= asset != null && "RETIRED".equals(asset.getStatus()) ? "selected" : "" %>>RETIRED - Đã nghỉ hưu</option>
-                                            <option value="MAINTENANCE" <%= asset != null && "MAINTENANCE".equals(asset.getStatus()) ? "selected" : "" %>>MAINTENANCE - Đang bảo trì</option>
+                                            
                                         </select>
                                     </div>
 

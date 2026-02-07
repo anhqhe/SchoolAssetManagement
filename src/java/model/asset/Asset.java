@@ -5,38 +5,46 @@
 package model.asset;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 /**
  *
  * @author Leo
  */
 public class Asset {
-    private int assetId;
+
+    private long assetId;
     private String assetCode;
     private String assetName;
-    private int categoryId;
+    private long categoryId;
     private String serialNumber;
     private String model;
     private String brand;
     private String originNote;
-    private LocalDateTime purchaseDate;  
-    private LocalDateTime receivedDate;  
+    private LocalDateTime purchaseDate;
+    private LocalDateTime receivedDate;
     private String conditionNote;
     private String status;
-    private int currentRoomId;
-    private int currentHolderId;
+    private long currentRoomId;
+    private long currentHolderId;
     private boolean isActive;
     private LocalDateTime createdAt;  // map với [CreatedAt]
     private LocalDateTime updatedAt;  // map với [UpdatedAt]
+    private String categoryName;   // từ JOIN AssetCategories
+    private String roomName;       // từ JOIN Rooms
+    private String roomLocation;   // từ JOIN Rooms
+    private String holderName;     // từ JOIN Users
+    private int quantity;         // số lượng loại tài sản (cùng AssetName + CategoryId)
 
     public Asset() {
     }
 
-    public int getAssetId() {
+    public long getAssetId() {
         return assetId;
     }
 
-    public void setAssetId(int assetId) {
+    public void setAssetId(long assetId) {
         this.assetId = assetId;
     }
 
@@ -56,11 +64,11 @@ public class Asset {
         this.assetName = assetName;
     }
 
-    public int getCategoryId() {
+    public long getCategoryId() {
         return categoryId;
     }
 
-    public void setCategoryId(int categoryId) {
+    public void setCategoryId(long categoryId) {
         this.categoryId = categoryId;
     }
 
@@ -128,19 +136,19 @@ public class Asset {
         this.status = status;
     }
 
-    public int getCurrentRoomId() {
+    public long getCurrentRoomId() {
         return currentRoomId;
     }
 
-    public void setCurrentRoomId(int currentRoomId) {
+    public void setCurrentRoomId(long currentRoomId) {
         this.currentRoomId = currentRoomId;
     }
 
-    public int getCurrentHolderId() {
+    public long getCurrentHolderId() {
         return currentHolderId;
     }
 
-    public void setCurrentHolderId(int currentHolderId) {
+    public void setCurrentHolderId(long currentHolderId) {
         this.currentHolderId = currentHolderId;
     }
 
@@ -167,6 +175,91 @@ public class Asset {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
+    }
+
+    public String getRoomLocation() {
+        return roomLocation;
+    }
+
+    public void setRoomLocation(String roomLocation) {
+        this.roomLocation = roomLocation;
+    }
+
+    public String getHolderName() {
+        return holderName;
+    }
+
+    public void setHolderName(String holderName) {
+        this.holderName = holderName;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getStatusBadgeClass() {
+        if (status == null) {
+            return "badge-secondary";
+        }
+        switch (status) {
+            case "IN_STOCK":
+                return "badge-info";
+            case "IN_USE":
+                return "badge-success";
+            case "RETIRED":
+                return "badge-danger";
+            default:
+                return "badge-secondary";
+        }
+    }
     
-    
+    public String getStatusText() {
+        if (status == null) {
+            return "N/A";
+        }
+        switch (status) {
+            case "IN_STOCK":
+                return "Trong kho";
+            case "IN_USE":
+                return "Đang sử dụng";
+            default:
+                return status;
+        }
+    }
+
+    public boolean getActive() {
+        return isActive;
+    }
+
+    /** Chuyển LocalDateTime sang Date cho JSP fmt:formatDate */
+    public Date getPurchaseDateAsDate() {
+        return purchaseDate == null ? null : Date.from(purchaseDate.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public Date getReceivedDateAsDate() {
+        return receivedDate == null ? null : Date.from(receivedDate.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public Date getCreatedAtAsDate() {
+        return createdAt == null ? null : Date.from(createdAt.atZone(ZoneId.systemDefault()).toInstant());
+    }
 }

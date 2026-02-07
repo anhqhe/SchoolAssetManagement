@@ -23,15 +23,24 @@ import util.DBUtil;
 public class AssetDao {
 
     public List<Asset> findAll() throws SQLException {
-        String sql = "SELECT * FROM Assets";
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, " +
+             "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, " +
+             "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, " +
+             "a.CurrentRoomId, r.RoomName, a.CurrentHolderId, " +
+             "a.IsActive, a.CreatedAt, a.UpdatedAt, " +
+             "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId) AS Quantity " +
+             "FROM Assets a " +
+             "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
+             "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId " +
+             "ORDER BY a.CreatedAt DESC";
         List<Asset> list = new ArrayList<>();
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Asset a = new Asset();
-                a.setAssetId(rs.getInt("AssetId"));
+                a.setAssetId(rs.getLong("AssetId"));
                 a.setAssetCode(rs.getString("AssetCode"));
                 a.setAssetName(rs.getString("AssetName"));
-                a.setCategoryId(rs.getInt("CategoryId"));
+                a.setCategoryId(rs.getLong("CategoryId"));
                 a.setSerialNumber(rs.getString("SerialNumber"));
                 a.setModel(rs.getString("Model"));
                 a.setBrand(rs.getString("Brand"));
@@ -51,14 +60,14 @@ public class AssetDao {
                 a.setStatus(rs.getString("Status"));
 
                 // có thể null
-                int roomId = rs.getInt("CurrentRoomId");
+                long roomId = rs.getLong("CurrentRoomId");
                 if (rs.wasNull()) {
                     a.setCurrentRoomId(0); // 0 là chưa có phòng
                 } else {
                     a.setCurrentRoomId(roomId);
                 }
 
-                int holderId = rs.getInt("CurrentHolderId");
+                long holderId = rs.getLong("CurrentHolderId");
                 if (rs.wasNull()) {
                     a.setCurrentHolderId(0);
                 } else {
@@ -76,6 +85,9 @@ public class AssetDao {
                 if (uAt != null) {
                     a.setUpdatedAt(uAt.toLocalDateTime());
                 }
+                a.setCategoryName(rs.getString("CategoryName"));
+                a.setRoomName(rs.getString("RoomName"));
+                a.setQuantity(rs.getInt("Quantity"));
                 list.add(a);
             }
         }
@@ -91,7 +103,7 @@ public class AssetDao {
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
-            ps.setInt(3, a.getCategoryId());
+            ps.setLong(3, a.getCategoryId());
             ps.setString(4, a.getSerialNumber());
             ps.setString(5, a.getModel());
             ps.setString(6, a.getBrand());
@@ -112,13 +124,13 @@ public class AssetDao {
             ps.setString(11, a.getStatus());
             //CurrentRoomId
             if (a.getCurrentRoomId() != 0) {
-                ps.setInt(12, a.getCurrentRoomId());
+                ps.setLong(12, a.getCurrentRoomId());
             } else {
                 ps.setNull(12, Types.INTEGER);
             }
             //CurrentHolderId
             if (a.getCurrentHolderId() != 0) {
-                ps.setInt(13, a.getCurrentHolderId());
+                ps.setLong(13, a.getCurrentHolderId());
             } else {
                 ps.setNull(13, Types.INTEGER);
             }
@@ -136,7 +148,7 @@ public class AssetDao {
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
-            ps.setInt(3, a.getCategoryId());
+            ps.setLong(3, a.getCategoryId());
             ps.setString(4, a.getSerialNumber());
             ps.setString(5, a.getModel());
             ps.setString(6, a.getBrand());
@@ -157,18 +169,18 @@ public class AssetDao {
             ps.setString(11, a.getStatus());
             //CurrentRoomId
             if (a.getCurrentRoomId() != 0) {
-                ps.setInt(12, a.getCurrentRoomId());
+                ps.setLong(12, a.getCurrentRoomId());
             } else {
                 ps.setNull(12, Types.INTEGER);
             }
             //CurrentHolderId
             if (a.getCurrentHolderId() != 0) {
-                ps.setInt(13, a.getCurrentHolderId());
+                ps.setLong(13, a.getCurrentHolderId());
             } else {
                 ps.setNull(13, Types.INTEGER);
             }
             ps.setBoolean(14, a.isIsActive());
-            ps.setInt(15, a.getAssetId());
+            ps.setLong(15, a.getAssetId());
             ps.executeUpdate();
         }
     }
@@ -181,20 +193,61 @@ public class AssetDao {
         }
     }
 
+    /** Cập nhật trạng thái tài sản và ghi lịch sử vào AssetStatusHistory */
+    public void updateStatus(long assetId, String newStatus, String reason, long changedByUserId) throws SQLException {
+        try (Connection con = DBUtil.getConnection()) {
+            String oldStatus = null;
+            String selSql = "SELECT Status FROM Assets WHERE AssetId = ?";
+            try (PreparedStatement ps = con.prepareStatement(selSql)) {
+                ps.setLong(1, assetId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        oldStatus = rs.getString("Status");
+                    }
+                }
+            }
+            if (oldStatus == null) {
+                throw new SQLException("Asset not found: " + assetId);
+            }
+            String updateSql = "UPDATE Assets SET Status = ?, UpdatedAt = SYSDATETIME() WHERE AssetId = ?";
+            try (PreparedStatement ps = con.prepareStatement(updateSql)) {
+                ps.setString(1, newStatus);
+                ps.setLong(2, assetId);
+                ps.executeUpdate();
+            }
+            String histSql = "INSERT INTO AssetStatusHistory (AssetId, OldStatus, NewStatus, Reason, ChangedByUserId, ChangedAt) VALUES (?, ?, ?, ?, ?, SYSDATETIME())";
+            try (PreparedStatement ps = con.prepareStatement(histSql)) {
+                ps.setLong(1, assetId);
+                ps.setString(2, oldStatus);
+                ps.setString(3, newStatus);
+                ps.setString(4, reason);
+                ps.setLong(5, changedByUserId);
+                ps.executeUpdate();
+            }
+        }
+    }
+
     public Asset findById(int id) throws SQLException {
-        String sql = "SELECT AssetId, AssetCode, AssetName, CategoryId, SerialNumber, Model, Brand, "
-                + "OriginNote, PurchaseDate, ReceivedDate, ConditionNote, Status, "
-                + "CurrentRoomId, CurrentHolderId, IsActive, CreatedAt, UpdatedAt "
-                + "FROM Assets WHERE AssetId = ?";
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+                + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
+                + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
+                + "a.CurrentRoomId, r.RoomName, r.Location AS RoomLocation, "
+                + "a.CurrentHolderId, u.FullName AS HolderName, "
+                + "a.IsActive, a.CreatedAt, a.UpdatedAt "
+                + "FROM Assets a "
+                + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
+                + "LEFT JOIN Users u ON a.CurrentHolderId = u.UserId "
+                + "WHERE a.AssetId = ?";
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Asset a = new Asset();
-                    a.setAssetId(rs.getInt("AssetId"));
+                    a.setAssetId(rs.getLong("AssetId"));
                     a.setAssetCode(rs.getString("AssetCode"));
                     a.setAssetName(rs.getString("AssetName"));
-                    a.setCategoryId(rs.getInt("CategoryId"));
+                    a.setCategoryId(rs.getLong("CategoryId"));
                     a.setSerialNumber(rs.getString("SerialNumber"));
                     a.setModel(rs.getString("Model"));
                     a.setBrand(rs.getString("Brand"));
@@ -214,14 +267,14 @@ public class AssetDao {
                     a.setStatus(rs.getString("Status"));
 
                     // có thể null
-                    int roomId = rs.getInt("CurrentRoomId");
+                    long roomId = rs.getLong("CurrentRoomId");
                     if (rs.wasNull()) {
                         a.setCurrentRoomId(0); // 0 là chưa có phòng
                     } else {
                         a.setCurrentRoomId(roomId);
                     }
 
-                    int holderId = rs.getInt("CurrentHolderId");
+                    long holderId = rs.getLong("CurrentHolderId");
                     if (rs.wasNull()) {
                         a.setCurrentHolderId(0);
                     } else {
@@ -239,10 +292,97 @@ public class AssetDao {
                     if (uAt != null) {
                         a.setUpdatedAt(uAt.toLocalDateTime());
                     }
+                    a.setCategoryName(rs.getString("CategoryName"));
+                    a.setRoomName(rs.getString("RoomName"));
+                    a.setRoomLocation(rs.getString("RoomLocation"));
+                    a.setHolderName(rs.getString("HolderName"));
                     return a;
                 }
             }
         }
         return null;
+    }
+  public List<Asset> searchAssets(String keyword, String status, Long categoryId) throws SQLException {
+        List<Asset> assets = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, " +
+            "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, " +
+            "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, " +
+            "a.ConditionNote, a.IsActive, a.CreatedAt, " +
+            "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId) AS Quantity " +
+            "FROM Assets a " +
+            "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
+            "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId " +
+            "WHERE 1=1 "
+        );
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (a.AssetName LIKE ? OR a.AssetCode LIKE ? OR a.SerialNumber LIKE ?) ");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append("AND a.Status = ? ");
+        }
+        if (categoryId != null && categoryId > 0) {
+            sql.append("AND a.CategoryId = ? ");
+        }
+        
+        sql.append("ORDER BY a.CreatedAt DESC");
+        
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            int paramIndex = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchPattern = "%" + keyword + "%";
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(paramIndex++, status);
+            }
+            if (categoryId != null && categoryId > 0) {
+                ps.setLong(paramIndex++, categoryId);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Asset asset = new Asset();
+                    asset.setAssetId(rs.getLong("AssetId"));
+                    asset.setAssetCode(rs.getString("AssetCode"));
+                    asset.setAssetName(rs.getString("AssetName"));
+                    asset.setCategoryId(rs.getLong("CategoryId"));
+                    asset.setCategoryName(rs.getString("CategoryName"));
+                    asset.setSerialNumber(rs.getString("SerialNumber"));
+                    asset.setModel(rs.getString("Model"));
+                    asset.setBrand(rs.getString("Brand"));
+                    asset.setStatus(rs.getString("Status"));
+                    asset.setCurrentRoomId(rs.getLong("CurrentRoomId"));
+                    asset.setRoomName(rs.getString("RoomName"));
+                    // PurchaseDate (date) -> LocalDateTime
+                    Date pDate = rs.getDate("PurchaseDate");
+                    if (pDate != null) {
+                        asset.setPurchaseDate(pDate.toLocalDate().atStartOfDay());
+                    }
+                    // ReceivedDate (date) -> LocalDateTime
+                    Date rDate = rs.getDate("ReceivedDate");
+                    if (rDate != null) {
+                        asset.setReceivedDate(rDate.toLocalDate().atStartOfDay());
+                    }
+                    asset.setConditionNote(rs.getString("ConditionNote"));
+                    asset.setIsActive(rs.getBoolean("IsActive"));
+                    // CreatedAt (datetime2) -> LocalDateTime
+                    Timestamp cAt = rs.getTimestamp("CreatedAt");
+                    if (cAt != null) {
+                        asset.setCreatedAt(cAt.toLocalDateTime());
+                    }
+                    asset.setQuantity(rs.getInt("Quantity"));
+                    
+                    assets.add(asset);
+                }
+            }
+        }
+        
+        return assets;
     }
 }

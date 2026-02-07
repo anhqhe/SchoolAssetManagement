@@ -12,11 +12,13 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import model.asset.Asset;
+import model.User;
 
 /**
  *
@@ -31,9 +33,10 @@ public class AssetServlet_CRUD extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-        if (action == null) {
+        if (action == null || action.isEmpty()) {
             action = "list";
         }
+        action = action.trim();
         switch (action) {
             case "create":
                 showCreateForm(request, response);
@@ -43,6 +46,23 @@ public class AssetServlet_CRUD extends HttpServlet {
                 break;
             case "delete":
                 deleteAsset(request, response);
+                break;
+            case "detail":
+                String idStr = request.getParameter("id");
+                if (idStr == null || idStr.trim().isEmpty()) {
+                    response.sendRedirect(request.getContextPath() + "/assets?action=list");
+                    return;
+                }
+                try {
+                    int id = Integer.parseInt(idStr.trim());
+                    Asset asset = assetDao.findById(id);
+                    request.setAttribute("asset", asset);
+                    request.getRequestDispatcher("/views/asset/asset-detail.jsp").forward(request, response);
+                } catch (NumberFormatException e) {
+                    response.sendRedirect(request.getContextPath() + "/assets?action=list");
+                } catch (Exception e) {
+                    response.sendRedirect(request.getContextPath() + "/assets?action=list");
+                }
                 break;
             default:
                 listAssets(request, response);
@@ -58,15 +78,40 @@ public class AssetServlet_CRUD extends HttpServlet {
             insertAsset(request, response);
         } else if ("edit".equals(action)) {
             updateAsset(request, response);
+        } else if ("changeStatus".equals(action)) {
+            changeStatusAsset(request, response);
         }
     }
 
     private void listAssets(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            List<Asset> assets = assetDao.findAll();
+            String keyword = request.getParameter("keyword");
+            String status = request.getParameter("status");
+            String categoryIdStr = request.getParameter("categoryId");
+
+            List<Asset> assets;
+            if ((keyword != null && !keyword.trim().isEmpty())
+                    || (status != null && !status.trim().isEmpty())
+                    || (categoryIdStr != null && !categoryIdStr.trim().isEmpty())) {
+                Long categoryId = null;
+                if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
+                    try {
+                        categoryId = Long.parseLong(categoryIdStr);
+                    } catch (NumberFormatException e) {
+                        // ignore
+                    }
+                }
+                assets = assetDao.searchAssets(keyword, status, categoryId);
+            } else {
+                assets = assetDao.findAll();
+            }
+
             request.setAttribute("assets", assets);
-            request.getRequestDispatcher("/views/admin/asset-list.jsp").forward(request, response);
+            request.setAttribute("keyword", keyword);
+            request.setAttribute("status", status);
+            request.setAttribute("categoryId", categoryIdStr);
+            request.getRequestDispatcher("/views/asset/asset-list.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException(e);
         }
@@ -122,6 +167,31 @@ public class AssetServlet_CRUD extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
             throw new ServletException(e);
+        }
+    }
+
+    private void changeStatusAsset(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        User currentUser = session != null ? (User) session.getAttribute("currentUser") : null;
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+            return;
+        }
+        try {
+            long assetId = Long.parseLong(request.getParameter("assetId"));
+            String newStatus = request.getParameter("newStatus");
+            String reason = request.getParameter("reason");
+            if (newStatus == null || newStatus.trim().isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/assets?action=detail&id=" + assetId);
+                return;
+            }
+            assetDao.updateStatus(assetId, newStatus.trim(), reason != null ? reason.trim() : "", currentUser.getUserId());
+            response.sendRedirect(request.getContextPath() + "/assets?action=detail&id=" + assetId);
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/assets?action=list");
         }
     }
 
