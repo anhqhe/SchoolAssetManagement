@@ -4,7 +4,7 @@
  */
 package controller.allocation.staff;
 
-import controller.allocation.websocket.NotificationEndPoint;
+import controller.allocation.notification.NotificationEndPoint;
 import dao.allocation.AllocationDAO;
 import dao.allocation.AllocationItemDAO;
 import dao.allocation.AssetDAO;
@@ -112,7 +112,10 @@ public class AllocateAssets extends HttpServlet {
         //Send notification to teacher
         AssetRequestDTO reqDTO = requestDAO.findById(requestId);
         NotificationEndPoint.sendToUser(reqDTO.getTeacherId(), 
-                "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!");
+                "Yêu cầu cấp phát đã hoàn thành",
+                "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!",
+                "ASSET_REQUEST",
+                requestId);
 
         response.sendRedirect("request-list?msg=success");
     }

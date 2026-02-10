@@ -1,4 +1,4 @@
-package controller.allocation.websocket;
+package controller.allocation.notification;
 
 import dao.allocation.NotificationDAO;
 import jakarta.websocket.*;
@@ -11,6 +11,8 @@ import model.allocation.Notification;
 
 @ServerEndpoint("/notifications/{userId}")
 public class NotificationEndPoint {
+    
+    private static NotificationDAO notiDAO = new NotificationDAO();
 
     // Thread-safe map: UserId -> Tập hợp các Session của User đó
     private static final ConcurrentHashMap<Long, CopyOnWriteArraySet<Session>> userSessions = new ConcurrentHashMap<>();
@@ -42,25 +44,16 @@ public class NotificationEndPoint {
     }
 
     // Send to 1 user (all tab)
-    public static void sendToUser(long userId, String message) {
-        sendToUser(userId, "Thông báo", message, "SYSTEM", 0);
-    }
-
     public static void sendToUser(long userId, String title, String content, String refType, long refId) {
-        insertNotification(userId, title, content, refType, refId);
+        long notiId = insertNotificationAndGetId(userId, title, content, refType, refId);
         CopyOnWriteArraySet<Session> sessions = userSessions.get(userId);
         if (sessions != null) {
             for (Session s : sessions) {
                 if (s.isOpen()) {
-                    s.getAsyncRemote().sendText(content);
+                    String payload = "{\"id\":" + notiId + ",\"content\":\"" + escapeJson(content) + "\"}";
+                    s.getAsyncRemote().sendText(payload);
                 }
             }
-        }
-    }
-
-    public static void sendToUsers(List<Long> userIds, String message) {
-        for (Long id : userIds) {
-            sendToUser(id, message);
         }
     }
 
@@ -70,7 +63,7 @@ public class NotificationEndPoint {
         }
     }
 
-    private static void insertNotification(long userId, String title, String content, String refType, long refId) {
+    private static long insertNotificationAndGetId(long userId, String title, String content, String refType, long refId) {
         try {
             Notification noti = new Notification();
             noti.setReceiverId(userId);
@@ -79,9 +72,17 @@ public class NotificationEndPoint {
             noti.setRefType(refType);
             noti.setRefId(refId);
 
-            new NotificationDAO().insertNotification(noti);
+            return notiDAO.insert(noti);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return -1;
+    }
+
+    private static String escapeJson(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

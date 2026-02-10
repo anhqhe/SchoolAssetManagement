@@ -4,7 +4,7 @@
  */
 package controller.allocation.board;
 
-import controller.allocation.websocket.NotificationEndPoint;
+import controller.allocation.notification.NotificationEndPoint;
 import dao.allocation.UserDAO;
 import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
@@ -86,6 +86,9 @@ public class RequestListBoard extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // For Board approve or reject
+        
+        
         // Get User data from session
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("currentUser");
@@ -112,6 +115,7 @@ public class RequestListBoard extends HttpServlet {
         }
 
         //Save to database sucessfully
+        
         // Send Notifications to Teacher, Staff 
         
         AssetRequestDTO reqDTO = requestDAO.findById(requestId);
@@ -119,18 +123,27 @@ public class RequestListBoard extends HttpServlet {
         //Board Reject
         if ("REJECTED".equals(decision)) {
             NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
-                    "Phiếu " + reqDTO.getRequestCode() + " của bạn đã bị từ chối.");
+                    "Yêu cầu bị từ chối",
+                    "Phiếu " + reqDTO.getRequestCode() + " của bạn đã bị từ chối.",
+                    "ASSET_REQUEST",
+                    requestId);
         }
 
         //Board  Approve
         if ("APPROVED".equals(decision)) {
             //Send noti to teacher
             NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
-                    "Phiếu " + reqDTO.getRequestCode() + " đã được phê duyệt!");
+                    "Yêu cầu được phê duyệt",
+                    "Phiếu " + reqDTO.getRequestCode() + " đã được phê duyệt!",
+                    "ASSET_REQUEST",
+                    requestId);
             //send noti to staffs
             List<Long> staffIds = userDAO.getIdsByRole("ASSET_STAFF");
             NotificationEndPoint.sendToUsers(staffIds,
-                    "Cần cấp phát tài sản cho phiếu: " + reqDTO.getRequestCode());
+                    "Yêu cầu cấp phát mới",
+                    "Cần cấp phát tài sản cho phiếu: " + reqDTO.getRequestCode(),
+                    "ASSET_REQUEST",
+                    requestId);
         }
 
         // Return result

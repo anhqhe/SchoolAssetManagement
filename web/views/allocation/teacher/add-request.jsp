@@ -82,6 +82,13 @@
                                     <hr>
                                     <h5>Danh sách tài sản cần mượn</h5>
 
+                                    <div id="category-dup-warning" class="alert alert-warning d-none" role="alert">
+                                        <span id="category-dup-text"></span>
+                                        <button type="button" class="close" id="category-dup-close" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+
                                     <div id="itemList">
                                         <div class="row item-row mb-3 align-items-end">
                                             <div class="col-md-4">
@@ -137,6 +144,34 @@
         <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
         
         <script>
+                                            function showDupWarning(message) {
+                                                const warning = document.getElementById('category-dup-warning');
+                                                const text = document.getElementById('category-dup-text');
+                                                text.textContent = message;
+                                                warning.classList.remove('d-none');
+                                            }
+
+                                            function hideDupWarning() {
+                                                const warning = document.getElementById('category-dup-warning');
+                                                const text = document.getElementById('category-dup-text');
+                                                warning.classList.add('d-none');
+                                                text.textContent = '';
+                                            }
+
+                                            function hasDuplicateCategories() {
+                                                const selects = document.querySelectorAll('select[name="categoryIds"]');
+                                                const seen = {};
+                                                for (let i = 0; i < selects.length; i++) {
+                                                    const value = selects[i].value;
+                                                    if (!value) continue;
+                                                    if (seen[value]) {
+                                                        return true;
+                                                    }
+                                                    seen[value] = true;
+                                                }
+                                                return false;
+                                            }
+
                                             function addItem() {
                                                 const itemList = document.getElementById('itemList');
                                                 const firstRow = itemList.querySelector('.item-row');
@@ -154,6 +189,7 @@
 
                                                 itemList.appendChild(newRow);
                                                 updateDeleteButtons();
+                                                hideDupWarning();
                                             }
 
                                             function deleteItem(button) {
@@ -169,6 +205,7 @@
 
                                                 itemRow.remove();
                                                 updateDeleteButtons();
+                                                hideDupWarning();
                                             }
 
                                             function updateDeleteButtons() {
@@ -185,6 +222,30 @@
                                                     }
                                                 });
                                             }
+
+                                            document.addEventListener('change', function (e) {
+                                                if (e.target && e.target.matches('select[name="categoryIds"]')) {
+                                                    if (hasDuplicateCategories()) {
+                                                        e.target.value = '';
+                                                        showDupWarning('Không được chọn trùng loại tài sản trong cùng một yêu cầu.');
+                                                    } else {
+                                                        hideDupWarning();
+                                                    }
+                                                }
+                                            });
+
+                                            document.addEventListener('submit', function (e) {
+                                                if (e.target && e.target.matches('form')) {
+                                                    if (hasDuplicateCategories()) {
+                                                        e.preventDefault();
+                                                        showDupWarning('Không được chọn trùng loại tài sản trong cùng một yêu cầu.');
+                                                    }
+                                                }
+                                            });
+
+                                            document.getElementById('category-dup-close').addEventListener('click', function () {
+                                                hideDupWarning();
+                                            });
         </script>
 
     </body>

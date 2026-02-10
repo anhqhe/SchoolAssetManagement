@@ -63,7 +63,8 @@
                                 </div>
                             </div>
 
-                            <c:forEach var="item" items="${neededItems}">
+                            <c:forEach var="item" items="${neededItems}" varStatus="st">
+                                <div class="category-group" data-category="${item.categoryId}" data-limit="${item.quantity}">
                                 <div class="card shadow mb-4 border-left-success">
                                     <div class="card-header py-3">
                                         <h6 class="m-0 font-weight-bold text-success">
@@ -72,6 +73,12 @@
                                     </div>
 
                                     <div class="card-body">
+                                        <div class="alert alert-warning d-none category-warning" data-group="${st.index}" role="alert">
+                                            <span class="category-warning-text"></span>
+                                            <button type="button" class="close category-warning-close" data-group="${st.index}" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
                                         <p class="small text-muted">Vui lòng chọn đủ ${item.quantity} tài sản từ kho bên dưới:</p>
 
                                         <div class="row g-3">
@@ -85,7 +92,8 @@
                                                                        name="selectedAssetIds" 
                                                                        value="${asset.assetId}"
                                                                        data-category="${item.categoryId}"
-                                                                       data-limit="${item.quantity}">
+                                                                       data-limit="${item.quantity}"
+                                                                       data-group="${st.index}">
                                                                 <label class="custom-control-label" for="asset_${asset.assetId}">
                                                                     <strong>${asset.assetCode}</strong> - ${asset.assetName}
                                                                 </label>
@@ -98,6 +106,7 @@
                                         </div>
                                     </div>     
 
+                                </div>
                                 </div>
                             </c:forEach>
 
@@ -125,26 +134,68 @@
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-        <!-- Đang lỗi, không chặn được check quá số lượng -->
         <script>
             $(document).ready(function () {
+                function showWarning(groupId, message) {
+                    const $warning = $('.category-warning[data-group="' + groupId + '"]');
+                    $warning.find('.category-warning-text').text(message);
+                    $warning.removeClass('d-none');
+                }
 
-                $('.asset-check').on('click', function (e) {
-                    let categoryId = $(this).data('category');
-                    let limit = $(this).data('limit');
+                function hideWarning(groupId) {
+                    const $warning = $('.category-warning[data-group="' + groupId + '"]');
+                    $warning.addClass('d-none');
+                    $warning.find('.category-warning-text').text('');
+                }
 
-                    let $checks = $(`.asset-check[data-category="${categoryId}"]`);
-                    let checkedCount = $checks.filter(':checked').length;
-
-                    // Nếu checkbox này CHƯA check mà đã đủ limit → chặn
-                    if (!$(this).is(':checked') && checkedCount >= limit) {
-                        e.preventDefault(); // CHẶN TRƯỚC KHI CHECK
-                        return false;
-                    }
+                $(document).on('click', '.category-warning-close', function () {
+                    const groupId = $(this).attr('data-group');
+                    hideWarning(groupId);
                 });
 
+                $('.asset-check').on('change', function () {
+                    const groupId = $(this).attr('data-group');
+                    const $checks = $('.asset-check[data-group="' + groupId + '"]');
+                    const limit = parseInt($(this).attr('data-limit'), 10);
+                    const checkedCount = $checks.filter(':checked').length;
+
+                    if (Number.isFinite(limit) && $(this).is(':checked') && checkedCount > limit) {
+                        this.checked = false;
+                        showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu.');
+                        return;
+                    }
+                    hideWarning(groupId);
+                });
+
+                $('form').on('submit', function (e) {
+                    let hasInvalid = false;
+
+                    const groupIds = {};
+                    $('.asset-check').each(function () {
+                        groupIds[$(this).attr('data-group')] = true;
+                    });
+
+                    Object.keys(groupIds).some(function (groupId) {
+                        const $checks = $('.asset-check[data-group="' + groupId + '"]');
+                        const limit = parseInt($checks.first().attr('data-limit'), 10);
+                        const checkedCount = $checks.filter(':checked').length;
+                        if (Number.isFinite(limit) && checkedCount > limit) {
+                            hasInvalid = true;
+                            showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu.');
+                            return true;
+                        }
+                        hideWarning(groupId);
+                        return false;
+                    });
+
+                    if (hasInvalid) {
+                        e.preventDefault();
+                    }
+                });
             });
         </script>
+
+
 
 
 

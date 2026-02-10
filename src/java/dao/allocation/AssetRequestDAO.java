@@ -48,7 +48,7 @@ public class AssetRequestDAO {
                 }
             }
         }
-        return 0;
+        return -1;
     }
 
     //update status
@@ -236,8 +236,83 @@ public class AssetRequestDAO {
             System.err.println(e);
         }
         return list;
+        
+        
     }
 
+    // view in staff/request-list
+    public List<AssetRequestDTO> getRequestsForStaff(String keyword, String status, String sortBy) throws SQLException {
+        
+        String orderClause;
+        if(sortBy ==null || sortBy.isEmpty()) {
+            orderClause = "r.CreatedAt DESC"; //default
+        } else {
+            orderClause = switch (sortBy) {
+                case "RequestCode ASC" -> "r.RequestCode ASC";
+                case "RequestCode DESC" -> "r.RequestCode DESC";
+                case "TeacherName ASC" -> "u.FullName ASC";
+                case "TeacherName DESC" -> "u.FullName DESC";
+                case "CreatedAt ASC" -> "r.CreatedAt ASC";
+                case "CreatedAt DESC" -> "r.CreatedAt DESC";
+                case "RoomName ASC" -> "rm.RoomName ASC";
+                case "RoomName DESC" -> "rm.RoomName DESC";
+                case "Status ASC" -> "r.Status ASC";
+                case "Status DESC" -> "r.Status DESC";
+
+                default -> "r.CreatedAt DESC";
+            }; 
+        }
+        
+        StringBuilder sql = new StringBuilder(
+                """
+                SELECT r.*, u.FullName AS TeacherName, rm.RoomName
+                FROM AssetRequests r
+                JOIN Users u ON r.TeacherId = u.UserId 
+                LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                WHERE r.Status IN ('APPROVED_BY_BOARD', 'COMPLETED')    
+                                                                 """);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+                        AND (r.RequestCode LIKE ? 
+                            OR u.FullName LIKE ? 
+                            OR rm.RoomName LIKE ?
+                            OR r.Purpose LIKE ? )  
+                       """);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND r.Status = ? ");
+        }
+
+        sql.append(" ORDER BY ").append(orderClause);
+
+        List<AssetRequestDTO> list = new ArrayList<>();
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchVal = "%" + keyword.trim() + "%";
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+                ps.setString(idx++, searchVal);
+            }
+            if (status != null && !status.isEmpty()) {
+                ps.setString(idx++, status);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+
+                    list.add(dto);
+                }
+            }
+        }
+        return list;
+    }
+
+    
     //Filter in staff/allocation-list, board/approval-center
     public List<AssetRequestDTO> getRequestsAdvanced(String keyword, String status, String sortBy) throws SQLException {
         

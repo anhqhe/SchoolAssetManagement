@@ -4,7 +4,7 @@
  */
 package controller.allocation.teacher;
 
-import controller.allocation.websocket.NotificationEndPoint;
+import controller.allocation.notification.NotificationEndPoint;
 import dao.allocation.UserDAO;
 import dao.allocation.AssetCategoryDAO;
 import dao.allocation.AssetRequestDAO;
@@ -95,7 +95,7 @@ public class AddRequest extends HttpServlet {
             String[] notes = request.getParameterValues("notes");
 
             // Save to database
-            boolean success = createAssetRequest(
+            long requestId = createAssetRequest(
                     currentUser.getUserId(),
                     roomId,
                     purpose,
@@ -103,10 +103,14 @@ public class AddRequest extends HttpServlet {
                     quantities,
                     notes);
 
-            if (success) {
-                //Send Notification to Board
+            if (requestId > 0) {
+                //Send Notification to Boards
                 List<Long> boardIds = userDAO.getIdsByRole("BOARD");
-                NotificationEndPoint.sendToUsers(boardIds, "Có phiếu yêu cầu mới từ: " + currentUser.getFullName());
+                NotificationEndPoint.sendToUsers(boardIds, 
+                        "Yêu cầu mới cần phê duyệt",
+                        "Có phiếu yêu cầu mới từ: " + currentUser.getFullName(),
+                        "ASSET_REQUEST",
+                        requestId);
                 
                 System.out.println("[AddRequest] User " + currentUser.getUserId() + " created new request successfully");
                 response.sendRedirect(request.getContextPath() + "/teacher/request-list?msg=success");
@@ -124,7 +128,7 @@ public class AddRequest extends HttpServlet {
     }
 
     //Save to database
-    public boolean createAssetRequest(long userId, long roomId, String purpose,
+    public long createAssetRequest(long userId, long roomId, String purpose,
             String[] catIds, String[] qtys, String[] notes) {
         Connection conn = null;
         try {
@@ -161,7 +165,7 @@ public class AddRequest extends HttpServlet {
             }
 
             conn.commit(); // End Transaction
-            return true;
+            return requestId;
 
         } catch (SQLException e) {
             System.err.println("[AddRequest] Database error: " + e.getMessage());
@@ -174,11 +178,11 @@ public class AddRequest extends HttpServlet {
                     ex.printStackTrace();
                 }
             }
-            return false;
+            return -1;
         } catch (Exception e) {
             System.err.println("[AddRequest] Unexpected error: " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return -1;
         } finally {
             if (conn != null) {
                 try {

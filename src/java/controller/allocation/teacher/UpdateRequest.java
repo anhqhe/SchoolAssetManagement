@@ -5,7 +5,7 @@
 package controller.allocation.teacher;
 
 import dao.allocation.AssetCategoryDAO;
-import controller.allocation.websocket.NotificationEndPoint;
+import controller.allocation.notification.NotificationEndPoint;
 import dao.allocation.AssetRequestDAO;
 import dao.allocation.AssetRequestItemDAO;
 import dao.allocation.UserDAO;
@@ -145,7 +145,11 @@ public class UpdateRequest extends HttpServlet {
             if (success) {
                 // Notify board about updated request
                 List<Long> boardIds = userDAO.getIdsByRole("BOARD");
-                NotificationEndPoint.sendToUsers(boardIds, currentUser.getFullName()+" đã cập nhật yêu cầu: " + req.getRequestCode());
+                NotificationEndPoint.sendToUsers(boardIds, 
+                        "Yêu cầu đã được cập nhật",
+                        currentUser.getFullName()+" đã cập nhật yêu cầu: " + req.getRequestCode(),
+                        "ASSET_REQUEST",
+                        requestId);
                 
                 response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId + "&msg=success");
             } else {

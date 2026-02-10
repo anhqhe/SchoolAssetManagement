@@ -49,7 +49,7 @@ public class RequestListStaff extends HttpServlet {
         
         List<AssetRequestDTO> list = new ArrayList<>();
         try {
-            list = requestDAO.getRequestsAdvanced(keyword, status, sortBy);
+            list = requestDAO.getRequestsForStaff(keyword, status, sortBy);
         } catch (SQLException ex) {
             Logger.getLogger(RequestListStaff.class.getName()).log(Level.SEVERE, null, ex);
         }
