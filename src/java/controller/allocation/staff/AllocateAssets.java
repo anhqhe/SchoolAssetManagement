@@ -46,14 +46,36 @@ public class AllocateAssets extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+
+        List<String> roles = currentUser.getRoles();
+        if (roles == null || !roles.contains("ASSET_STAFF")) {
+            response.sendRedirect(request.getContextPath() + "/staff/request-list");
+            return;
+        }
+
         try {
             long requestId = Long.parseLong(request.getParameter("requestId"));
 
             AssetRequestDTO requestDetail = requestDAO.findById(requestId);
+            if (requestDetail == null) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Không thể tải yêu cầu cấp phát.");
+                response.sendRedirect("request-list");
+                return;
+            }
             
             //Only request approved_by_board can allocate asset
             if (!requestDetail.getStatus().equals("APPROVED_BY_BOARD")) {
-                response.sendRedirect("request-list?error=true");
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Yêu cầu chưa được phê duyệt để cấp phát.");
+                response.sendRedirect("request-list");
                 return;
             }
 
@@ -70,24 +92,55 @@ public class AllocateAssets extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("request-list?error=true");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Không thể tải yêu cầu cấp phát.");
+            response.sendRedirect("request-list");
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-      
-        // Get Staff data
-        User staff = (User) request.getSession().getAttribute("currentUser");
+        HttpSession session = request.getSession(false);
+        User staff = (session != null) ? (User) session.getAttribute("currentUser") : null;
 
+        if (staff == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+
+        List<String> roles = staff.getRoles();
+        if (roles == null || !roles.contains("ASSET_STAFF")) {
+            response.sendRedirect(request.getContextPath() + "/staff/request-list");
+            return;
+        }
+
+        String action = request.getParameter("action");
         // Get RequestId, list asset, note
         long requestId = Long.parseLong(request.getParameter("requestId"));
+
+        if ("notify_out_of_stock".equals(action)) {
+            AssetRequestDTO reqDTO = requestDAO.findById(requestId);
+            if (reqDTO != null) {
+                NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
+                        "Kho hàng không đủ tài sản",
+                        "Kho hàng không đủ tài sản cấp phát cho phiếu " + reqDTO.getRequestCode() + ".",
+                        "ASSET_REQUEST",
+                        requestId);
+            }
+            session.setAttribute("type", "info");
+            session.setAttribute("message", "Đã gửi thông báo hết tài sản cho giáo viên.");
+            response.sendRedirect("allocate-assets?requestId=" + requestId);
+            return;
+        }
+
         String note = request.getParameter("note");
         String[] selectedAssetIds = request.getParameterValues("selectedAssetIds");
 
         if (selectedAssetIds == null || selectedAssetIds.length == 0) {
-            response.sendRedirect("allocate-assets?requestId=" + requestId + "&msg=no_selection");
+            session.setAttribute("type", "warning");
+            session.setAttribute("message", "Vui lòng chọn ít nhất một tài sản để cấp phát.");
+            response.sendRedirect("allocate-assets?requestId=" + requestId);
             return;
         }
 
@@ -103,7 +156,9 @@ public class AllocateAssets extends HttpServlet {
         boolean success = processAllocation(requestId, staff.getUserId(), note, assetIds);
         
         if (!success) {
-            response.sendRedirect("allocate-assets?requestId=" + requestId + "&msg=error");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra khi cấp phát tài sản.");
+            response.sendRedirect("allocate-assets?requestId=" + requestId);
             return;
         }
         
@@ -117,7 +172,9 @@ public class AllocateAssets extends HttpServlet {
                 "ASSET_REQUEST",
                 requestId);
 
-        response.sendRedirect("request-list?msg=success");
+        session.setAttribute("type", "success");
+        session.setAttribute("message", "Cấp phát tài sản thành công!");
+        response.sendRedirect("request-list");
     }
 
     // Save data to database

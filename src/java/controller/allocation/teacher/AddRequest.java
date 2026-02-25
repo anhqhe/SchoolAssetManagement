@@ -44,12 +44,12 @@ public class AddRequest extends HttpServlet {
         // Check authentication
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
-        
+
         // Check authorization - user must have TEACHER role
         List<String> roles = currentUser.getRoles();
         if (roles == null || !roles.contains("TEACHER")) {
@@ -60,7 +60,7 @@ public class AddRequest extends HttpServlet {
         try {
             request.setAttribute("rooms", roomDAO.getAllActiveRooms());
             request.setAttribute("categories", assetCategoryDAO.getAllActiveCategories());
-            request.getRequestDispatcher("/views/allocation/teacher/add-request.jsp")
+            request.getRequestDispatcher("/views/allocation/teacher/request-form.jsp")
                     .forward(request, response);
         } catch (Exception e) {
             System.err.println("Error loading add request page: " + e.getMessage());
@@ -77,7 +77,7 @@ public class AddRequest extends HttpServlet {
         // Get user information from session
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         // Check authentication
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
@@ -106,23 +106,25 @@ public class AddRequest extends HttpServlet {
             if (requestId > 0) {
                 //Send Notification to Boards
                 List<Long> boardIds = userDAO.getIdsByRole("BOARD");
-                NotificationEndPoint.sendToUsers(boardIds, 
+                NotificationEndPoint.sendToUsers(boardIds,
                         "Yêu cầu mới cần phê duyệt",
                         "Có phiếu yêu cầu mới từ: " + currentUser.getFullName(),
                         "ASSET_REQUEST",
                         requestId);
-                
-                System.out.println("[AddRequest] User " + currentUser.getUserId() + " created new request successfully");
-                response.sendRedirect(request.getContextPath() + "/teacher/request-list?msg=success");
+
+                session.setAttribute("type", "success");
+                session.setAttribute("message", "Gửi yêu cầu tài sản thành công!");
+                response.sendRedirect(request.getContextPath() + "/teacher/request-list");
             } else {
-                request.setAttribute("error", "Không thể tạo yêu cầu. Vui lòng thử lại!");
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Không thể tạo yêu cầu. Vui lòng thử lại!");
                 doGet(request, response);
             }
 
         } catch (Exception e) {
-            System.err.println("[AddRequest] Error creating request: " + e.getMessage());
             e.printStackTrace();
-            request.setAttribute("error", "Dữ liệu nhập vào không hợp lệ!");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Dữ liệu nhập vào không hợp lệ!");
             doGet(request, response);
         }
     }

@@ -42,22 +42,16 @@
                     <%@ include file="/views/layout/allocation/topbar2.jsp" %>
 
                     <!-- Error/Success Messages -->
-                    <c:if test="${not empty param.error}">
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            <i class="fas fa-exclamation-circle"></i> ${param.error}
+                    <c:if test="${not empty sessionScope.message}">
+                        <div class="alert alert-${sessionScope.type eq 'error' ? 'danger' : (sessionScope.type eq 'warning' ? 'warning' : (sessionScope.type eq 'info' ? 'info' : 'success'))} alert-dismissible fade show">
+                            <i class="fas fa-${sessionScope.type eq 'error' ? 'exclamation-circle' : (sessionScope.type eq 'warning' ? 'exclamation-triangle' : (sessionScope.type eq 'info' ? 'info-circle' : 'check-circle'))}"></i>
+                            ${sessionScope.message}
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
                         </div>
-                    </c:if>
-
-                    <c:if test="${not empty param.msg}">
-                        <div class="alert alert-success alert-dismissible fade show">
-                            <i class="fas fa-check-circle"></i> ${param.msg}
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
+                        <c:remove var="type" scope="session" />
+                        <c:remove var="message" scope="session" />
                     </c:if>
 
                     <!-- Main Content -->

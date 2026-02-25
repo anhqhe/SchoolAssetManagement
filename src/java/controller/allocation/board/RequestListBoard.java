@@ -21,8 +21,6 @@ import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import model.User;
 
 /**
@@ -52,16 +50,9 @@ public class RequestListBoard extends HttpServlet {
         // Check authorization - user must have BOARD role
         List<String> roles = currentUser.getRoles();
         if (roles == null || !roles.contains("BOARD")) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            //response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
             return;
-        }
-
-        //show msg if approved
-        String msg = request.getParameter("msg");
-        if ("success".equals(msg)) {
-            request.setAttribute("msg", "Đã phê duyệt phiếu thành công!");
-        } else if ("error".equals(msg)) {
-            request.setAttribute("error", "Có lỗi xảy ra trong quá trình xử lý.");
         }
 
         //Filter
@@ -74,7 +65,8 @@ public class RequestListBoard extends HttpServlet {
         try {
             list = requestDAO.getRequestsAdvanced(keyword, status, sortBy);
         } catch (SQLException ex) {
-            Logger.getLogger(RequestListBoard.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("controller.allocation.board.RequestListBoard.doGet()");
+            System.out.println(ex);
         }
 
         request.setAttribute("requestList", list);
@@ -85,32 +77,49 @@ public class RequestListBoard extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        // Check authentication
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+        
+        // Check authorization - user must have BOARD role
+        List<String> roles = currentUser.getRoles();
+        if (roles == null || !roles.contains("BOARD")) {
+            //response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
+            return;
+        }
 
         // For Board approve or reject
-        
-        
-        // Get User data from session
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("currentUser");
+               
 
         // Get data from form
         String requestIdStr = request.getParameter("requestId");
         String decision = request.getParameter("decision"); // APPROVED or REJECTED
         String note = request.getParameter("note");
 
-        if (user == null || requestIdStr == null) {
-            response.sendRedirect("request-list?msg=error");
+        if (currentUser == null || requestIdStr == null) {
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra trong quá trình xử lý.");
+            response.sendRedirect("request-list");
             return;
         }
 
         long requestId = Long.parseLong(requestIdStr);
-        long approverId = user.getUserId();
+        long approverId = currentUser.getUserId();
 
         // Save to database
         boolean isSuccess = approveOrRejectRequest(requestId, approverId, decision, note);
 
         if (!isSuccess) {
-            response.sendRedirect("request-list?msg=error");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra trong quá trình xử lý.");
+            response.sendRedirect("request-list");
             return;
         }
 
@@ -147,7 +156,9 @@ public class RequestListBoard extends HttpServlet {
         }
 
         // Return result
-        response.sendRedirect("request-list?msg=success");
+        session.setAttribute("type", "success");
+        session.setAttribute("message", "Đã phê duyệt phiếu thành công!");
+        response.sendRedirect("request-list");
 
     }
 
@@ -188,3 +199,4 @@ public class RequestListBoard extends HttpServlet {
         }
     }
 }
+

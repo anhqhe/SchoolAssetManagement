@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import model.User;
 
 @WebServlet(name = "MarkNotificationReadServlet", urlPatterns = {"/notifications/mark-read"})
@@ -18,7 +19,8 @@ public class MarkNotificationReadServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("application/json");
-        User currentUser = (User) request.getSession().getAttribute("currentUser");
+        HttpSession session = request.getSession(false);
+        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
         if (currentUser == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"success\":false}");
@@ -44,7 +46,7 @@ public class MarkNotificationReadServlet extends HttpServlet {
         try {
             
             
-            boolean updated = notiDAO.markAsRead(notificationId);
+            boolean updated = notiDAO.markAsRead(notificationId, currentUser.getUserId());
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write("{\"success\":" + updated + "}");
         } catch (Exception e) {

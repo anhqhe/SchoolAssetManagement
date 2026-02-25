@@ -17,8 +17,6 @@ import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import model.allocation.AssetRequest;
 import model.User;
 
@@ -57,7 +55,8 @@ public class RequestListTeacher extends HttpServlet {
         try {
             list = requestDAO.getRequestsByTeacher(currentUser.getUserId(), keyword, status, sortBy);
         } catch (SQLException ex) {
-            Logger.getLogger(RequestListTeacher.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("controller.allocation.teacher.RequestListTeacher.doGet()");
+            System.out.println(ex);
         }
         
         request.setAttribute("roomDAO", roomDAO);

@@ -37,25 +37,17 @@
                             </div>
                             <div class="card-body">
 
-                                <!-- Message Alert -->
-                                <c:if test="${param.msg eq 'success'}">
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
+                                <!-- Error/Success Messages -->
+                                <c:if test="${not empty sessionScope.message}">
+                                    <div class="alert alert-${sessionScope.type eq 'error' ? 'danger' : (sessionScope.type eq 'warning' ? 'warning' : (sessionScope.type eq 'info' ? 'info' : 'success'))} alert-dismissible fade show">
+                                        <i class="fas fa-${sessionScope.type eq 'error' ? 'exclamation-circle' : (sessionScope.type eq 'warning' ? 'exclamation-triangle' : (sessionScope.type eq 'info' ? 'info-circle' : 'check-circle'))}"></i>
+                                        ${sessionScope.message}
+                                        <button type="button" class="close" data-dismiss="alert">
+                                            <span>&times;</span>
                                         </button>
-                                        <i class="fas fa-check-circle"></i>
-                                        Gửi yêu cầu tài sản thành công!
                                     </div>
-                                </c:if>
-
-                                <c:if test="${not empty error}">
-                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        ${error}
-                                    </div>
+                                    <c:remove var="type" scope="session" />
+                                    <c:remove var="message" scope="session" />
                                 </c:if>
 
 
@@ -142,7 +134,7 @@
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery-easing/jquery.easing.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
-        
+
         <script>
                                             function showDupWarning(message) {
                                                 const warning = document.getElementById('category-dup-warning');
@@ -163,7 +155,8 @@
                                                 const seen = {};
                                                 for (let i = 0; i < selects.length; i++) {
                                                     const value = selects[i].value;
-                                                    if (!value) continue;
+                                                    if (!value)
+                                                        continue;
                                                     if (seen[value]) {
                                                         return true;
                                                     }
@@ -250,3 +243,4 @@
 
     </body>
 </html>
+

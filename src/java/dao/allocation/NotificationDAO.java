@@ -138,14 +138,15 @@ public class NotificationDAO {
         return list;
     }
 
-    public boolean markAsRead(long notificationId) throws SQLException {
+    public boolean markAsRead(long notificationId, long receiverId) throws SQLException {
         String sql = """
                  UPDATE Notifications
                  SET IsRead = 1
-                 WHERE NotificationId = ? AND IsRead = 0
+                 WHERE NotificationId = ? AND ReceiverId = ? AND IsRead = 0
                  """;
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
             ps.setLong(1, notificationId);
+            ps.setLong(2, receiverId);
             return ps.executeUpdate() > 0;
         }
     }

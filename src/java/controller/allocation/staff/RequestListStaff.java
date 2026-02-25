@@ -12,11 +12,11 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import model.User;
 
 /**
  *
@@ -30,13 +30,21 @@ public class RequestListStaff extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        //Handle message from redirect
-        String msg = request.getParameter("msg");
-        if ("success".equals(msg)) {
-            request.setAttribute("msg", "Cấp phát tài sản thành công!");
-        } else if ("error".equals(msg)) {
-            request.setAttribute("msg", "Có lỗi xảy ra.");
+        // Check authentication
+        HttpSession session = request.getSession(false);
+        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+
+        // Check authorization - user must have ASSET_STAFF role
+        List<String> roles = currentUser.getRoles();
+        if (roles == null || !roles.contains("ASSET_STAFF")) {
+            //response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
+            return;
         }
 
         //Filter
@@ -51,7 +59,8 @@ public class RequestListStaff extends HttpServlet {
         try {
             list = requestDAO.getRequestsForStaff(keyword, status, sortBy);
         } catch (SQLException ex) {
-            Logger.getLogger(RequestListStaff.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("controller.allocation.staff.RequestListStaff.doGet()");
+            System.out.println(ex);
         }
 
         request.setAttribute("requestList", list);
@@ -65,3 +74,4 @@ public class RequestListStaff extends HttpServlet {
     }
 
 }
+

@@ -1,15 +1,24 @@
 package controller.allocation.notification;
 
 import dao.allocation.NotificationDAO;
-import jakarta.websocket.*;
+import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import model.User;
 import model.allocation.Notification;
 
-@ServerEndpoint("/notifications/{userId}")
+@ServerEndpoint(
+        value = "/notifications/{userId}",
+        configurator = HttpSessionConfigurator.class
+)
 public class NotificationEndPoint {
     
     private static NotificationDAO notiDAO = new NotificationDAO();
@@ -19,7 +28,21 @@ public class NotificationEndPoint {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("userId") long userId) {
-        
+        HttpSession httpSession = (HttpSession) session.getUserProperties().get(HttpSession.class.getName());
+        User currentUser = null;
+        if (httpSession != null) {
+            currentUser = (User) httpSession.getAttribute("currentUser");
+        }
+
+        if (currentUser == null || currentUser.getUserId() != userId) {
+            try {
+                session.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, "Unauthorized"));
+            } catch (Exception e) {
+                // ignore close failures
+            }
+            return;
+        }
+
         System.out.println("WebSocket onOpen: userId=" + userId + ", sessionId=" + session.getId());
         // Nếu User chưa có trong Map, tạo mới một CopyOnWriteArraySet
         userSessions.computeIfAbsent(userId, k -> new CopyOnWriteArraySet<>()).add(session);

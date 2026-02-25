@@ -61,14 +61,6 @@ public class RequestDetailBoard extends HttpServlet {
                 response.sendRedirect("request-list");
                 return;
             }
-            
-            String msg = request.getParameter("msg");
-            if ("success".equals(msg)) {
-                request.setAttribute("msg", "Thành công!");
-            } else if ("error".equals(msg)) {
-                request.setAttribute("msg", "Có lỗi xảy ra.");
-            }
-
             long requestId = Long.parseLong(idParam);
 
             // Get AssetRequest Infor
@@ -91,7 +83,10 @@ public class RequestDetailBoard extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("request-list?msg=error");
+            HttpSession session = request.getSession();
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra khi tải chi tiết yêu cầu.");
+            response.sendRedirect("request-list");
         }
     } 
 
@@ -103,3 +98,4 @@ public class RequestDetailBoard extends HttpServlet {
 
 
 }
+

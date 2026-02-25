@@ -1,15 +1,32 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="dao.allocation.NotificationDAO, model.allocation.Notification, java.util.List" %>
 
+<!-- Set role flags -->
+<c:set var="isTeacher" value="false"/>
+<c:set var="isStaff" value="false"/>
+<c:set var="isBoard" value="false"/>
+<c:forEach var="role" items="${sessionScope.currentUser.roles}">
+    <c:if test="${role eq 'TEACHER'}"><c:set var="isTeacher" value="true"/></c:if>
+    <c:if test="${role eq 'ASSET_STAFF'}"><c:set var="isStaff" value="true"/></c:if>
+    <c:if test="${role eq 'BOARD'}"><c:set var="isBoard" value="true"/></c:if>
+</c:forEach>
+
+
 <%
     model.User topbarUser = (model.User) session.getAttribute("currentUser");
-    List<Notification> unreadNotis = java.util.Collections.emptyList();
+    List<Notification> recentNotis = java.util.Collections.emptyList();
     int unreadCount = 0;
     if (topbarUser != null) {
         try {
             NotificationDAO notiDao = new NotificationDAO();
-            unreadNotis = notiDao.getTop10ByUserId(topbarUser.getUserId());
-            unreadCount = unreadNotis != null ? unreadNotis.size() : 0;
+            recentNotis = notiDao.getTop10ByUserId(topbarUser.getUserId());
+            if (recentNotis != null) {
+                for (Notification noti : recentNotis) {
+                    if (!noti.isRead()) {
+                        unreadCount++;
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -31,13 +48,33 @@
                  aria-labelledby="alertsDropdown" style="min-width: 320px;">
                 <h6 class="dropdown-header">Thông báo</h6>
                 <div id="notiList">
-                    <% if (unreadCount == 0) { %>
-                        <div class="dropdown-item text-wrap text-gray-700" id="notiEmpty">Không có thông báo mới</div>
+                    <% if (recentNotis == null || recentNotis.isEmpty()) { %>
+                    <div class="dropdown-item text-wrap text-gray-700" id="notiEmpty">Không có thông báo</div>
                     <% } else { %>
-                        <% for (Notification noti : unreadNotis) { %>
-                            <div class="dropdown-item text-wrap text-gray-700 noti-item"
-                                 data-noti-id="<%= noti.getNotificationId() %>"><%= noti.getContent() %></div>
-                        <% } %>
+                    <% for (Notification noti : recentNotis) { %>
+                    <div class="dropdown-item text-wrap noti-item <%= noti.isRead() ? "text-gray-500" : "text-gray-900 font-weight-bold" %>"
+                         data-noti-id="<%= noti.getNotificationId() %>"
+                         data-is-read="<%= noti.isRead() ? "1" : "0" %>">
+
+                        <c:choose>
+                            <c:when test="${isTeacher}">
+                                <a href="${pageContext.request.contextPath}/teacher/request-detail?id=<%= noti.getRefId() %>" class="text-decoration-none text-reset">
+                                    <%= noti.getContent() %>
+                                </a>
+                            </c:when>
+                            <c:when test="${isStaff}">
+                                <a href="${pageContext.request.contextPath}/staff/request-detail?id=<%= noti.getRefId() %>" class="text-decoration-none text-reset">
+                                    <%= noti.getContent() %>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <a href="${pageContext.request.contextPath}/board/request-detail?id=<%= noti.getRefId() %>" class="text-decoration-none text-reset">
+                                    <%= noti.getContent() %>
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <% } %>
                     <% } %>
                 </div>
             </div>
@@ -92,7 +129,8 @@
 
         function updateBadge() {
             const countBadge = document.getElementById('notiCount');
-            if (!countBadge) return;
+            if (!countBadge)
+                return;
             if (unreadCount > 0) {
                 countBadge.style.display = 'inline-block';
                 countBadge.innerText = String(unreadCount);
@@ -123,14 +161,15 @@
                     try {
                         data = JSON.parse(event.data);
                     } catch (e) {
-                        data = { content: event.data, id: -1 };
+                        data = {content: event.data, id: -1};
                     }
                     const item = document.createElement('div');
-                    item.className = 'dropdown-item text-wrap text-gray-700 noti-item';
+                    item.className = 'dropdown-item text-wrap text-gray-900 font-weight-bold noti-item';
                     item.textContent = data.content || '';
                     if (data.id && data.id > 0) {
                         item.setAttribute('data-noti-id', String(data.id));
                     }
+                    item.setAttribute('data-is-read', '0');
                     list.prepend(item);
                 }
                 unreadCount += 1;
@@ -143,7 +182,7 @@
 
             socket.onclose = function () {
                 console.log("WebSocket closed. Reconnecting in " + reconnectInterval + "ms...");
-                setTimeout(function() {
+                setTimeout(function () {
                     reconnectInterval = Math.min(60000, reconnectInterval * 2);
                     connect();
                 }, reconnectInterval);
@@ -156,26 +195,26 @@
         if (notiList) {
             notiList.addEventListener('click', function (e) {
                 const target = e.target.closest('.noti-item');
-                if (!target) return;
+                if (!target)
+                    return;
                 const notiId = target.getAttribute('data-noti-id');
-                if (!notiId) return;
+                if (!notiId)
+                    return;
 
                 fetch(contextPath + '/notifications/mark-read', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: 'notificationId=' + encodeURIComponent(notiId)
                 }).then(function () {
-                    if (unreadCount > 0) {
-                        unreadCount -= 1;
-                        updateBadge();
-                    }
-                    target.remove();
-                    if (notiList.children.length === 0) {
-                        const empty = document.createElement('div');
-                        empty.className = 'dropdown-item text-wrap text-gray-700';
-                        empty.id = 'notiEmpty';
-                        empty.textContent = 'Không có thông báo mới';
-                        notiList.appendChild(empty);
+                    const isRead = target.getAttribute('data-is-read');
+                    if (isRead !== '1') {
+                        target.setAttribute('data-is-read', '1');
+                        target.classList.remove('text-gray-900', 'font-weight-bold');
+                        target.classList.add('text-gray-500');
+                        if (unreadCount > 0) {
+                            unreadCount -= 1;
+                            updateBadge();
+                        }
                     }
                 }).catch(function (err) {
                     console.error('Mark read failed:', err);

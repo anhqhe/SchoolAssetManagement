@@ -88,13 +88,17 @@ public class UpdateRequest extends HttpServlet {
             request.setAttribute("rooms", roomDAO.getAllActiveRooms());
             request.setAttribute("categories", categoryDAO.getAllActiveCategories());
 
-            request.getRequestDispatcher("/views/allocation/teacher/update-request.jsp")
+            request.getRequestDispatcher("/views/allocation/teacher/request-form.jsp")
                     .forward(request, response);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=invalid_id");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Invalid ID");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
         } catch (Exception e) {
             e.printStackTrace(System.err);
-            response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=load_failed");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Đã xảy ra lỗi!");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
         }
     }
 
@@ -145,20 +149,24 @@ public class UpdateRequest extends HttpServlet {
             if (success) {
                 // Notify board about updated request
                 List<Long> boardIds = userDAO.getIdsByRole("BOARD");
-                NotificationEndPoint.sendToUsers(boardIds, 
+                NotificationEndPoint.sendToUsers(boardIds,
                         "Yêu cầu đã được cập nhật",
-                        currentUser.getFullName()+" đã cập nhật yêu cầu: " + req.getRequestCode(),
+                        currentUser.getFullName() + " đã cập nhật yêu cầu: " + req.getRequestCode(),
                         "ASSET_REQUEST",
                         requestId);
-                
-                response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId + "&msg=success");
+
+                session.setAttribute("type", "success");
+                session.setAttribute("message", "Cập nhật yêu cầu thành công!");
+                response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId);
             } else {
-                request.setAttribute("error", "Update failed. Please try again.");
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Lỗi cập nhật. Vui lòng thử lại!");
                 doGet(request, response);
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
-            request.setAttribute("error", "Invalid input data.");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Invalid Input Data");
             doGet(request, response);
         }
     }

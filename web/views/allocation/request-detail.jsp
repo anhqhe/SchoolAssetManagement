@@ -63,24 +63,16 @@
                         </div>
 
                         <!-- Message Alert (COMMON) -->
-                        <c:if test="${param.msg eq 'success'}">
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <c:if test="${not empty sessionScope.message}">
+                            <div class="alert alert-${sessionScope.type eq 'error' ? 'danger' : (sessionScope.type eq 'warning' ? 'warning' : (sessionScope.type eq 'info' ? 'info' : 'success'))} alert-dismissible fade show" role="alert">
                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
-                                <i class="fas fa-check-circle"></i>
-                                Thành công!
+                                <i class="fas fa-${sessionScope.type eq 'error' ? 'exclamation-triangle' : (sessionScope.type eq 'warning' ? 'exclamation-triangle' : (sessionScope.type eq 'info' ? 'info-circle' : 'check-circle'))}"></i>
+                                ${sessionScope.message}
                             </div>
-                        </c:if>
-
-                        <c:if test="${param.msg eq 'error'}">
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Có lỗi xảy ra!
-                            </div>
+                            <c:remove var="type" scope="session" />
+                            <c:remove var="message" scope="session" />
                         </c:if>
 
                         <!-- COMMON: General Info & Request Items  -->
@@ -273,3 +265,5 @@
         </script>
     </body>
 </html>
+
+

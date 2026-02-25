@@ -47,7 +47,8 @@ public class RequestDetailTeacher extends HttpServlet {
             // Check authorization - user must have TEACHER role
             List<String> roles = currentUser.getRoles();
             if (roles == null || !roles.contains("TEACHER")) {
-                response.sendRedirect("request-list");
+                //response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
                 return;
             }
             
@@ -59,8 +60,6 @@ public class RequestDetailTeacher extends HttpServlet {
 
             long requestId = Long.parseLong(idParam);
             
-            System.out.println("[RequestDetailTeacher] Loading request ID: " + requestId);
-
             AssetRequestDTO req = requestDAO.findById(requestId);
             if (req == null) {
                 System.out.println("[RequestDetailTeacher] Request not found for ID: " + requestId);
