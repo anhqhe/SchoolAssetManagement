@@ -22,10 +22,9 @@ import util.DBUtil;
 /*
 *
 * Asset & AssetDTO DAO
-*/
-
+ */
 public class AssetDAO {
-    
+
     public boolean updateAssetStatus(Connection conn, long assetId, String status) throws SQLException {
         String sql = "UPDATE Assets SET Status = ? WHERE AssetId = ?";
 
@@ -38,10 +37,24 @@ public class AssetDAO {
         }
     }
 
+    public boolean updateAsset(Connection conn, long assetId, long currentRoomId, long currentHolderId, String status) throws SQLException {
+        String sql = "UPDATE Assets SET CurrentRoomId =?, CurrentHolderId =?, Status = ? WHERE AssetId = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, currentRoomId);
+            ps.setLong(2, currentHolderId);
+            ps.setString(3, status);
+            ps.setLong(4, assetId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+
     /*
     *
     * AssetDTO DAO
-    */
+     */
     public List<AssetDTO> findAvailableAssets() {
         List<AssetDTO> list = new ArrayList<>();
 
@@ -68,7 +81,5 @@ public class AssetDAO {
         }
         return list;
     }
-
-    
 
 }

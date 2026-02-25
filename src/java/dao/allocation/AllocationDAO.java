@@ -21,7 +21,7 @@ import util.DBUtil;
 public class AllocationDAO {
 
     public long insertAllocation(Connection conn, AssetAllocation allocation) throws SQLException {
-        
+
         String sql = """
                      INSERT INTO [dbo].[AssetAllocations]
                                 ([AllocationCode]
@@ -44,39 +44,67 @@ public class AllocationDAO {
             ps.setLong(5, allocation.getAllocatedById());
             ps.setString(6, "ACTIVE");  //ACTIVE: allocate, RETURNED: deallocate
             ps.setString(7, allocation.getNote());
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getLong(1); 
+                    return rs.getLong(1);
                 }
             }
         }
         return -1;
     }
 
-    
     public List<AssetDTO> getAllocatedAssetsByRequestId(long requestId) throws SQLException {
-    List<AssetDTO> assets = new ArrayList<>();
-    String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, c.CategoryName " +
-                 "FROM AssetAllocations aa " +
-                 "JOIN AssetAllocationItems aai ON aa.AllocationId = aai.AllocationId " +
-                 "JOIN Assets a ON aai.AssetId = a.AssetId " +
-                 "JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
-                 "WHERE aa.RequestId = ?";
-    
-    try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
-        ps.setLong(1, requestId);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                AssetDTO asset = new AssetDTO();
-                asset.setAssetId(rs.getLong("AssetId"));
-                asset.setAssetCode(rs.getString("AssetCode"));
-                asset.setAssetName(rs.getString("AssetName"));
-                asset.setCategoryName(rs.getString("CategoryName"));
-                assets.add(asset);
+        List<AssetDTO> assets = new ArrayList<>();
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, c.CategoryName, a.Status, a.CurrentHolderId "
+                + "FROM AssetAllocations aa "
+                + "JOIN AssetAllocationItems aai ON aa.AllocationId = aai.AllocationId "
+                + "JOIN Assets a ON aai.AssetId = a.AssetId "
+                + "JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                + "WHERE aa.RequestId = ?";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+            ps.setLong(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetDTO asset = new AssetDTO();
+                    asset.setAssetId(rs.getLong("AssetId"));
+                    asset.setAssetCode(rs.getString("AssetCode"));
+                    asset.setAssetName(rs.getString("AssetName"));
+                    asset.setCategoryName(rs.getString("CategoryName"));
+                    asset.setStatus(rs.getString("Status"));
+                    asset.setCurrentHolderId(rs.getLong("CurrentHolderId"));
+                    assets.add(asset);
+                }
             }
+            return assets;
         }
     }
-    return assets;
-}
+
+    public AssetAllocation getAllocationByRequestId(long requestId) throws SQLException {
+        String sql = "SELECT TOP 1 AllocationId, AllocationCode, RequestId, FromRoomId, ToRoomId, ReceiverId, AllocatedById, Status, Note, AllocatedAt "
+                + "FROM AssetAllocations WHERE RequestId = ? ORDER BY AllocatedAt DESC";
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+            ps.setLong(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    model.allocation.AssetAllocation alloc = new model.allocation.AssetAllocation();
+                    alloc.setAllocationId(rs.getLong("AllocationId"));
+                    alloc.setAllocationCode(rs.getString("AllocationCode"));
+                    alloc.setRequestId(rs.getLong("RequestId"));
+                    alloc.setFromRoomId(rs.getLong("FromRoomId"));
+                    alloc.setToRoomId(rs.getLong("ToRoomId"));
+                    alloc.setReceiverId(rs.getLong("ReceiverId"));
+                    alloc.setAllocatedById(rs.getLong("AllocatedById"));
+                    alloc.setStatus(rs.getString("Status"));
+                    alloc.setNote(rs.getString("Note"));
+                    alloc.setAllocatedAt(rs.getTimestamp("AllocatedAt").toLocalDateTime());
+                    return alloc;
+                }
+            }
+        }
+        return null;
+    }
+
 }

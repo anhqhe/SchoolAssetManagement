@@ -71,14 +71,23 @@ public class RequestDetailStaff extends HttpServlet {
             
             ApprovalDTO approval = approvalDAO.findByRef("ASSET_REQUEST", requestId);
             
-            //Get asset infor after allocating
+            //Get asset info after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
-            
+
+            //Get allocation header to determine who allocated
+            model.allocation.AssetAllocation allocHeader = allocationDAO.getAllocationByRequestId(requestId);
+            String allocatedByName = null;
+            if (allocHeader != null && allocHeader.getAllocatedById() != null) {
+                dao.allocation.UserDAO allocUserDao = new dao.allocation.UserDAO();
+                model.User allocUser = allocUserDao.getByUserId(allocHeader.getAllocatedById());
+                if (allocUser != null) allocatedByName = allocUser.getFullName() != null ? allocUser.getFullName() : allocUser.getUsername();
+            }
 
             request.setAttribute("req", requestDetail);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
+            request.setAttribute("allocatedByName", allocatedByName);
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
         } catch (Exception e) {

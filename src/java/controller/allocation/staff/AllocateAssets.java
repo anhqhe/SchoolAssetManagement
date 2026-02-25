@@ -212,8 +212,13 @@ public class AllocateAssets extends HttpServlet {
                 // Save data to table AssetAllocationItem
                 boolean itemSuccess = allocItemDAO.insertAllocationItem(conn, allocationId, assetId);
 
-                // Update Status in table Asset
-                boolean assetSuccess = assetDAO.updateAssetStatus(conn, assetId, "IN_USE");
+               
+                // update table Asset
+                boolean assetSuccess = assetDAO.updateAsset(conn, 
+                        assetId, 
+                        req.getRequestedRoomId(),
+                        req.getTeacherId(),
+                        "IN_USE");
 
                 // Save data to table AssetStatusHistory
                 statusHistoryDAO.insertStatusHistory(conn, assetId, "IN_USE", "Cấp phát cho yêu cầu #" + requestId, staffId);

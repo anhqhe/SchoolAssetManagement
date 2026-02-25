@@ -138,11 +138,12 @@
                             </div>
                         </c:if>
 
-                        <!-- STAFF & BOARD: Allocated Assets -->
+                        <!-- STAFF & BOARD: Allocated / Distributed Assets -->
                         <c:if test="${(isStaff || isBoard) && not empty allocatedAssets}">
                             <div class="card shadow mb-4 border-left-primary">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Danh sách tài sản đã bàn giao</h6>
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Tài sản đã được phân phối</h6>
+                                    <small class="text-muted">Người phân phối: <strong>${allocatedByName}</strong></small>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -151,7 +152,9 @@
                                                 <tr>
                                                     <th>Mã tài sản</th>
                                                     <th>Tên tài sản</th>
-                                                    <th>Loại</th>
+                                                    <th>Danh mục</th>
+                                                    <th>Giao cho</th>
+                                                    <th>Tình trạng</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -160,6 +163,32 @@
                                                         <td class="font-weight-bold">${asset.assetCode}</td>
                                                         <td>${asset.assetName}</td>
                                                         <td><span class="badge badge-info">${asset.categoryName}</span></td>
+                                                        <td>
+                                                            <c:choose>
+                                                                <c:when test="${asset.currentHolderId != null && asset.currentHolderId > 0}">
+                                                                    ${userDAO.getByUserId(asset.currentHolderId).fullName}
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    -
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
+                                                        <td>
+                                                            <c:choose>
+                                                                <c:when test="${asset.status == 'GOOD' || asset.status == 'AVAILABLE'}">
+                                                                    <span class="badge badge-success">Tốt</span>
+                                                                </c:when>
+                                                                <c:when test="${asset.status == 'MAINTENANCE' || asset.status == 'NEEDS_REPAIR'}">
+                                                                    <span class="badge badge-warning">Cần bảo trì</span>
+                                                                </c:when>
+                                                                <c:when test="${asset.status == 'IN_USE'}">
+                                                                    <span class="badge badge-primary">Đang sử dụng</span>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="badge badge-secondary">${asset.status}</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
                                                     </tr>
                                                 </c:forEach>
                                             </tbody>
@@ -175,38 +204,23 @@
                                 <h6>Phản hồi từ Ban Giám Hiệu:</h6>
                                 <p class="mb-1"><strong>Quyết định:</strong> ${approval.decision}</p>
                                 <p class="mb-1"><strong>Lý do/Ghi chú:</strong> ${approval.decisionNote}</p>
-                                <small>Duyệt bởi: ${userDAO.getByUserId(approval.approverId).getUsername()} vào lúc ${approval.decidedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
+                                <small>Duyệt bởi: ${userDAO.getByUserId(approval.approverId).getFullName()} vào lúc ${approval.decidedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
                             </div>
                         </c:if>
 
                         <!-- BOARD ONLY: Approve/Reject Buttons -->
                         <c:if test="${isBoard && req.status == 'WAITING_BOARD'}">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 bg-primary text-white">
-                                    <h6 class="m-0 font-weight-bold">Xử lý yêu cầu</h6>
-                                </div>
-                                <div class="card-body">
-                                    <button type="button" class="btn btn-danger mr-2" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
-                                        <i class="fas fa-times"></i> Từ chối
-                                    </button>
-                                    <button type="button" class="btn btn-success" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
-                                        <i class="fas fa-check"></i> Phê duyệt
-                                    </button>
-                                </div>
-                            </div>
+                            <button type="button" class="btn btn-success" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
+                                <i class="fas fa-check"></i> Phê duyệt/ Từ chối
+                            </button>
                         </c:if>
 
                         <!-- STAFF ONLY: Allocate Assets Button -->
                         <c:if test="${isStaff && req.status == 'APPROVED_BY_BOARD'}">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 bg-success text-white">
-                                    <h6 class="m-0 font-weight-bold">Tiến hành cấp phát</h6>
-                                </div>
-                                <div class="card-body">
-                                    <a href="${pageContext.request.contextPath}/staff/allocate-assets?requestId=${req.requestId}" class="btn btn-primary">
-                                        <i class="fas fa-box-open"></i> Bàn giao tài sản
-                                    </a>
-                                </div>
+                            <div class="card-body">
+                                <a href="${pageContext.request.contextPath}/staff/allocate-assets?requestId=${req.requestId}" class="btn btn-primary">
+                                    <i class="fas fa-box-open"></i> Bàn giao tài sản
+                                </a>
                             </div>
                         </c:if>
                     </div>
@@ -257,11 +271,11 @@
 
 
         <script>
-                                        function openApproveModal(id, code) {
-                                            document.getElementById('modalReqId').value = id;
-                                            document.getElementById('modalReqCode').innerText = code;
-                                            $('#approveModal').modal('show');
-                                        }
+                                function openApproveModal(id, code) {
+                                    document.getElementById('modalReqId').value = id;
+                                    document.getElementById('modalReqCode').innerText = code;
+                                    $('#approveModal').modal('show');
+                                }
         </script>
     </body>
 </html>
