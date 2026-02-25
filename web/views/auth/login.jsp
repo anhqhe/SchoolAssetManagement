@@ -238,6 +238,14 @@
                                     <p>Vui lòng nhập thông tin đăng nhập của bạn</p>
                                 </div>
 
+                                <!-- Success Message -->
+                                <c:if test="${not empty sessionScope.successMessage}">
+                                    <div class="alert alert-success alert-custom">
+                                        <i class="fas fa-check-circle"></i> ${sessionScope.successMessage}
+                                    </div>
+                                    <c:remove var="successMessage" scope="session" />
+                                </c:if>
+
                                 <!-- Error Message -->
                                 <c:if test="${not empty error}">
                                     <div class="alert alert-danger alert-custom">
@@ -295,7 +303,7 @@
                                 <!-- Forgot Password -->
                                 <div class="text-center">
                                     <a class="forgot-link" 
-                                       href="${pageContext.request.contextPath}/views/auth/forgot-password.jsp">
+                                       href="${pageContext.request.contextPath}/forgot-password">
                                         <i class="fas fa-question-circle"></i> Quên mật khẩu?
                                     </a>
                                 </div>
