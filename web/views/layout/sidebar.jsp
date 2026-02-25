@@ -41,7 +41,7 @@
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/rooms">
             <i class="fas fa-fw fa-door-open"></i>
-            <span>Room management</span>
+            <span>Quản lý phòng</span>
         </a>
     </li>
     

@@ -44,7 +44,7 @@
 
                 <div class="d-sm-flex align-items-center justify-content-between mb-4">
                     <h1 class="h3 mb-0 text-gray-800">
-                        <i class="fas fa-door-open text-primary"></i> Room management
+                        <i class="fas fa-door-open text-primary"></i> Quản lý phòng
                     </h1>
                 </div>
 
@@ -72,9 +72,9 @@
                                 <thead class="thead-light">
                                 <tr>
                                     <th>ID</th>
-                                    <th>Room name</th>
-                                    <th>Location</th>
-                                    <th>Actions</th>
+                                    <th>Tên phòng</th>
+                                    <th>Vị trí</th>
+                                    <th>Thao tác</th>
                                 </tr>
                                 </thead>
                                 <tbody>
