@@ -18,14 +18,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>
-            <c:choose>
-                <c:when test="${isTeacher}">Lịch Sử Yêu Cầu Tài Sản</c:when>
-                <c:when test="${isStaff}">Danh Sách Yêu Cầu Chờ Xử Lý</c:when>
-                <c:when test="${isBoard}">Trung Tâm Phê Duyệt</c:when>
-                <c:otherwise>Danh Sách Yêu Cầu</c:otherwise>
-            </c:choose>
-        </title>
+        <title>Danh sách yêu cầu</title>
         <link href="${pageContext.request.contextPath}/assets/css/sb-admin-2.min.css" rel="stylesheet">
         <link href="${pageContext.request.contextPath}/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
         <link href="${pageContext.request.contextPath}/assets/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
@@ -61,12 +54,7 @@
                         <div class="d-sm-flex align-items-center justify-content-between mb-4">
                             <h1 class="h3 mb-0 text-gray-800">
                                 <i class="fas fa-list text-primary"></i>
-                                <c:choose>
-                                    <c:when test="${isTeacher}">Lịch Sử Yêu Cầu Tài Sản</c:when>
-                                    <c:when test="${isStaff}">Danh Sách Yêu Cầu Chờ Xử Lý</c:when>
-                                    <c:when test="${isBoard}">Trung Tâm Phê Duyệt</c:when>
-                                    <c:otherwise>Danh Sách Yêu Cầu</c:otherwise>
-                                </c:choose>
+                                Danh Sách Yêu Cầu
                             </h1>
 
                             <!-- Add Request Button (TEACHER ONLY) -->
