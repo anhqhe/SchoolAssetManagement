@@ -84,7 +84,7 @@
                                             <form action="${pageContext.request.contextPath}/staff/request-list" method="get" id="filterForm" class="form-inline">
                                             </c:when>
                                             <c:when test="${isBoard}">
-                                                <form action="${pageContext.request.contextPath}/board/request-center" method="get" id="filterForm" class="form-inline">
+                                                <form action="${pageContext.request.contextPath}/board/request-list" method="get" id="filterForm" class="form-inline">
                                                 </c:when>
                                             </c:choose>
                                             <div class="form-group mr-3 mb-2">
@@ -100,13 +100,14 @@
                                                     <c:choose>
                                                         <c:when test="${isTeacher || isBoard}">
                                                             <option value="">-- Tất cả trạng thái --</option>
-                                                            <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ duyệt</option>
-                                                            <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
+                                                            <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ Phê Duyệt</option>
+                                                            <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
+                                                            <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
                                                         </c:when>
                                                         <c:when test="${isStaff}">
                                                             <option value="">-- Tất cả trạng thái --</option>
-                                                            <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã duyệt</option>
+                                                            <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                                         </c:when>
                                                     </c:choose>
@@ -216,10 +217,10 @@
                                                                             <!-- Status -->
                                                                             <td>
                                                                                 <c:choose>
-                                                                                    <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">WAITING_BOARD</span></c:when>
-                                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-success">APPROVED_BY_BOARD</span></c:when>
-                                                                                    <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">COMPLETED</span></c:when>
-                                                                                    <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">REJECTED</span></c:when>
+                                                                                    <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">Chờ Phê Duyệt</span></c:when>
+                                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-primary">Đã Phê Duyệt</span></c:when>
+                                                                                    <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Hoàn Thành</span></c:when>
+                                                                                    <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Từ Chối</span></c:when>
                                                                                     <c:otherwise><span class="badge badge-secondary">${req.status}</span></c:otherwise>
                                                                                 </c:choose>
                                                                             </td>
@@ -299,7 +300,7 @@
                                                             <div class="mb-3">
                                                                 <label class="form-label">Quyết định</label>
                                                                 <select name="decision" class="form-control" required>
-                                                                    <option value="APPROVED">Phê Duyệt (Chuyển Staff cấp phát)</option>
+                                                                    <option value="APPROVED">Phê Duyệt</option>
                                                                     <option value="REJECTED">Từ Chối Yêu Cầu</option>
                                                                 </select>
                                                             </div>

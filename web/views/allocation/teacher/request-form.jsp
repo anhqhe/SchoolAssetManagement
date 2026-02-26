@@ -6,8 +6,8 @@
         <meta charset="UTF-8">
         <title>
             <c:choose>
-                <c:when test="${not empty req}">Update Asset Request</c:when>
-                <c:otherwise>Yêu cầu tài sản</c:otherwise>
+                <c:when test="${not empty req}">Phiếu yêu cầu tài sản</c:when>
+                <c:otherwise>Phiếu yêu cầu tài sản</c:otherwise>
             </c:choose>
         </title>
         <link href="${pageContext.request.contextPath}/assets/css/sb-admin-2.min.css" rel="stylesheet">
@@ -37,15 +37,12 @@
                         <div class="card shadow">
                             <div class="card-header bg-primary text-white">
                                 <h4 class="mb-0">
-                                    <c:choose>
-                                        <c:when test="${not empty req}">Update Asset Request</c:when>
-                                        <c:otherwise>Phiếu yêu cầu tài sản</c:otherwise>
-                                    </c:choose>
+                                    Phiếu yêu cầu tài sản
                                 </h4>
                             </div>
                             <div class="card-body">
 
-                                <!-- Error/Success Messages -->
+                                <!--  Messages -->
                                 <c:if test="${not empty sessionScope.message}">
                                     <div class="alert alert-${sessionScope.type eq 'error' ? 'danger' : (sessionScope.type eq 'warning' ? 'warning' : (sessionScope.type eq 'info' ? 'info' : 'success'))} alert-dismissible fade show">
                                         <i class="fas fa-${sessionScope.type eq 'error' ? 'exclamation-circle' : (sessionScope.type eq 'warning' ? 'exclamation-triangle' : (sessionScope.type eq 'info' ? 'info-circle' : 'check-circle'))}"></i>
@@ -66,18 +63,10 @@
                                     <div class="row mb-4">
                                         <div class="col-md-6">
                                             <label class="form-label">
-                                                <c:choose>
-                                                    <c:when test="${not empty req}">Requested room:</c:when>
-                                                    <c:otherwise>Phòng nhận tài sản:</c:otherwise>
-                                                </c:choose>
+                                                Phòng nhận tài sản:
                                             </label>
                                             <select name="requestedRoomId" class="form-select" required>
-                                                <option value="">
-                                                    <c:choose>
-                                                        <c:when test="${not empty req}">-- Select room --</c:when>
-                                                        <c:otherwise>-- Chọn phòng --</c:otherwise>
-                                                    </c:choose>
-                                                </option>
+                                                <option value="">-- Chọn phòng --</option>
                                                 <c:forEach var="room" items="${rooms}">
                                                     <option value="${room.roomId}" ${room.roomId == req.requestedRoomId ? 'selected' : ''}>
                                                         ${room.roomName} (${room.roomCode})
@@ -86,23 +75,13 @@
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label">
-                                                <c:choose>
-                                                    <c:when test="${not empty req}">Purpose:</c:when>
-                                                    <c:otherwise>Mục đích sử dụng:</c:otherwise>
-                                                </c:choose>
-                                            </label>
+                                            <label class="form-label">Mục đích sử dụng:</label>
                                             <input type="text" name="purpose" class="form-control" value="${not empty req ? req.purpose : ''}" placeholder="Ví dụ: Giảng dạy môn Tin học" required>
                                         </div>
                                     </div>
 
                                     <hr>
-                                    <h5>
-                                        <c:choose>
-                                            <c:when test="${not empty req}">Requested items</c:when>
-                                            <c:otherwise>Danh sách tài sản cần mượn</c:otherwise>
-                                        </c:choose>
-                                    </h5>
+                                    <h5>Danh sách tài sản cần mượn</h5>
 
                                     <div id="category-dup-warning" class="alert alert-warning d-none" role="alert">
                                         <span id="category-dup-text"></span>
@@ -117,19 +96,9 @@
                                                 <c:forEach var="item" items="${itemList}" varStatus="st">
                                                     <div class="row item-row mb-3 align-items-end">
                                                         <div class="col-md-4">
-                                                            <label class="form-label">
-                                                                <c:choose>
-                                                                    <c:when test="${not empty req}">Category:</c:when>
-                                                                    <c:otherwise>Loại tài sản:</c:otherwise>
-                                                                </c:choose>
-                                                            </label>
+                                                            <label class="form-label">Loại tài sản:</label>
                                                             <select name="categoryIds" class="form-select" required>
-                                                                <option value="">
-                                                                    <c:choose>
-                                                                        <c:when test="${not empty req}">-- Select category --</c:when>
-                                                                        <c:otherwise>-- Chọn loại --</c:otherwise>
-                                                                    </c:choose>
-                                                                </option>
+                                                                <option value="">-- Chọn loại --</option>
                                                                 <c:forEach var="cat" items="${categories}">
                                                                     <option value="${cat.categoryId}" ${cat.categoryId == item.categoryId ? 'selected' : ''}>
                                                                         ${cat.categoryName}
@@ -138,21 +107,11 @@
                                                             </select>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <label class="form-label">
-                                                                <c:choose>
-                                                                    <c:when test="${not empty req}">Quantity:</c:when>
-                                                                    <c:otherwise>Số lượng:</c:otherwise>
-                                                                </c:choose>
-                                                            </label>
+                                                            <label class="form-label">Số lượng:</label>
                                                             <input type="number" name="quantities" class="form-control" min="1" value="${item.quantity}" required>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <label class="form-label">
-                                                                <c:choose>
-                                                                    <c:when test="${not empty req}">Note:</c:when>
-                                                                    <c:otherwise>Ghi chú:</c:otherwise>
-                                                                </c:choose>
-                                                            </label>
+                                                            <label class="form-label">Ghi chú:</label>
                                                             <input type="text" name="notes" class="form-control" value="${item.note}" placeholder="Mô tả thêm">
                                                         </div>
                                                         <div class="col-md-2">
@@ -194,18 +153,15 @@
 
                                     <div class="mt-3">
                                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addItem()">
-                                            <c:choose>
-                                                <c:when test="${not empty req}">+ Add item</c:when>
-                                                <c:otherwise>+ Thêm tài sản</c:otherwise>
-                                            </c:choose>
+                                            + Thêm tài sản
                                         </button>
                                     </div>
 
                                     <div class="mt-5 text-end">
                                         <c:choose>
                                             <c:when test="${not empty req}">
-                                                <a href="${pageContext.request.contextPath}/teacher/request-detail?id=${req.requestId}" class="btn btn-light">Cancel</a>
-                                                <button type="submit" class="btn btn-success">Update request</button>
+                                                <a href="${pageContext.request.contextPath}/teacher/request-list" class="btn btn-light">Hủy bỏ</a>
+                                                <button type="submit" class="btn btn-success">Cập Nhật Yêu Cầu</button>
                                             </c:when>
                                             <c:otherwise>
                                                 <a href="${pageContext.request.contextPath}/teacher/request-list" class="btn btn-light">Hủy bỏ</a>
