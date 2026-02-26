@@ -29,7 +29,7 @@
                 <a class="dropdown-item"
                    href="${pageContext.request.contextPath}/views/auth/change-password.jsp">
                     <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Change Password
+                    Thay đổi mật khẩu
                 </a>
 
                 <div class="dropdown-divider"></div>
@@ -37,7 +37,7 @@
                 <a class="dropdown-item"
                    href="${pageContext.request.contextPath}/auth/logout">
                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Logout
+                    Đăng xuất
                 </a>
             </div>
         </li>

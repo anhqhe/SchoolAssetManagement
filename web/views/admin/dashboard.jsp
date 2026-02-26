@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.User" %>
 <%@ page import="java.util.List" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <%
     User currentUser = (User) session.getAttribute("currentUser");
@@ -56,7 +58,9 @@
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Tổng tài sản
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">1,247</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${totalAssets}
+                                        </div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-boxes fa-2x text-gray-300"></i>
@@ -75,7 +79,9 @@
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             Đang sử dụng
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">1,089</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${inUseAssets}
+                                        </div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-check-circle fa-2x text-gray-300"></i>
@@ -94,7 +100,9 @@
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Đang bảo trì
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">127</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${maintenanceAssets}
+                                        </div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-tools fa-2x text-gray-300"></i>
@@ -113,7 +121,9 @@
                                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                             Hỏng hóc
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">31</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${damagedAssets}
+                                        </div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
@@ -202,45 +212,45 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>IT-2024-001</td>
-                                                <td>Máy tính Dell Latitude</td>
-                                                <td>Thiết bị IT</td>
-                                                <td><span class="badge badge-success">Đang sử dụng</span></td>
-                                                <td>15/01/2024</td>
-                                            </tr>
-                                            <tr>
-                                                <td>FU-2024-045</td>
-                                                <td>Bàn giảng viên</td>
-                                                <td>Nội thất</td>
-                                                <td><span class="badge badge-success">Đang sử dụng</span></td>
-                                                <td>14/01/2024</td>
-                                            </tr>
-                                            <tr>
-                                                <td>IT-2024-002</td>
-                                                <td>Máy chiếu Epson</td>
-                                                <td>Thiết bị IT</td>
-                                                <td><span class="badge badge-warning">Đang cài đặt</span></td>
-                                                <td>13/01/2024</td>
-                                            </tr>
-                                            <tr>
-                                                <td>FU-2024-046</td>
-                                                <td>Ghế văn phòng</td>
-                                                <td>Nội thất</td>
-                                                <td><span class="badge badge-success">Đang sử dụng</span></td>
-                                                <td>12/01/2024</td>
-                                            </tr>
-                                            <tr>
-                                                <td>IT-2024-003</td>
-                                                <td>Màn hình LG 27 inch</td>
-                                                <td>Thiết bị IT</td>
-                                                <td><span class="badge badge-success">Đang sử dụng</span></td>
-                                                <td>11/01/2024</td>
-                                            </tr>
+                                            <c:choose>
+                                                <c:when test="${empty recentAssets}">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-muted">
+                                                            Chưa có tài sản nào
+                                                        </td>
+                                                    </tr>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:forEach var="asset" items="${recentAssets}">
+                                                        <tr>
+                                                            <td>${asset.assetCode}</td>
+                                                            <td>${asset.assetName}</td>
+                                                            <td>${asset.categoryName}</td>
+                                                            <td>
+                                                                <span class="badge ${asset.statusBadgeClass}">
+                                                                    ${asset.statusText}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <c:choose>
+                                                                    <c:when test="${not empty asset.receivedDate}">
+                                                                        <fmt:formatDate value="${asset.receivedDate}" pattern="dd/MM/yyyy"/>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        -
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </tbody>
                                     </table>
                                 </div>
-                                <a href="#" class="btn btn-primary btn-sm">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+                                <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-primary btn-sm">
+                                    Xem tất cả <i class="fas fa-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
                     </div>

@@ -38,7 +38,7 @@
                     <p class="text-gray-500 mb-0">
                         It looks like you found a glitch in the matrix...
                     </p>
-                    <a href="${pageContext.request.contextPath}/views/admin/dashboard.jsp">
+                    <a href="${pageContext.request.contextPath}/admin/dashboard">
                         &larr; Back to Dashboard
                     </a>
                 </div>

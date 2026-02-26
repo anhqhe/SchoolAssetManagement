@@ -4,7 +4,7 @@
 
     <!-- Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center"
-       href="${pageContext.request.contextPath}/views/admin/dashboard.jsp">
+       href="${pageContext.request.contextPath}/admin/dashboard">
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-school"></i>
         </div>
@@ -15,7 +15,7 @@
 
     <!-- Dashboard -->
     <li class="nav-item active">
-        <a class="nav-link" href="${pageContext.request.contextPath}/views/admin/dashboard.jsp">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Trang tổng quan</span>
         </a>
@@ -143,7 +143,7 @@
     <hr class="sidebar-divider">
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/views/auth/change-password.jsp">
+        <a class="nav-link" href="${pageContext.request.contextPath}/change-password">
             <i class="fas fa-key"></i>
             <span>Thay đổi mật khẩu</span>
         </a>
