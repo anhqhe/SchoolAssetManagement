@@ -39,11 +39,11 @@ public class RequestListStaff extends HttpServlet {
             return;
         }
 
-        // Check authorization - user must have ASSET_STAFF role
+        // Check authorization - user must have ASSET_STAFF hoặc ADMIN role
         List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("ASSET_STAFF")) {
-            //response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
+        boolean isStaffOrAdmin = roles != null && (roles.contains("ASSET_STAFF") || roles.contains("ADMIN"));
+        if (!isStaffOrAdmin) {
+            response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
             return;
         }
 

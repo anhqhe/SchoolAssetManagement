@@ -49,10 +49,11 @@ public class RequestDetailBoard extends HttpServlet {
                 return;
             }
             
-            // Check authorization - user must have BOARD role
+            // Check authorization - user must have BOARD hoặc ADMIN role
             List<String> roles = currentUser.getRoles();
-            if (roles == null || !roles.contains("BOARD")) {
-                response.sendRedirect("request-list");
+            boolean isBoardOrAdmin = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
+            if (!isBoardOrAdmin) {
+                response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
                 return;
             }
             

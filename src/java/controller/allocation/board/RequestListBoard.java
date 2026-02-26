@@ -47,11 +47,11 @@ public class RequestListBoard extends HttpServlet {
             return;
         }
         
-        // Check authorization - user must have BOARD role
+        // Check authorization - user must have BOARD hoặc ADMIN role
         List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("BOARD")) {
-            //response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
+        boolean isBoardOrAdmin = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
+        if (!isBoardOrAdmin) {
+            response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
             return;
         }
 
@@ -87,11 +87,11 @@ public class RequestListBoard extends HttpServlet {
             return;
         }
         
-        // Check authorization - user must have BOARD role
+        // Check authorization - user must have BOARD hoặc ADMIN role
         List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("BOARD")) {
-            //response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
+        boolean isBoardOrAdmin = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
+        if (!isBoardOrAdmin) {
+            response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
             return;
         }
 
