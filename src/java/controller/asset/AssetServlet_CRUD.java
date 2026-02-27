@@ -89,20 +89,29 @@ public class AssetServlet_CRUD extends HttpServlet {
             String keyword = request.getParameter("keyword");
             String status = request.getParameter("status");
             String categoryIdStr = request.getParameter("categoryId");
-
+            String activeState = request.getParameter("activeState");
+            Boolean isActiveFilter = null;
+            if("active".equals(activeState)){
+                isActiveFilter = true;
+            }else if("isActive".equals(activeState)){
+                isActiveFilter = false;
+            }
             List<Asset> assets;
-            if ((keyword != null && !keyword.trim().isEmpty())
+            boolean hasFilter = ((keyword != null && !keyword.trim().isEmpty())
                     || (status != null && !status.trim().isEmpty())
-                    || (categoryIdStr != null && !categoryIdStr.trim().isEmpty())) {
+                    || (categoryIdStr != null && !categoryIdStr.trim().isEmpty())
+                    || (activeState != null && !activeState.trim().isEmpty()));
+            
+            if (hasFilter) {
                 Long categoryId = null;
                 if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
                     try {
                         categoryId = Long.parseLong(categoryIdStr);
                     } catch (NumberFormatException e) {
-                        // ignore
+                        //ignore
                     }
                 }
-                assets = assetDao.searchAssets(keyword, status, categoryId);
+                assets = assetDao.searchAssets(keyword, status, categoryId, isActiveFilter);
             } else {
                 assets = assetDao.findAll();
             }
@@ -111,6 +120,7 @@ public class AssetServlet_CRUD extends HttpServlet {
             request.setAttribute("keyword", keyword);
             request.setAttribute("status", status);
             request.setAttribute("categoryId", categoryIdStr);
+            request.setAttribute("activeState", activeState);
             request.getRequestDispatcher("/views/asset/asset-list.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException(e);

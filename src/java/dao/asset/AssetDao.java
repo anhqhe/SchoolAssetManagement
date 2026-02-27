@@ -23,16 +23,17 @@ import util.DBUtil;
 public class AssetDao {
 
     public List<Asset> findAll() throws SQLException {
-        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, " +
-             "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, " +
-             "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, " +
-             "a.CurrentRoomId, r.RoomName, a.CurrentHolderId, " +
-             "a.IsActive, a.CreatedAt, a.UpdatedAt, " +
-             "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId) AS Quantity " +
-             "FROM Assets a " +
-             "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
-             "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId " +
-             "ORDER BY a.CreatedAt DESC";
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+                + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
+                + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
+                + "a.CurrentRoomId, r.RoomName, a.CurrentHolderId, "
+                + "a.IsActive, a.CreatedAt, a.UpdatedAt, "
+                + "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId AND a2.IsActive = 1) AS Quantity "
+                + "FROM Assets a "
+                + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
+                + "WHERE a.IsActive = 1"
+                + "ORDER BY a.CreatedAt DESC";
         List<Asset> list = new ArrayList<>();
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -186,14 +187,16 @@ public class AssetDao {
     }
 
     public void delete(int assetId) throws SQLException {
-        String sql = "DELETE FROM Assets WHERE AssetId = ?";
+        String sql = "UPDATE Assets SET IsActive = 0, UpdatedAt = SYSDATETIME() WHERE AssetId = ?";
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, assetId);
             ps.executeUpdate();
         }
     }
 
-    /** Cập nhật trạng thái tài sản và ghi lịch sử vào AssetStatusHistory */
+    /**
+     * Cập nhật trạng thái tài sản và ghi lịch sử vào AssetStatusHistory
+     */
     public void updateStatus(long assetId, String newStatus, String reason, long changedByUserId) throws SQLException {
         try (Connection con = DBUtil.getConnection()) {
             String oldStatus = null;
@@ -302,20 +305,21 @@ public class AssetDao {
         }
         return null;
     }
-  public List<Asset> searchAssets(String keyword, String status, Long categoryId) throws SQLException {
+
+    public List<Asset> searchAssets(String keyword, String status, Long categoryId, Boolean isActive) throws SQLException {
         List<Asset> assets = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, " +
-            "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, " +
-            "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, " +
-            "a.ConditionNote, a.IsActive, a.CreatedAt, " +
-            "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId) AS Quantity " +
-            "FROM Assets a " +
-            "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
-            "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId " +
-            "WHERE 1=1 "
+                "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+                + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
+                + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
+                + "a.ConditionNote, a.IsActive, a.CreatedAt, "
+                + "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId AND a2.IsActive = 1) AS Quantity "
+                + "FROM Assets a "
+                + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
+                + "WHERE 1=1 "
         );
-        
+
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND (a.AssetName LIKE ? OR a.AssetCode LIKE ? OR a.SerialNumber LIKE ?) ");
         }
@@ -325,12 +329,13 @@ public class AssetDao {
         if (categoryId != null && categoryId > 0) {
             sql.append("AND a.CategoryId = ? ");
         }
-        
+        if(isActive != null){
+            sql.append("AND a.IsActive = ? ");
+        }
         sql.append("ORDER BY a.CreatedAt DESC");
-        
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            
+
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
             int paramIndex = 1;
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String searchPattern = "%" + keyword + "%";
@@ -344,7 +349,10 @@ public class AssetDao {
             if (categoryId != null && categoryId > 0) {
                 ps.setLong(paramIndex++, categoryId);
             }
-            
+            if (isActive != null){
+                ps.setBoolean(paramIndex++, isActive);
+            }
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Asset asset = new Asset();
@@ -377,12 +385,12 @@ public class AssetDao {
                         asset.setCreatedAt(cAt.toLocalDateTime());
                     }
                     asset.setQuantity(rs.getInt("Quantity"));
-                    
+
                     assets.add(asset);
                 }
             }
         }
-        
+
         return assets;
     }
 }

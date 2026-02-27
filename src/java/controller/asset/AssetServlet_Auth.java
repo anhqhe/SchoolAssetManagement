@@ -49,11 +49,22 @@ public class AssetServlet_Auth extends HttpServlet {
             String keyword = request.getParameter("keyword");
             String status = request.getParameter("status");
             String categoryIdStr = request.getParameter("categoryId");
+            String activeState = request.getParameter("activeState");
+            Boolean isActiveFilter = null;
+            if("active".equals(isActiveFilter)){
+                isActiveFilter = Boolean.TRUE;
+            }else if("isActive".equals(isActiveFilter)){
+                isActiveFilter = Boolean.FALSE;
+            }
             
             List<Asset> assets;
-            
+            boolean hasFilter = 
+                    (keyword != null && !keyword.trim().isEmpty())
+                    || (status != null && !status.trim().isEmpty())
+                    || (categoryIdStr != null && !categoryIdStr.trim().isEmpty())
+                    || (activeState != null && !activeState.trim().isEmpty());
             // Nếu có filter/search
-            if (keyword != null || status != null || categoryIdStr != null) {
+            if (hasFilter) {
                 Long categoryId = null;
                 if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
                     try {
@@ -62,7 +73,7 @@ public class AssetServlet_Auth extends HttpServlet {
                         // Ignore invalid categoryId
                     }
                 }
-                assets = assetDAO.searchAssets(keyword, status, categoryId);
+                assets = assetDAO.searchAssets(keyword, status, categoryId, isActiveFilter);
             } else {
                 // Lấy tất cả assets
                 assets = assetDAO.findAll();
@@ -73,7 +84,7 @@ public class AssetServlet_Auth extends HttpServlet {
             request.setAttribute("keyword", keyword);
             request.setAttribute("status", status);
             request.setAttribute("categoryId", categoryIdStr);
-            
+            request.setAttribute("activeState", activeState);
             // Forward to JSP
             request.getRequestDispatcher("/views/asset/asset-list.jsp").forward(request, response);
             
