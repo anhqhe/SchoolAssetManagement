@@ -4,7 +4,7 @@
 
     <!-- Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center"
-       href="${pageContext.request.contextPath}/views/admin/dashboard.jsp">
+       href="${pageContext.request.contextPath}/admin/dashboard">
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-school"></i>
         </div>
@@ -13,20 +13,22 @@
 
     <hr class="sidebar-divider my-0">
 
-    <!-- Dashboard -->
-    <li class="nav-item active">
-        <a class="nav-link" href="${pageContext.request.contextPath}/views/admin/dashboard.jsp">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Trang tổng quan</span>
-        </a>
-    </li>
-
-    <hr class="sidebar-divider">
-
     <% 
         model.User sidebarUser = (model.User) session.getAttribute("currentUser");
         java.util.List<String> sidebarRoles = (sidebarUser != null) ? sidebarUser.getRoles() : null;
     %>
+
+    <!-- Dashboard (ADMIN ONLY) -->
+    <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
+    <li class="nav-item active">
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/dashboard">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Trang tổng quan</span>
+        </a>
+    </li>
+    <% } %>
+
+    <hr class="sidebar-divider">
 
     <!-- ADMIN ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
@@ -86,9 +88,9 @@
     </li>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/requests">
-            <i class="fas fa-fw fa-clipboard-list"></i>
-            <span>Yêu cầu tài sản</span>
+        <a class="nav-link" href="${pageContext.request.contextPath}/staff/request-list">
+            <i class="fas fa-list"></i>
+            <span>Danh sách yêu cầu</span>
         </a>
     </li>
     
@@ -111,6 +113,13 @@
         </a>
     </li>
     
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
+            <i class="fas fa-list"></i>
+            <span>Danh sách yêu cầu</span>
+        </a>
+    </li>
+    
     <% } %>
        
     <!-- BOARD ONLY -->
@@ -120,6 +129,13 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/board/approvals">
             <i class="fas fa-fw fa-check-square"></i>
             <span>Phê duyệt yêu cầu</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
+            <i class="fas fa-list"></i>
+            <span>Danh sách yêu cầu</span>
         </a>
     </li>
     
@@ -136,7 +152,7 @@
     <hr class="sidebar-divider">
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/views/auth/change-password.jsp">
+        <a class="nav-link" href="${pageContext.request.contextPath}/change-password">
             <i class="fas fa-key"></i>
             <span>Thay đổi mật khẩu</span>
         </a>

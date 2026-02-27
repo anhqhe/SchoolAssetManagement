@@ -26,8 +26,10 @@ public class User {
     public void setActive(boolean active) { isActive = active; }
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
+
     public String getResetToken() { return resetToken; }
     public void setResetToken(String resetToken) { this.resetToken = resetToken; }
     public Date getResetTokenExpiry() { return resetTokenExpiry; }
     public void setResetTokenExpiry(Date resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
+
 }
