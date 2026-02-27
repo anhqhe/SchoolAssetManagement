@@ -23,6 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import model.User;
+import model.allocation.AssetAllocation;
 
 /**
  *
@@ -75,20 +76,14 @@ public class RequestDetailBoard extends HttpServlet {
             //Get asset info after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
-            //Get allocation header to determine who allocated
-            model.allocation.AssetAllocation allocHeader = allocationDAO.getAllocationByRequestId(requestId);
-            String allocatedByName = null;
-            if (allocHeader != null && allocHeader.getAllocatedById() != null) {
-                dao.allocation.UserDAO allocUserDao = new dao.allocation.UserDAO();
-                model.User allocUser = allocUserDao.getByUserId(allocHeader.getAllocatedById());
-                if (allocUser != null) allocatedByName = allocUser.getFullName() != null ? allocUser.getFullName() : allocUser.getUsername();
-            }
+            //Get allocation
+            AssetAllocation allocation = allocationDAO.getAllocationByRequestId(requestId);
 
             request.setAttribute("req", requestDetail);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
-            request.setAttribute("allocatedByName", allocatedByName);
+            request.setAttribute("allocation", allocation);
             
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
