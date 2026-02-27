@@ -225,8 +225,6 @@ public class Asset {
                 return "badge-info";
             case "IN_USE":
                 return "badge-success";
-            case "RETIRED":
-                return "badge-danger";
             default:
                 return "badge-secondary";
         }

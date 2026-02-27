@@ -99,88 +99,83 @@
                                 <h6 class="m-0 font-weight-bold text-primary">Danh sách tài sản</h6>
                             </div>
                             <div class="card-body">
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Mã tài sản</th>
-                                                            <th>Tên tài sản</th>
-                                                            <th>Danh mục</th>
-                                                            <th>Số lượng</th>
-                                                            <th>Số seri</th>
-                                                            <th>Model</th>
-                                                            <th>Hãng</th>
-                                                            <th>Trạng thái</th>
-                                                            <th>Phòng hiện tại</th>
-                                                            <th>Hoạt động</th>
-                                                            <th>Thao tác</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <%
-                                                            if (assets != null && !assets.isEmpty()) {
-                                                                for (Asset a : assets) {
-                                                        %>
-                                                        <tr>
-                                                            <td><%= a.getAssetCode() != null ? a.getAssetCode() : "" %></td>
-                                                            <td><%= a.getAssetName() != null ? a.getAssetName() : "" %></td>
-                                                            <td><%= a.getCategoryName() != null ? a.getCategoryName() : "-" %></td>
-                                                            <td class="text-center"><span class="badge badge-primary"><%= a.getQuantity() %></span></td>
-                                                            <td><%= a.getSerialNumber() != null ? a.getSerialNumber() : "-" %></td>
-                                                            <td><%= a.getModel() != null ? a.getModel() : "-" %></td>
-                                                            <td><%= a.getBrand() != null ? a.getBrand() : "-" %></td>
-                                                            <td>
-                                                                <%
-                                                                    String itemStatus = a.getStatus() != null ? a.getStatus() : "";
-                                                                    String badgeClass = "badge-secondary";
-                                                                    if ("IN_STOCK".equals(itemStatus)) badgeClass = "badge-info";
-                                                                    else if ("IN_USE".equals(itemStatus)) badgeClass = "badge-success";
-                                                                    else if ("RETIRED".equals(itemStatus)) badgeClass = "badge-danger";
-                                                                %>
-                                                                <span class="badge <%= badgeClass %>"><%= itemStatus %></span>
-                                                            </td>
-                                                            <td><%= a.getRoomName() != null ? a.getRoomName() : "-" %></td>
-                                                            <td>
-                                                                <% if (a.isIsActive()) { %>
-                                                                <span class="badge badge-success">Hoạt động</span>
-                                                                <% } else { %>
-                                                                <span class="badge badge-secondary">Không hoạt động</span>
-                                                                <% } %>
-                                                            </td>
-                                                            <td>
-                                                                <% if (isAssetStaff) { %>
-                                                                <a href="${pageContext.request.contextPath}/assets?action=edit&id=<%= a.getAssetId() %>" 
-                                                                   class="btn btn-sm btn-warning">
-                                                                    <i class="fas fa-edit"></i> Sửa
-                                                                </a>
-                                                                <a href="${pageContext.request.contextPath}/assets?action=delete&id=<%= a.getAssetId() %>" 
-                                                                   class="btn btn-sm btn-danger"
-                                                                   onclick="return confirm('Bạn chắc chắn muốn xóa tài sản này?');">
-                                                                    <i class="fas fa-trash"></i> Xóa
-                                                                </a>
-                                                                <% } %>
-                                                                <a href="${pageContext.request.contextPath}/assets?action=detail&id=<%= a.getAssetId() %>" 
-                                                                   class="btn btn-sm btn-info" title="Chi tiết">
-                                                                    <i class="fas fa-eye"></i>
-                                                                </a>
-                                                            </td>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã tài sản</th>
+                                                <th>Tên tài sản</th>
+                                                <th>Danh mục</th>
+                                                <th>Số lượng</th>
+                                                <th>Số seri</th>
+                                                <th>Model</th>
+                                                <th>Hãng</th>
+                                                <th>Trạng thái</th>
+                                                <th>Phòng hiện tại</th>
+                                                <th>Hoạt động</th>
+                                                <th>Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <%
+                                                if (assets != null && !assets.isEmpty()) {
+                                                    for (Asset a : assets) {
+                                            %>
+                                            <tr>
+                                                <td><%= a.getAssetCode() != null ? a.getAssetCode() : "" %></td>
+                                                <td><%= a.getAssetName() != null ? a.getAssetName() : "" %></td>
+                                                <td><%= a.getCategoryName() != null ? a.getCategoryName() : "-" %></td>
+                                                <td class="text-center"><span class="badge badge-primary"><%= a.getQuantity() %></span></td>
+                                                <td><%= a.getSerialNumber() != null ? a.getSerialNumber() : "-" %></td>
+                                                <td><%= a.getModel() != null ? a.getModel() : "-" %></td>
+                                                <td><%= a.getBrand() != null ? a.getBrand() : "-" %></td>
+                                                <td>
+                                                    <span class="badge <%= a.getStatusBadgeClass() %>">
+                                                        <%= a.getStatusText() %>
+                                                    </span>
+                                                </td>
+                                                <td><%= a.getRoomName() != null ? a.getRoomName() : "-" %></td>
+                                                <td>
+                                                    <% if (a.isIsActive()) { %>
+                                                    <span class="badge badge-success">Hoạt động</span>
+                                                    <% } else { %>
+                                                    <span class="badge badge-secondary">Không hoạt động</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <% if (isAssetStaff) { %>
+                                                    <a href="${pageContext.request.contextPath}/assets?action=edit&id=<%= a.getAssetId() %>" 
+                                                       class="btn btn-sm btn-warning">
+                                                        <i class="fas fa-edit"></i> Sửa
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/assets?action=delete&id=<%= a.getAssetId() %>" 
+                                                       class="btn btn-sm btn-danger"
+                                                       onclick="return confirm('Bạn chắc chắn muốn xóa tài sản này?');">
+                                                        <i class="fas fa-trash"></i> Xóa
+                                                    </a>
+                                                    <% } %>
+                                                    <a href="${pageContext.request.contextPath}/assets?action=detail&id=<%= a.getAssetId() %>" 
+                                                       class="btn btn-sm btn-info" title="Chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
 
-                                                        </tr>
-                                                        <%
-                                                                }
-                                                            } else {
-                                                        %>
-                                                        <tr>
-                                                            <td colspan="11" class="text-center">Chưa có dữ liệu</td>
-                                                        </tr>
-                                                        <%
-                                                            }
-                                                        %>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
+                                            </tr>
+                                            <%
+                                                    }
+                                                } else {
+                                            %>
+                                            <tr>
+                                                <td colspan="11" class="text-center">Chưa có dữ liệu</td>
+                                            </tr>
+                                            <%
+                                                }
+                                            %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
                         <%@ include file="/views/layout/footer.jsp" %>
 
