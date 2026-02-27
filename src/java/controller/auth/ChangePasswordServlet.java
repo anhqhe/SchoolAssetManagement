@@ -22,7 +22,7 @@ import model.User;
  */
 @WebServlet(name="ChangePasswordServlet", urlPatterns={"/change-password"})
 public class ChangePasswordServlet extends HttpServlet {
-   private final UserDAO userDAO = new UserDAO();
+    private final UserDAO userDAO = new UserDAO();
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
      * @param request servlet request
@@ -59,8 +59,15 @@ public class ChangePasswordServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        
-        processRequest(request, response);
+        HttpSession session = request.getSession(false);
+        User user = session != null ? (User) session.getAttribute("currentUser") : null;
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+
+        request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
     } 
 
     /** 
@@ -73,11 +80,14 @@ public class ChangePasswordServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
         HttpSession session = request.getSession(false);
-        User user = (User) session.getAttribute("currentUser");
+        User user = session != null ? (User) session.getAttribute("currentUser") : null;
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
 
@@ -85,8 +95,26 @@ public class ChangePasswordServlet extends HttpServlet {
         String newPass = request.getParameter("newPassword");
         String confirm = request.getParameter("confirmPassword");
 
-        if (!newPass.equals(confirm)) {
-            request.setAttribute("error", "Mật khẩu xác nhận không khớp");
+        if (oldPass == null || oldPass.trim().isEmpty()) {
+            request.setAttribute("error", "Vui lòng nhập mật khẩu hiện tại.");
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
+            return;
+        }
+
+        if (newPass == null || newPass.trim().isEmpty()) {
+            request.setAttribute("error", "Vui lòng nhập mật khẩu mới.");
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
+            return;
+        }
+
+        if (confirm == null || !newPass.equals(confirm)) {
+            request.setAttribute("error", "Mật khẩu xác nhận không khớp.");
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
+            return;
+        }
+
+        if (newPass.length() < 6) {
+            request.setAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự.");
             request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }

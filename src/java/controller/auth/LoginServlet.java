@@ -90,13 +90,13 @@ public class LoginServlet extends HttpServlet {
 
             // Chuyển hướng tuỳ vai trò (ví dụ)
             if (user.getRoles() != null && user.getRoles().contains("ADMIN")) {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
             } else if (user.getRoles().contains("ASSET_STAFF")) {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
-            }else if (user.getRoles().contains("TEACHER")) {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
+                resp.sendRedirect(req.getContextPath() + "/assets/list");
+            } else if (user.getRoles().contains("TEACHER")) {
+                resp.sendRedirect(req.getContextPath() + "/teacher/request-list");
             } else {
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
+                resp.sendRedirect(req.getContextPath() + "/board/request-list");
             }
             
         } catch (Exception e) {
