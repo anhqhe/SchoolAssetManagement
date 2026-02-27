@@ -1,11 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.User" %>
 <%@ page import="model.Room" %>
+<%@ page import="java.util.List" %>
 
 <%
     User currentUser = (User) session.getAttribute("currentUser");
     Room room = (Room) request.getAttribute("room");
     String error = (String) request.getAttribute("error");
+
+    @SuppressWarnings("unchecked")
+    List<User> teachersInRoom = (List<User>) request.getAttribute("teachersInRoom");
 %>
 
 <!DOCTYPE html>
@@ -66,8 +70,53 @@
                             </dl>
 
                             <hr>
+
+                            <h5 class="font-weight-bold text-primary mb-3">
+                                <i class="fas fa-chalkboard-teacher"></i> Giáo viên đang làm việc tại phòng này
+                            </h5>
+
+                            <%
+                                if (teachersInRoom == null || teachersInRoom.isEmpty()) {
+                            %>
+                                <p class="text-muted mb-3">
+                                    Chưa có giáo viên nào được gán cho phòng này.
+                                </p>
+                            <%
+                                } else {
+                            %>
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="thead-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Họ tên</th>
+                                            <th>Tên đăng nhập</th>
+                                            <th>Email</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <%
+                                            int index = 1;
+                                            for (User teacher : teachersInRoom) {
+                                        %>
+                                            <tr>
+                                                <td><%= index++ %></td>
+                                                <td><%= teacher.getFullName() != null ? teacher.getFullName() : "-" %></td>
+                                                <td><code><%= teacher.getUsername() %></code></td>
+                                                <td><%= teacher.getEmail() != null ? teacher.getEmail() : "-" %></td>
+                                            </tr>
+                                        <%
+                                            }
+                                        %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <%
+                                }
+                            %>
+
                             <a href="${pageContext.request.contextPath}/rooms/config?id=<%= room.getRoomId() %>"
-                               class="btn btn-warning">
+                               class="btn btn-warning mt-2">
                                 <i class="fas fa-cog"></i> Config Room
                             </a>
                         </div>

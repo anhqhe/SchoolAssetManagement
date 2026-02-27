@@ -21,11 +21,11 @@
             min-height: 100vh;
             display: flex;
             align-items: center;
+            justify-content: center; /* Căn giữa theo chiều ngang */
         }
 
         .login-container {
-            margin-top: 50px;
-            margin-bottom: 50px;
+            margin: 0 auto; /* Căn giữa container bên trong */
         }
 
         .login-card {

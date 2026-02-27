@@ -50,6 +50,9 @@ public class RoomDetailServlet extends HttpServlet {
                 req.setAttribute("error", "Không tìm thấy phòng.");
             } else {
                 req.setAttribute("room", room);
+                // Lấy danh sách giáo viên đang làm việc tại phòng này
+                List<User> teachers = roomDAO.getTeachersByRoomId(roomId);
+                req.setAttribute("teachersInRoom", teachers);
             }
 
             req.getRequestDispatcher("/views/admin/room-detail.jsp").forward(req, resp);
