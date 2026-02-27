@@ -92,9 +92,9 @@ public class AssetServlet_CRUD extends HttpServlet {
             String activeState = request.getParameter("activeState");
             Boolean isActiveFilter = null;
             if("active".equals(activeState)){
-                isActiveFilter = true;
-            }else if("isActive".equals(activeState)){
-                isActiveFilter = false;
+                isActiveFilter = Boolean.TRUE;
+            }else if("inactive".equals(activeState)){
+                isActiveFilter = Boolean.FALSE;
             }
             List<Asset> assets;
             boolean hasFilter = ((keyword != null && !keyword.trim().isEmpty())

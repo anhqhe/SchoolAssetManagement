@@ -51,9 +51,9 @@ public class AssetServlet_Auth extends HttpServlet {
             String categoryIdStr = request.getParameter("categoryId");
             String activeState = request.getParameter("activeState");
             Boolean isActiveFilter = null;
-            if("active".equals(isActiveFilter)){
+            if("active".equals(activeState)){
                 isActiveFilter = Boolean.TRUE;
-            }else if("isActive".equals(isActiveFilter)){
+            }else if("inactive".equals(activeState)){
                 isActiveFilter = Boolean.FALSE;
             }
             

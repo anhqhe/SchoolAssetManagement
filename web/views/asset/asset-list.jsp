@@ -85,9 +85,8 @@
                                     </div>
                                     <div class="form-group mr-3 mb-2">
                                         <select name="activeState" class="form-control">
-                                            <option value="">-- Tất cả trạng thái --</option>
                                             <option value="active" ${activeState == 'active' ? 'selected' : ''}>Đang hoạt động</option>
-                                            <option value="inActive" ${activeState == 'inActive' ? 'selected' : ''}>Không hoạt động</option>
+                                            <option value="inactive" ${activeState == 'inactive' ? 'selected' : ''}>Không hoạt động</option>
                                         </select>
                                     </div>
                                     <button type="submit" class="btn btn-primary mb-2 mr-2">
