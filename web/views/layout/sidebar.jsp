@@ -13,20 +13,22 @@
 
     <hr class="sidebar-divider my-0">
 
-    <!-- Dashboard -->
+    <% 
+        model.User sidebarUser = (model.User) session.getAttribute("currentUser");
+        java.util.List<String> sidebarRoles = (sidebarUser != null) ? sidebarUser.getRoles() : null;
+    %>
+
+    <!-- Dashboard (ADMIN ONLY) -->
+    <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
     <li class="nav-item active">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Trang tổng quan</span>
         </a>
     </li>
+    <% } %>
 
     <hr class="sidebar-divider">
-
-    <% 
-        model.User sidebarUser = (model.User) session.getAttribute("currentUser");
-        java.util.List<String> sidebarRoles = (sidebarUser != null) ? sidebarUser.getRoles() : null;
-    %>
 
     <!-- ADMIN ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>

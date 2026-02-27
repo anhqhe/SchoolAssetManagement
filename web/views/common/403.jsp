@@ -18,8 +18,8 @@
     <p class="text-gray-500 mb-3">
         Vui lòng liên hệ quản trị viên nếu bạn nghĩ đây là nhầm lẫn.
     </p>
-    <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/dashboard">
-        &larr; Quay lại Trang tổng quan
+    <a class="btn btn-primary" href="#" onclick="window.history.back(); return false;">
+        &larr; Quay lại trang trước
     </a>
 </div>
 
