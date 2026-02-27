@@ -32,7 +32,7 @@
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/assets/list">
+        <a class="nav-link" href="${pageContext.request.contextPath}/assets?action=list">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>
@@ -65,7 +65,7 @@
     <% if (sidebarRoles != null && sidebarRoles.contains("ASSET_STAFF") && !sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/assets/list">
+        <a class="nav-link" href="${pageContext.request.contextPath}/assets">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>
@@ -95,7 +95,7 @@
     <% } %>
        
     <!-- TEACHER ONLY -->
-    <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
+<% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
