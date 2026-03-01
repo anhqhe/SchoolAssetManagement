@@ -4,10 +4,7 @@
  */
 package model;
 
-/**
- *
- * @author ASUS
- */
+
 import java.util.Date;
 
 public class Transfer {
@@ -23,6 +20,21 @@ public class Transfer {
     
     private String statusText;
     private String statusBadgeClass;
+    
+    private String assetNames;
+    
+    private int assetId;        
+    private int fromRoomId;    
+    private int toRoomId;       
+    private int requestedById;  
+    public int getAssetId() { return assetId; }
+    public void setAssetId(int assetId) { this.assetId = assetId; }
+    public int getFromRoomId() { return fromRoomId; }
+    public void setFromRoomId(int fromRoomId) { this.fromRoomId = fromRoomId; }
+    public int getToRoomId() { return toRoomId; }
+    public void setToRoomId(int toRoomId) { this.toRoomId = toRoomId; }
+    public int getRequestedById() { return requestedById; }
+    public void setRequestedById(int requestedById) { this.requestedById = requestedById; }
     
     public int getTransferId() { return transferId; }
     public void setTransferId(int transferId) { this.transferId = transferId; }
@@ -54,5 +66,6 @@ public class Transfer {
 
     public String getStatusBadgeClass() { return statusBadgeClass; }
     public void setStatusBadgeClass(String statusBadgeClass) { this.statusBadgeClass = statusBadgeClass; }
-    
+    public String getAssetNames() { return assetNames; }
+    public void setAssetNames(String assetNames) { this.assetNames = assetNames; }
 }
