@@ -1,6 +1,7 @@
 package controller;
 
 import dao.RoomDAO;
+import dao.UserDAO;
 import model.Room;
 import model.User;
 
@@ -19,6 +20,7 @@ import java.util.List;
 public class RoomConfigServlet extends HttpServlet {
 
     private final RoomDAO roomDAO = new RoomDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -50,6 +52,12 @@ public class RoomConfigServlet extends HttpServlet {
                 req.setAttribute("error", "Không tìm thấy phòng.");
             } else {
                 req.setAttribute("room", room);
+                // Lấy trưởng phòng hiện tại và danh sách tất cả giáo viên
+                User roomHead = roomDAO.getRoomHeadByRoomId(roomId);
+                req.setAttribute("roomHead", roomHead);
+
+                List<User> teachers = userDAO.getAllTeachers();
+                req.setAttribute("teachers", teachers);
             }
 
             req.getRequestDispatcher("/views/admin/room-config.jsp").forward(req, resp);
@@ -82,6 +90,7 @@ public class RoomConfigServlet extends HttpServlet {
         String idParam = req.getParameter("roomId");
         String roomName = req.getParameter("roomName");
         String location = req.getParameter("location");
+        String headTeacherParam = req.getParameter("headTeacherId");
 
         if (idParam == null || idParam.trim().isEmpty()) {
             resp.sendRedirect(req.getContextPath() + "/rooms");
@@ -100,6 +109,16 @@ public class RoomConfigServlet extends HttpServlet {
                 room.setLocation(location != null ? location.trim() : null);
 
                 boolean updated = roomDAO.updateRoom(room);
+
+                // Xử lý update trưởng phòng
+                Long headTeacherId = null;
+                if (headTeacherParam != null && !headTeacherParam.trim().isEmpty()) {
+                    try {
+                        headTeacherId = Long.parseLong(headTeacherParam);
+                    } catch (NumberFormatException ignored) { }
+                }
+                roomDAO.setRoomHead(roomId, headTeacherId);
+
                 if (updated) {
                     req.setAttribute("success", "Cập nhật cấu hình phòng thành công.");
                 } else {
@@ -107,8 +126,15 @@ public class RoomConfigServlet extends HttpServlet {
                 }
             }
 
+            // Reload lại dữ liệu phòng, trưởng phòng và danh sách giáo viên
             Room reloaded = roomDAO.getRoomById(roomId);
             req.setAttribute("room", reloaded);
+
+            User roomHead = roomDAO.getRoomHeadByRoomId(roomId);
+            req.setAttribute("roomHead", roomHead);
+
+            List<User> teachers = userDAO.getAllTeachers();
+            req.setAttribute("teachers", teachers);
 
             req.getRequestDispatcher("/views/admin/room-config.jsp").forward(req, resp);
 

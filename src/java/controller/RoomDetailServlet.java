@@ -50,9 +50,14 @@ public class RoomDetailServlet extends HttpServlet {
                 req.setAttribute("error", "Không tìm thấy phòng.");
             } else {
                 req.setAttribute("room", room);
-                // Lấy danh sách giáo viên đang làm việc tại phòng này
-                List<User> teachers = roomDAO.getTeachersByRoomId(roomId);
-                req.setAttribute("teachersInRoom", teachers);
+                // Lấy trưởng phòng (giáo viên phụ trách chính) của phòng
+                try {
+                    User roomHead = roomDAO.getRoomHeadByRoomId(roomId);
+                    req.setAttribute("roomHead", roomHead);
+                } catch (SQLException ex) {
+                    // Nếu chỉ lỗi phần trưởng phòng thì vẫn hiển thị thông tin phòng bình thường
+                    ex.printStackTrace();
+                }
             }
 
             req.getRequestDispatcher("/views/admin/room-detail.jsp").forward(req, resp);

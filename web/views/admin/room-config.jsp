@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.User" %>
 <%@ page import="model.Room" %>
+<%@ page import="java.util.List" %>
 
 <%
     User currentUser = (User) session.getAttribute("currentUser");
@@ -8,6 +9,10 @@
     String error = (String) request.getAttribute("error");
     String success = (String) request.getAttribute("success");
     String locationValue = (room != null && room.getLocation() != null) ? room.getLocation() : "";
+
+    @SuppressWarnings("unchecked")
+    List<User> teachers = (List<User>) request.getAttribute("teachers");
+    User roomHead = (User) request.getAttribute("roomHead");
 %>
 
 <!DOCTYPE html>
@@ -88,6 +93,27 @@
                                            name="location"
                                            class="form-control"
                                            value="<%= locationValue %>">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="headTeacherId">Trưởng phòng</label>
+                                    <select id="headTeacherId" name="headTeacherId" class="form-control">
+                                        <option value="">-- Chưa gán trưởng phòng --</option>
+                                        <%
+                                            if (teachers != null) {
+                                                Long currentHeadId = (roomHead != null) ? roomHead.getUserId() : null;
+                                                for (User teacher : teachers) {
+                                                    boolean selected = currentHeadId != null && currentHeadId == teacher.getUserId();
+                                        %>
+                                        <option value="<%= teacher.getUserId() %>" <%= selected ? "selected" : "" %>>
+                                            <%= teacher.getFullName() != null ? teacher.getFullName() : teacher.getUsername() %>
+                                            (<%= teacher.getUsername() %>)
+                                        </option>
+                                        <%
+                                                }
+                                            }
+                                        %>
+                                    </select>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">

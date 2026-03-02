@@ -15,7 +15,15 @@ public class RoomDAO {
 
     public List<Room> getAllRooms() throws SQLException {
         List<Room> rooms = new ArrayList<>();
-        String sql = "SELECT RoomId, RoomName, Location FROM Rooms ORDER BY RoomName";
+
+        String sql =
+                "SELECT r.RoomId, r.RoomName, r.Location, " +
+                "       u.FullName AS HeadTeacherName " +
+                "FROM Rooms r " +
+                "LEFT JOIN TeacherRoomAssignments tra " +
+                "       ON tra.RoomId = r.RoomId AND tra.IsPrimary = 1 " +
+                "LEFT JOIN Users u ON tra.TeacherId = u.UserId " +
+                "ORDER BY r.RoomName";
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -26,6 +34,7 @@ public class RoomDAO {
                 room.setRoomId(rs.getLong("RoomId"));
                 room.setRoomName(rs.getString("RoomName"));
                 room.setLocation(rs.getString("Location"));
+                room.setHeadTeacherName(rs.getString("HeadTeacherName"));
                 rooms.add(room);
             }
         }
@@ -70,18 +79,16 @@ public class RoomDAO {
     }
 
     /**
-     * Lấy danh sách giáo viên đang được gán vào một phòng.
-     * Dữ liệu lấy từ bảng TeacherRoomAssignments (TeacherId, RoomId) join với Users.
+     * Lấy trưởng phòng (giáo viên phụ trách chính) của một phòng.
+     * Chọn giáo viên có IsPrimary = 1 trong TeacherRoomAssignments.
      */
-    public List<User> getTeachersByRoomId(long roomId) throws SQLException {
-        List<User> teachers = new ArrayList<>();
-
-        String sql = "SELECT u.UserId, u.Username, u.FullName, u.Email, u.IsActive " +
+    public User getRoomHeadByRoomId(long roomId) throws SQLException {
+        String sql = "SELECT TOP 1 u.UserId, u.Username, u.FullName, u.Email, u.IsActive " +
                      "FROM TeacherRoomAssignments tra " +
                      "JOIN Users u ON tra.TeacherId = u.UserId " +
                      "JOIN UserRoles ur ON ur.UserId = u.UserId " +
                      "JOIN Roles r ON ur.RoleId = r.RoleId " +
-                     "WHERE tra.RoomId = ? AND r.RoleCode = 'TEACHER' " +
+                     "WHERE tra.RoomId = ? AND tra.IsPrimary = 1 AND r.RoleCode = 'TEACHER' " +
                      "ORDER BY u.FullName";
 
         try (Connection conn = DBUtil.getConnection();
@@ -90,18 +97,42 @@ public class RoomDAO {
             ps.setLong(1, roomId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
+                if (rs.next()) {
                     User teacher = new User();
                     teacher.setUserId(rs.getLong("UserId"));
                     teacher.setUsername(rs.getString("Username"));
                     teacher.setFullName(rs.getString("FullName"));
                     teacher.setEmail(rs.getString("Email"));
                     teacher.setActive(rs.getBoolean("IsActive"));
-                    teachers.add(teacher);
+                    return teacher;
                 }
             }
         }
 
-        return teachers;
+        return null;
+    }
+
+    /**
+     * Cập nhật trưởng phòng cho một phòng.
+     * Xoá mọi gán cũ của phòng, sau đó (nếu teacherId != null) thêm bản ghi mới với IsPrimary = 1.
+     */
+    public void setRoomHead(long roomId, Long teacherId) throws SQLException {
+        String deleteSql = "DELETE FROM TeacherRoomAssignments WHERE RoomId = ?";
+        String insertSql = "INSERT INTO TeacherRoomAssignments (TeacherId, RoomId, IsPrimary) VALUES (?, ?, 1)";
+
+        try (Connection conn = DBUtil.getConnection()) {
+            try (PreparedStatement del = conn.prepareStatement(deleteSql)) {
+                del.setLong(1, roomId);
+                del.executeUpdate();
+            }
+
+            if (teacherId != null) {
+                try (PreparedStatement ins = conn.prepareStatement(insertSql)) {
+                    ins.setLong(1, teacherId);
+                    ins.setLong(2, roomId);
+                    ins.executeUpdate();
+                }
+            }
+        }
     }
 }
