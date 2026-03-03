@@ -5,6 +5,9 @@
 package controller.asset;
 
 import dao.asset.AssetDao;
+import dao.asset.AssetCategoryDao;
+import dao.asset.RoomDao;
+import dao.asset.UserDao;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -14,9 +17,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.asset.Asset;
 import model.User;
 
@@ -75,9 +81,17 @@ public class AssetServlet_CRUD extends HttpServlet {
             throws ServletException, IOException {
         String action = request.getParameter("action");
         if ("create".equals(action)) {
-            insertAsset(request, response);
+            try {
+                insertAsset(request, response);
+            } catch (SQLException ex) {
+                Logger.getLogger(AssetServlet_CRUD.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } else if ("edit".equals(action)) {
-            updateAsset(request, response);
+            try {
+                updateAsset(request, response);
+            } catch (SQLException ex) {
+                Logger.getLogger(AssetServlet_CRUD.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } else if ("changeStatus".equals(action)) {
             changeStatusAsset(request, response);
         }
@@ -91,9 +105,9 @@ public class AssetServlet_CRUD extends HttpServlet {
             String categoryIdStr = request.getParameter("categoryId");
             String activeState = request.getParameter("activeState");
             Boolean isActiveFilter = null;
-            if("active".equals(activeState)){
+            if ("active".equals(activeState)) {
                 isActiveFilter = Boolean.TRUE;
-            }else if("inactive".equals(activeState)){
+            } else if ("inactive".equals(activeState)) {
                 isActiveFilter = Boolean.FALSE;
             }
             List<Asset> assets;
@@ -101,7 +115,7 @@ public class AssetServlet_CRUD extends HttpServlet {
                     || (status != null && !status.trim().isEmpty())
                     || (categoryIdStr != null && !categoryIdStr.trim().isEmpty())
                     || (activeState != null && !activeState.trim().isEmpty()));
-            
+
             if (hasFilter) {
                 Long categoryId = null;
                 if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
@@ -129,8 +143,14 @@ public class AssetServlet_CRUD extends HttpServlet {
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setAttribute("mode", "create");
-        request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
+        try {
+            AssetCategoryDao categoryDao = new AssetCategoryDao();
+            request.setAttribute("categories", categoryDao.findAllActive());
+            request.setAttribute("mode", "create");
+            request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        }
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
@@ -138,6 +158,8 @@ public class AssetServlet_CRUD extends HttpServlet {
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             Asset asset = new AssetDao().findById(id);
+            AssetCategoryDao categoryDao = new AssetCategoryDao();
+            request.setAttribute("categories", categoryDao.findAllActive());
             request.setAttribute("asset", asset);
             request.setAttribute("mode", "edit");
             request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
@@ -147,25 +169,71 @@ public class AssetServlet_CRUD extends HttpServlet {
     }
 
     private void insertAsset(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException, SQLException {
         try {
+            String error = validateAssetForm(request, true);
+            if (error != null) {
+                Asset assetForForm = buildAssetFromRequestSafe(request);
+                AssetCategoryDao categoryDao = new AssetCategoryDao();
+                request.setAttribute("asset", assetForForm);
+                request.setAttribute("categories", categoryDao.findAllActive());
+                request.setAttribute("errorMessage", error);
+                request.setAttribute("mode", "create");
+                request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
+                return;
+            }
             Asset asset = builtAssetFromRequest(request);
             assetDao.insert(asset);
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
-            throw new ServletException(e);
+            Asset assetForForm = buildAssetFromRequestSafe(request);
+            AssetCategoryDao categoryDao = new AssetCategoryDao();
+            request.setAttribute("asset", assetForForm);
+            request.setAttribute("categories", categoryDao.findAllActive());
+            request.setAttribute("errorMessage", "Mã tài sản đã tồn tại hoặc dữ liệu không hợp lệ.");
+            request.setAttribute("mode", "create");
+            request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
         }
     }
 
     private void updateAsset(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException, SQLException {
         try {
+            String error = validateAssetForm(request, false);
+            if (error != null) {
+                Asset assetForForm = buildAssetFromRequestSafe(request);
+                String assetIdStr = request.getParameter("assetId");
+                if (assetForForm != null && assetIdStr != null && !assetIdStr.trim().isEmpty()) {
+                    try {
+                        assetForForm.setAssetId(Integer.parseInt(assetIdStr.trim()));
+                    } catch (NumberFormatException ignored) {}
+                }
+                AssetCategoryDao categoryDao = new AssetCategoryDao();
+                request.setAttribute("asset", assetForForm);
+                request.setAttribute("categories", categoryDao.findAllActive());
+                request.setAttribute("errorMessage", error);
+                request.setAttribute("mode", "edit");
+                request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
+                return;
+            }
             Asset asset = builtAssetFromRequest(request);
             asset.setAssetId(Integer.parseInt(request.getParameter("assetId")));
             assetDao.update(asset);
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
-            throw new ServletException(e);
+            Asset assetForForm = buildAssetFromRequestSafe(request);
+            String assetIdStr = request.getParameter("assetId");
+            if (assetForForm != null && assetIdStr != null && !assetIdStr.trim().isEmpty()) {
+                try {
+                    assetForForm.setAssetId(Integer.parseInt(assetIdStr.trim()));
+                } catch (NumberFormatException ignored) {}
+            }
+            AssetCategoryDao categoryDao = new AssetCategoryDao();
+            request.setAttribute("asset", assetForForm);
+            request.setAttribute("categories", categoryDao.findAllActive());
+            request.setAttribute("errorMessage", "Mã tài sản đã tồn tại hoặc dữ liệu không hợp lệ.");
+            request.setAttribute("mode", "edit");
+            request.getRequestDispatcher("/views/asset/asset-form.jsp").forward(request, response);
         }
     }
 
@@ -226,7 +294,14 @@ public class AssetServlet_CRUD extends HttpServlet {
             a.setReceivedDate(LocalDate.parse(rDateStr).atStartOfDay());
         }
         a.setConditionNote(request.getParameter("conditionNote"));
-        a.setStatus(request.getParameter("status"));
+
+        String statusParam = request.getParameter("status");
+        if (statusParam == null || statusParam.trim().isEmpty()) {
+            a.setStatus("IN_STOCK");
+        } else {
+            a.setStatus(statusParam);
+        }
+
         //Current Room Id
         String roomIdStr = request.getParameter("currentRoomId");
         if (roomIdStr != null && !roomIdStr.isEmpty()) {
@@ -241,4 +316,146 @@ public class AssetServlet_CRUD extends HttpServlet {
         return a;
     }
 
+    /** Build Asset từ request params một cách an toàn (không throw) - dùng khi hiển thị lại form sau validation fail */
+    private Asset buildAssetFromRequestSafe(HttpServletRequest request) {
+        try {
+            Asset a = new Asset();
+            a.setAssetCode(request.getParameter("assetCode"));
+            a.setAssetName(request.getParameter("assetName"));
+            String catIdStr = request.getParameter("categoryId");
+            if (catIdStr != null && !catIdStr.trim().isEmpty()) {
+                a.setCategoryId(Long.parseLong(catIdStr.trim()));
+            }
+            a.setSerialNumber(request.getParameter("serialNumber"));
+            a.setModel(request.getParameter("model"));
+            a.setBrand(request.getParameter("brand"));
+            a.setOriginNote(request.getParameter("originNote"));
+
+            String pDateStr = request.getParameter("purchaseDate");
+            if (pDateStr != null && !pDateStr.trim().isEmpty()) {
+                a.setPurchaseDate(LocalDate.parse(pDateStr.trim()).atStartOfDay());
+            }
+            String rDateStr = request.getParameter("receivedDate");
+            if (rDateStr != null && !rDateStr.trim().isEmpty()) {
+                a.setReceivedDate(LocalDate.parse(rDateStr.trim()).atStartOfDay());
+            }
+
+            a.setConditionNote(request.getParameter("conditionNote"));
+
+            String statusParam = request.getParameter("status");
+            if (statusParam != null && !statusParam.trim().isEmpty()) {
+                a.setStatus(statusParam.trim());
+            } else {
+                a.setStatus("IN_STOCK");
+            }
+
+            String roomIdStr = request.getParameter("currentRoomId");
+            if (roomIdStr != null && !roomIdStr.trim().isEmpty()) {
+                try {
+                    a.setCurrentRoomId(Long.parseLong(roomIdStr.trim()));
+                } catch (NumberFormatException ignored) {}
+            }
+            String holderIdStr = request.getParameter("currentHolderId");
+            if (holderIdStr != null && !holderIdStr.trim().isEmpty()) {
+                try {
+                    a.setCurrentHolderId(Long.parseLong(holderIdStr.trim()));
+                } catch (NumberFormatException ignored) {}
+            }
+            a.setIsActive("on".equals(request.getParameter("isActive")));
+            return a;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private final RoomDao roomDao = new RoomDao();
+    private final UserDao userDao = new UserDao();
+
+    private String validateAssetForm(HttpServletRequest request, boolean isCreate) throws SQLException {
+        String assetCode = request.getParameter("assetCode");
+        String assetName = request.getParameter("assetName");
+        String categoryIdStr = request.getParameter("categoryId");
+        String roomIdStr = request.getParameter("currentRoomId");
+        String holderIdStr = request.getParameter("currentHolderId");
+        String pDateStr = request.getParameter("purchaseDate");
+        String rDateStr = request.getParameter("receivedDate");
+
+        if (assetCode == null || assetCode.trim().isEmpty()) {
+            return "Mã tài sản là bắt buộc.";
+        }
+
+        if (assetCode == null || assetCode.trim().isEmpty()) {
+            return "Mã tài sản là bắt buộc.";
+        }
+        if (assetName == null || assetName.trim().isEmpty()) {
+            return "Tên tài sản là bắt buộc.";
+        }
+
+        if (categoryIdStr == null || categoryIdStr.trim().isEmpty()) {
+            return "Vui lòng chọn danh mục.";
+        }
+
+        //Ngày mua phải sau ngày nhập
+        try {
+            if (pDateStr != null && !pDateStr.trim().isEmpty() && rDateStr != null && !rDateStr.trim().isEmpty()) {
+                LocalDate p = LocalDate.parse(pDateStr);
+                LocalDate r = LocalDate.parse(rDateStr);
+                if (p.isAfter(r)) {
+                    return "Ngày mua không được sau ngày nhận";
+                }
+            }
+        } catch (Exception e) {
+            return "Định dạng ngày không hợp lệ";
+        }
+
+        //Validate roomID tồn tại
+        if (roomIdStr != null && !roomIdStr.isEmpty()) {
+            try {
+                long roomId = Long.parseLong(roomIdStr);
+                if(roomId < 0){
+                    return "Id phòng không được âm.";
+                }
+                if (!roomDao.exists(roomId)) {
+                    return "Phòng hiện tại không tồn tại.";
+                }
+            } catch (NumberFormatException e) {
+                return "Room ID không hợp lệ.";
+            }
+
+        }
+
+        //Validate holderId tồn tại
+        if (holderIdStr != null && !holderIdStr.trim().isEmpty()) {
+            try {
+                long holderId = Long.parseLong(holderIdStr);
+                if(holderId < 0){
+                    return "Id người giữ không được âm.";
+                }
+                if (!userDao.exists(holderId)) {
+                    return "User (người giữ) không tồn tại.";
+                }
+            } catch (NumberFormatException e) {
+                return "Room ID không hợp lệ.";
+            }
+
+        }
+        //Check assetCode là duy nhất
+        if (isCreate) {
+            if (assetDao.existsByCode(assetCode.trim())) {
+                return "Mã tài sản đã tồn tại, vui lòng chọn mã khác.";
+            }
+        } else {
+            // Edit: chỉ báo lỗi nếu mã trùng với TÀI SẢN KHÁC (không tính bản thân)
+            String assetIdStr = request.getParameter("assetId");
+            if (assetIdStr != null && !assetIdStr.trim().isEmpty()) {
+                try {
+                    int assetId = Integer.parseInt(assetIdStr.trim());
+                    if (assetDao.existsByCodeExcludingId(assetCode.trim(), assetId)) {
+                        return "Mã tài sản đã tồn tại, vui lòng chọn mã khác.";
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return null;// hợp lệ
+    }
 }

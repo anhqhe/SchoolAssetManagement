@@ -136,7 +136,10 @@ public class AllocateAssets extends HttpServlet {
                             "ASSET_REQUEST",
                             requestId);
                     try {
-                        requestDAO.updateStatus(requestId, "OUT_OF_STOCK");
+//                        requestDAO.updateStatus(requestId, "OUT_OF_STOCK");
+                        try (Connection conn = DBUtil.getConnection()) {
+                            requestDAO.updateStatus(conn, requestId, "OUT_OF_STOCK");
+                        }
                     } catch (SQLException ex) {
                         LOGGER.log(Level.SEVERE, "Error updating request status", ex);
                         throw new RuntimeException("Không thể cập nhật trạng thái yêu cầu.");
@@ -360,7 +363,7 @@ public class AllocateAssets extends HttpServlet {
                 conn.close();
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE,
-                            "Error closing connection in AllocateAssset", ex);
+                        "Error closing connection in AllocateAssset", ex);
             }
         }
     }

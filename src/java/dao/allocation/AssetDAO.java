@@ -82,4 +82,29 @@ public class AssetDAO {
         return list;
     }
 
+    //Thêm tạm để build
+    public AssetDTO findById(long assetId) throws SQLException {
+    String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+            + "c.CategoryName, a.Status "
+            + "FROM Assets a "
+            + "JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+            + "WHERE a.AssetId = ?";
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setLong(1, assetId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                AssetDTO a = new AssetDTO();
+                a.setAssetId(rs.getLong("AssetId"));
+                a.setAssetCode(rs.getString("AssetCode"));
+                a.setAssetName(rs.getString("AssetName"));
+                a.setCategoryId(rs.getLong("CategoryId"));
+                a.setCategoryName(rs.getString("CategoryName"));
+                a.setStatus(rs.getString("Status"));
+                return a;
+            }
+        }
+    }
+    return null;
+}
 }

@@ -393,4 +393,28 @@ public class AssetDao {
 
         return assets;
     }
+    
+    public boolean existsByCode(String assetCode) throws SQLException{
+        String sql = "SELECT 1 FROM Assets WHERE AssetCode = ?";
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)){
+            ps.setString(1, assetCode);
+            try(ResultSet rs = ps.executeQuery()){
+                return rs.next();
+            }
+        } 
+    }
+
+    /** Kiểm tra mã tài sản đã tồn tại bởi tài sản KHÁC (dùng khi edit - loại trừ asset hiện tại) */
+    public boolean existsByCodeExcludingId(String assetCode, int excludeAssetId) throws SQLException {
+        String sql = "SELECT 1 FROM Assets WHERE AssetCode = ? AND AssetId != ?";
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, assetCode);
+            ps.setInt(2, excludeAssetId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
 }
