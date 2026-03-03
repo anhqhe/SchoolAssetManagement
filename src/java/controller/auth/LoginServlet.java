@@ -88,13 +88,11 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("currentUser", user);
             session.setMaxInactiveInterval(30*60); // 30 phút
 
-            // Chuyển hướng tuỳ vai trò
+            // Chuyển hướng tuỳ vai trò (ví dụ)
             if (user.getRoles() != null && user.getRoles().contains("ADMIN")) {
-                // ADMIN: về trang dashboard JSP
-                resp.sendRedirect(req.getContextPath() + "/views/admin/dashboard.jsp");
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
             } else if (user.getRoles().contains("ASSET_STAFF")) {
-                // Asset staff: đi thẳng tới màn danh sách tài sản
-                resp.sendRedirect(req.getContextPath() + "/assets/list");
+                resp.sendRedirect(req.getContextPath() + "/assets");
             } else if (user.getRoles().contains("TEACHER")) {
                 resp.sendRedirect(req.getContextPath() + "/teacher/request-list");
             } else {

@@ -42,7 +42,10 @@
 
                         <!-- Header: Title + Back Button (COMMON) -->
                         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                            <h1 class="h3 mb-0 text-gray-800">Chi tiết phiếu: ${req.requestCode}</h1>
+                            <h1 class="h3 mb-0 text-gray-800">
+                                <i class="fas fa-info-circle text-primary"></i>
+                                Chi tiết phiếu: ${req.requestCode}
+                            </h1>
                             <c:choose>
                                 <c:when test="${isTeacher}">
                                     <a href="${pageContext.request.contextPath}/teacher/request-list" class="btn btn-sm btn-secondary shadow-sm">
@@ -77,7 +80,7 @@
 
                         <!-- COMMON: General Info & Request Items  -->
                         <div class="row">
-                            <div class="col-lg-4">
+                            <div class="col-lg-6">
                                 <div class="card shadow mb-4">
                                     <div class="card-header py-3">
                                         <h6 class="m-0 font-weight-bold text-primary">Thông tin chung</h6>
@@ -86,14 +89,23 @@
                                         <p><strong>Giáo viên:</strong> ${req.teacherName}</p>
                                         <p><strong>Phòng sử dụng:</strong> ${req.roomName}</p>
                                         <p><strong>Ngày tạo:</strong> ${req.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}</p>
-                                        <p><strong>Trạng thái:</strong> <span class="badge badge-primary">${req.status}</span></p>
+                                        <p>
+                                            <strong>Trạng thái:</strong> 
+                                            <c:choose>
+                                                <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">Chờ Phê Duyệt</span></c:when>
+                                                <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-primary">Đã Phê Duyệt</span></c:when>
+                                                <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Hoàn Thành</span></c:when>
+                                                <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Từ Chối</span></c:when>
+                                                <c:otherwise><span class="badge badge-secondary">${req.status}</span></c:otherwise>
+                                            </c:choose>
+                                        </p>
                                         <hr>
                                         <p><strong>Mục đích:</strong><br>${req.purpose}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="col-lg-8">
+                            <div class="col-lg-6">
                                 <div class="card shadow mb-4">
                                     <div class="card-header py-3">
                                         <h6 class="m-0 font-weight-bold text-primary">Danh mục thiết bị yêu cầu</h6>
@@ -124,26 +136,16 @@
                             </div>
                         </div>
 
-                        <!-- TEACHER ONLY: Approval Feedback -->
-                        <c:if test="${isTeacher && not empty approval}">
-                            <div class="row">
-                                <div class="col-md-8 mx-auto">
-                                    <div class="alert ${approval.decision == 'APPROVED' ? 'alert-success' : 'alert-danger'}">
-                                        <h6>Phản hồi từ Ban Giám Hiệu:</h6>
-                                        <p class="mb-1"><strong>Quyết định:</strong> ${approval.decision}</p>
-                                        <p class="mb-1"><strong>Lý do/Ghi chú:</strong> ${approval.decisionNote}</p>
-                                        <small>Duyệt bởi: ${userDAO.getByUserId(approval.approverId).getUsername()} vào lúc ${approval.decidedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:if>
 
-                        <!-- STAFF & BOARD: Allocated / Distributed Assets -->
-                        <c:if test="${(isStaff || isBoard) && not empty allocatedAssets}">
-                            <div class="card shadow mb-4 border-left-primary">
+
+
+
+                        <!-- All: Allocated / Distributed Assets -->
+                        <c:if test="${(isTeacher || isStaff || isBoard) && not empty allocatedAssets}">
+                            <div class="card shadow mb-4">
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Tài sản đã được phân phối</h6>
-                                    <small class="text-muted">Người phân phối: <strong>${allocatedByName}</strong></small>
+                                    <small class="text-muted">Người phân phối: <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong></small>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -198,19 +200,105 @@
                             </div>
                         </c:if>
 
-                        <!-- STAFF & BOARD: Approval Feedback -->
-                        <c:if test="${(isStaff || isBoard) && not empty approval}">
-                            <div class="alert ${approval.decision == 'APPROVED' ? 'alert-success' : 'alert-danger'}">
-                                <h6>Phản hồi từ Ban Giám Hiệu:</h6>
-                                <p class="mb-1"><strong>Quyết định:</strong> ${approval.decision}</p>
-                                <p class="mb-1"><strong>Lý do/Ghi chú:</strong> ${approval.decisionNote}</p>
-                                <small>Duyệt bởi: ${userDAO.getByUserId(approval.approverId).getFullName()} vào lúc ${approval.decidedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}</small>
+                        <!-- All: Approval Feedback -->
+                        <c:if test="${(isTeacher || isStaff || isBoard) && not empty approval}">                           
+                            <div class="card shadow-sm mb-4 border-0">
+
+                                <div class="card-body">
+
+                                    <!-- ===== Phản hồi BGH ===== -->
+                                    <div class="d-flex align-items-start mb-3">
+
+                                        <div class="mr-3">
+                                            <i class="fas
+                                               ${approval.decision == 'APPROVED' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'}
+                                               fa-lg"></i>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+
+                                            <h6 class="font-weight-bold mb-2">
+                                                Phản hồi từ Ban Giám Hiệu
+                                            </h6>
+
+                                            <div class="mb-2">
+                                                Quyết định: 
+                                                <c:choose>
+                                                    <c:when test="${approval.decision == 'APPROVED'}">
+                                                        <span class="badge px-3 py-2" style="background: #d4edda; color: #155724; border-radius:20px;">
+                                                            Được Phê Duyệt
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${approval.decision == 'REJECTED'}">
+                                                        <span class="badge px-3 py-2" style="background: #f8d7da; color: #721c24; border-radius:20px;">
+                                                            Từ Chối
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge badge-secondary">${approval.decision}</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <div class="text-muted small">
+                                                    Lý do / Ghi chú: ${approval.decisionNote}
+                                                </div>
+                                            </div>
+
+                                            <div class="text-muted small">
+                                                Duyệt bởi 
+                                                <strong>${userDAO.getByUserId(approval.approverId).getFullName()}</strong>
+                                                • 
+                                                ${approval.decidedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- ===== Phản hồi Người phân phối ===== -->
+                                    <c:if test="${req.status == 'COMPLETED'}">
+                                        <hr class="my-3">
+
+                                        <div class="d-flex align-items-start">
+
+                                            <div class="mr-3">
+                                                <i class="fas fa-box-open text-primary fa-lg"></i>
+                                            </div>
+
+                                            <div class="flex-grow-1">
+
+                                                <h6 class="font-weight-bold mb-1">
+                                                    Phản hồi từ Người Phân Phối
+                                                </h6>
+                                                <div>
+                                                    Ghi chú: ${allocation.note}
+                                                </div>
+                                                <div class="text-muted small">
+                                                    Phân phối bởi 
+                                                    <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
+                                                    • 
+                                                    ${allocation.allocatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </c:if>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <!-- TEACHER ONLY: Update Request Buttons -->
+                        <c:if test="${isTeacher && req.status == 'WAITING_BOARD'}">
+                            <div class="card-body">
+                                <a href="${pageContext.request.contextPath}/teacher/update-request?id=${req.requestId}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Cập nhật yêu cầu
+                                </a>
                             </div>
                         </c:if>
 
                         <!-- BOARD ONLY: Approve/Reject Buttons -->
                         <c:if test="${isBoard && req.status == 'WAITING_BOARD'}">
-                            <button type="button" class="btn btn-success" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
+                            <button type="button" class="btn btn-primary" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
                                 <i class="fas fa-check"></i> Phê duyệt/ Từ chối
                             </button>
                         </c:if>
@@ -224,6 +312,8 @@
                             </div>
                         </c:if>
                     </div>
+
+
                 </div>
 
                 <%@ include file="/views/layout/footer.jsp" %>
@@ -245,7 +335,7 @@
                         <div class="mb-3">
                             <label class="form-label">Quyết định</label>
                             <select name="decision" class="form-control" required>
-                                <option value="APPROVED">Phê Duyệt (Chuyển Staff cấp phát)</option>
+                                <option value="APPROVED">Phê Duyệt</option>
                                 <option value="REJECTED">Từ Chối Yêu Cầu</option>
                             </select>
                         </div>

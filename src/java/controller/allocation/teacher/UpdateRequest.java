@@ -52,13 +52,17 @@ public class UpdateRequest extends HttpServlet {
 
         List<String> roles = currentUser.getRoles();
         if (roles == null || !roles.contains("TEACHER")) {
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Bạn không có quyền chỉnh sửa");
             response.sendRedirect(request.getContextPath() + "/teacher/request-list");
             return;
         }
 
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=invalid_id");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
             return;
         }
 
@@ -67,17 +71,23 @@ public class UpdateRequest extends HttpServlet {
             AssetRequestDTO req = requestDAO.findById(requestId);
 
             if (req == null) {
-                response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=request_not_found");
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Không tìm thấy yêu cầu");
+                response.sendRedirect(request.getContextPath() + "/teacher/request-list");
                 return;
             }
 
             if (req.getTeacherId() != currentUser.getUserId()) {
-                response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=not_allowed");
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Bạn không có quyền chỉnh sửa");
+                response.sendRedirect(request.getContextPath() + "/teacher/request-list");
                 return;
             }
 
             if (!"WAITING_BOARD".equals(req.getStatus())) {
-                response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId + "&error=not_editable");
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Yêu cầu không thể chỉnh sửa");
+                response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId);
                 return;
             }
 
@@ -92,7 +102,7 @@ public class UpdateRequest extends HttpServlet {
                     .forward(request, response);
         } catch (NumberFormatException e) {
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Invalid ID");
+            session.setAttribute("message", "ID không hợp lệ");
             response.sendRedirect(request.getContextPath() + "/teacher/request-list");
         } catch (Exception e) {
             e.printStackTrace(System.err);

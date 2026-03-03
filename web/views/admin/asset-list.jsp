@@ -75,7 +75,8 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <form method="get" action="${pageContext.request.contextPath}/assets/list" class="form-inline">
+                        <form method="get" action="${pageContext.request.contextPath}/assets" class="form-inline">
+                            <input type="hidden" name="action" value="list">
                             <div class="form-group mr-3 mb-2">
                                 <input type="text" 
                                        name="keyword" 
@@ -88,10 +89,7 @@
                                 <select name="status" class="form-control">
                                     <option value="">-- Tất cả trạng thái --</option>
                                     <option value="IN_STOCK" ${status == 'IN_STOCK' ? 'selected' : ''}>Trong kho</option>
-                                    <option value="IN_USE" ${status == 'IN_USE' ? 'selected' : ''}>Đang sử dụng</option>
-                                    <option value="MAINTENANCE" ${status == 'MAINTENANCE' ? 'selected' : ''}>Bảo trì</option>
-                                    <option value="DAMAGED" ${status == 'DAMAGED' ? 'selected' : ''}>Hỏng hóc</option>
-                                    <option value="DISPOSED" ${status == 'DISPOSED' ? 'selected' : ''}>Đã thanh lý</option>
+                                    <option value="IN_USE" ${status == 'IN_USE' ? 'selected' : ''}>Đang sử dụng</option>                                    
                                 </select>
                             </div>
                             
@@ -99,7 +97,7 @@
                                 <i class="fas fa-search"></i> Tìm kiếm
                             </button>
                             
-                            <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-secondary mb-2">
+                            <a href="${pageContext.request.contextPath}/assets?action=list" class="btn btn-secondary mb-2">
                                 <i class="fas fa-redo"></i> Đặt lại
                             </a>
                         </form>
@@ -161,7 +159,7 @@
                                                         </span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <a href="${pageContext.request.contextPath}/assets/detail?id=${asset.assetId}" 
+                                                        <a href="${pageContext.request.contextPath}/assets?action=detail&id=${asset.assetId}" 
                                                            class="btn btn-sm btn-info" title="Xem chi tiết">
                                                             <i class="fas fa-eye"></i>
                                                         </a>

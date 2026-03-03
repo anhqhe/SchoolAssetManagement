@@ -53,6 +53,8 @@ public class AddRequest extends HttpServlet {
         // Check authorization - user must have TEACHER role
         List<String> roles = currentUser.getRoles();
         if (roles == null || !roles.contains("TEACHER")) {
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Bạn không có quyền truy cập");
             response.sendRedirect("request-list");
             return;
         }
@@ -65,7 +67,8 @@ public class AddRequest extends HttpServlet {
         } catch (Exception e) {
             System.err.println("Error loading add request page: " + e.getMessage());
             e.printStackTrace();
-            request.setAttribute("error", "Không thể tải trang. Vui lòng thử lại!");
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Đã xảy ra lỗi. Vui lòng thử lại!");
             request.getRequestDispatcher("/views/allocation/teacher/request-list.jsp")
                     .forward(request, response);
         }
