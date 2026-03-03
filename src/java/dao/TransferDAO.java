@@ -129,21 +129,19 @@ public List<Transfer> getTransfers(String keyword, String status) throws SQLExce
         return t;
     }
 
-public boolean insertTransferWithItems(Transfer t, List<Integer> assetIds) throws SQLException {
+public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNoteMap) throws SQLException {
     String sqlTransfer = "INSERT INTO AssetTransfers (TransferCode, RequestedById, FromRoomId, ToRoomId, " +
                          "Status, Reason, CreatedAt) " +
                          "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
-    String sqlItem = "INSERT INTO AssetTransferItems (TransferId, AssetId) VALUES (?, ?)";
+    String sqlItem = "INSERT INTO AssetTransferItems (TransferId, AssetId, Note) VALUES (?, ?, ?)";
 
     Connection conn = null;
     try {
         conn = DBUtil.getConnection();
-        conn.setAutoCommit(false); // transaction
+        conn.setAutoCommit(false);
 
         long transferId;
-
-     
         try (PreparedStatement ps = conn.prepareStatement(sqlTransfer, Statement.RETURN_GENERATED_KEYS)) {
             String code = "TRF" + System.currentTimeMillis();
             ps.setString(1, code);
@@ -153,7 +151,6 @@ public boolean insertTransferWithItems(Transfer t, List<Integer> assetIds) throw
             ps.setString(5, "PENDING");
             ps.setString(6, t.getReason());
             ps.executeUpdate();
-
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
                 transferId = rs.getLong(1);
@@ -163,11 +160,11 @@ public boolean insertTransferWithItems(Transfer t, List<Integer> assetIds) throw
             }
         }
 
-        // Insert items
         try (PreparedStatement ps = conn.prepareStatement(sqlItem)) {
-            for (int assetId : assetIds) {
+            for (Map.Entry<Integer, String> entry : assetNoteMap.entrySet()) {
                 ps.setLong(1, transferId);
-                ps.setLong(2, assetId);
+                ps.setLong(2, entry.getKey());       
+                ps.setString(3, entry.getValue());   
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -175,7 +172,6 @@ public boolean insertTransferWithItems(Transfer t, List<Integer> assetIds) throw
 
         conn.commit();
         return true;
-
     } catch (SQLException e) {
         if (conn != null) conn.rollback();
         throw e;
