@@ -18,7 +18,6 @@ import model.User;
         filterName = "AuthFilter",
         urlPatterns = {
             "/admin/*",
-            "/assets/*",
             "/staff/*",
             "/teacher/*",
             "/board/*",
@@ -63,8 +62,7 @@ public class AuthFilter implements Filter {
         }
 
         // Nhóm ASSET_STAFF (và ADMIN) cho các URL quản lý tài sản
-        else if (path.startsWith("/assets/")
-                || path.startsWith("/staff/")
+        else if ( path.startsWith("/staff/")
                 || path.startsWith("/transfers/")) {
             allowed = roles.contains("ASSET_STAFF") || roles.contains("ADMIN");
         }
