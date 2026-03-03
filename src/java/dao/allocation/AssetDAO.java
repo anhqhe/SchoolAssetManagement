@@ -82,31 +82,4 @@ public class AssetDAO {
         return list;
     }
 
-    public AssetDTO findById(long assetId) {
-        String sql = "SELECT a.*, c.CategoryName "
-                + "FROM Assets a "
-                + "JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
-                + "WHERE a.AssetId = ?";
-
-        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
-            ps.setLong(1, assetId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    AssetDTO a = new AssetDTO();
-                    a.setAssetId(rs.getLong("AssetId"));
-                    a.setAssetCode(rs.getString("AssetCode"));
-                    a.setAssetName(rs.getString("AssetName"));
-                    a.setCategoryId(rs.getLong("CategoryId"));
-                    a.setCategoryName(rs.getString("CategoryName"));
-                    a.setStatus(rs.getString("Status"));
-                    return a;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("dao.allocation.AssetDAO.findById()");
-            System.err.println(e);
-        }
-        return null;
-    }
-
 }

@@ -186,9 +186,6 @@
                                                                 <c:when test="${asset.status == 'IN_USE'}">
                                                                     <span class="badge badge-primary">Đang sử dụng</span>
                                                                 </c:when>
-                                                                <c:when test="${asset.status == 'IN_STOCK'}">
-                                                                    <span class="badge badge-primary">Trong kho</span>
-                                                                </c:when>
                                                                 <c:otherwise>
                                                                     <span class="badge badge-secondary">${asset.status}</span>
                                                                 </c:otherwise>
@@ -260,7 +257,7 @@
                                     </div>
 
                                     <!-- ===== Phản hồi Người phân phối ===== -->
-                                    <c:if test="${req.status == 'COMPLETED' || req.status == 'OUT_OF_STOCK'}">
+                                    <c:if test="${req.status == 'COMPLETED'}">
                                         <hr class="my-3">
 
                                         <div class="d-flex align-items-start">
@@ -274,8 +271,6 @@
                                                 <h6 class="font-weight-bold mb-1">
                                                     Phản hồi từ Người Phân Phối
                                                 </h6>
-                                                
-                                                <c:if test="${req.status == 'COMPLETED'}">
                                                 <div>
                                                     Ghi chú: ${allocation.note}
                                                 </div>
@@ -285,12 +280,6 @@
                                                     • 
                                                     ${allocation.allocatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
                                                 </div>
-                                                </c:if>
-                                                
-                                                <c:if test = "${req.status == 'OUT_OF_STOCK'}">
-                                                    <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
-                                                    Kho đang hết tài sản. Vui lòng chờ!!
-                                                </c:if>
                                             </div>
                                         </div>
                                     </c:if>

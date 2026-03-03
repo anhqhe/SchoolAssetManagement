@@ -52,36 +52,20 @@ public class AssetRequestDAO {
     }
 
     //update status
-    public boolean updateStatus(Connection conn, long requestId, String status) throws SQLException{
+    public boolean updateStatus(Connection conn, long requestId, String status) throws SQLException {
         String sql = """
                      UPDATE AssetRequests 
                      SET Status = ?, UpdatedAt = SYSDATETIME() 
                      WHERE RequestId = ?
                      """;
 
-        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setLong(2, requestId);
 
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
-        } 
-    }
-    
-    public boolean updateStatus(long requestId, String status) throws SQLException{
-        String sql = """
-                     UPDATE AssetRequests 
-                     SET Status = ?, UpdatedAt = SYSDATETIME() 
-                     WHERE RequestId = ?
-                     """;
-
-        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
-            ps.setString(1, status);
-            ps.setLong(2, requestId);
-
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } 
+        }
     }
 
     //update request info (room, purpose)
@@ -285,7 +269,7 @@ public class AssetRequestDAO {
                 FROM AssetRequests r
                 JOIN Users u ON r.TeacherId = u.UserId 
                 LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
-                WHERE r.Status IN ('APPROVED_BY_BOARD', 'COMPLETED', 'OUT_OF_STOCK')    
+                WHERE r.Status IN ('APPROVED_BY_BOARD', 'COMPLETED')    
                                                                  """);
 
         if (keyword != null && !keyword.trim().isEmpty()) {

@@ -104,13 +104,11 @@
                                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                                             <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
-                                                            <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết tài sản</option>
                                                         </c:when>
                                                         <c:when test="${isStaff}">
                                                             <option value="">-- Tất cả trạng thái --</option>
                                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
-                                                            <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết tài sản</option>
                                                         </c:when>
                                                     </c:choose>
                                                 </select>
@@ -223,8 +221,7 @@
                                                                                     <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-primary">Đã Phê Duyệt</span></c:when>
                                                                                     <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Hoàn Thành</span></c:when>
                                                                                     <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Từ Chối</span></c:when>
-                                                                                    <c:when test="${req.status == 'OUT_OF_STOCK'}"><span class="badge badge-secondary">Hết tài sản</span></c:when>
-                                                                                    <c:otherwise><span class="badge badge-info">${req.status}</span></c:otherwise>
+                                                                                    <c:otherwise><span class="badge badge-secondary">${req.status}</span></c:otherwise>
                                                                                 </c:choose>
                                                                             </td>
                                                                             <!-- Actions (role-specific) -->
