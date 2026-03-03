@@ -1,5 +1,8 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
+ */
 package controller.staff;
-
 import dao.TransferDAO;
 import model.Transfer;
 import model.User;
@@ -16,8 +19,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet("/transfers/approve")
-public class TransferApproveServlet extends HttpServlet {
+
+@WebServlet("/transfers/reject")
+public class TransferRejectServlet extends HttpServlet {
 
     private final TransferDAO transferDAO = new TransferDAO();
 
@@ -28,8 +32,8 @@ public class TransferApproveServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // Kiểm tra đăng nhập & quyền
         User currentUser = (User) request.getSession().getAttribute("currentUser");
+
         if (currentUser == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"success\":false,\"message\":\"Chưa đăng nhập\"}");
@@ -38,14 +42,14 @@ public class TransferApproveServlet extends HttpServlet {
 
         boolean isAuthorized = currentUser.getRoles() != null &&
                 (currentUser.getRoles().contains("ADMIN") ||
-                 currentUser.getRoles().contains("ASSET_STAFF"));
+                 currentUser.getRoles().contains("BOARD") ||
+                currentUser.getRoles().contains("ASSET_STAFF"));
 
         if (!isAuthorized) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.getWriter().write("{\"success\":false,\"message\":\"Không có quyền phê duyệt\"}");
+            response.getWriter().write("{\"success\":false,\"message\":\"Không có quyền từ chối\"}");
             return;
         }
-
 
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
@@ -56,22 +60,19 @@ public class TransferApproveServlet extends HttpServlet {
 
         try {
             int transferId = Integer.parseInt(idParam.trim());
-            boolean updated = transferDAO.approveTransfer(transferId);
+
+            boolean updated = transferDAO.rejectTransfer(transferId);
 
             if (updated) {
-                response.getWriter().write("{\"success\":true,\"message\":\"Phê duyệt thành công\"}");
+                response.getWriter().write("{\"success\":true,\"message\":\"Từ chối thành công\"}");
             } else {
                 response.setStatus(HttpServletResponse.SC_CONFLICT);
                 response.getWriter().write("{\"success\":false,\"message\":\"Phiếu không tồn tại hoặc đã được xử lý\"}");
             }
 
-        } catch (NumberFormatException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("{\"success\":false,\"message\":\"ID không hợp lệ\"}");
         } catch (Exception e) {
-            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server: " + e.getMessage() + "\"}");
+            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server\"}");
         }
     }
 }
