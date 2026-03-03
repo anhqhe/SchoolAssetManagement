@@ -24,6 +24,8 @@ import java.sql.Connection;
 import model.allocation.AssetRequest;
 import model.allocation.AssetRequestItem;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -38,6 +40,8 @@ public class AddRequest extends HttpServlet {
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO requestItemDAO = new AssetRequestItemDAO();
 
+    private static final Logger LOGGER = Logger.getLogger(AddRequest.class.getName());
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -50,23 +54,15 @@ public class AddRequest extends HttpServlet {
             return;
         }
 
-        // Check authorization - user must have TEACHER role
-        List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("TEACHER")) {
-            session.setAttribute("type", "error");
-            session.setAttribute("message", "Bạn không có quyền truy cập");
-            response.sendRedirect("request-list");
-            return;
-        }
-
         try {
             request.setAttribute("rooms", roomDAO.getAllActiveRooms());
             request.setAttribute("categories", assetCategoryDAO.getAllActiveCategories());
             request.getRequestDispatcher("/views/allocation/teacher/request-form.jsp")
                     .forward(request, response);
         } catch (Exception e) {
-            System.err.println("Error loading add request page: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading request form", e);
+
             session.setAttribute("type", "error");
             session.setAttribute("message", "Đã xảy ra lỗi. Vui lòng thử lại!");
             request.getRequestDispatcher("/views/allocation/teacher/request-list.jsp")
@@ -89,13 +85,18 @@ public class AddRequest extends HttpServlet {
 
         try {
             // Get data from Request Form
-            long roomId = Long.parseLong(request.getParameter("requestedRoomId"));
+            long roomId = validateId(request.getParameter("requestedRoomId"), "Phòng");
             String purpose = request.getParameter("purpose");
 
             // Get list data
             String[] categoryIds = request.getParameterValues("categoryIds");
             String[] quantities = request.getParameterValues("quantities");
             String[] notes = request.getParameterValues("notes");
+
+            if (purpose == null || purpose.isBlank()) {
+                throw new IllegalArgumentException("Purpose is required");
+            }
+            validateItems(categoryIds, quantities);
 
             // Save to database
             long requestId = createAssetRequest(
@@ -106,29 +107,92 @@ public class AddRequest extends HttpServlet {
                     quantities,
                     notes);
 
-            if (requestId > 0) {
-                //Send Notification to Boards
-                List<Long> boardIds = userDAO.getIdsByRole("BOARD");
+            if (requestId <= 0) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Không thể tạo yêu cầu. Vui lòng thử lại!");
+                response.sendRedirect(request.getContextPath() + "/teacher/add-request");
+                return;
+            }
+
+            //success
+            //Send Notification to Boards
+            List<Long> boardIds = userDAO.getIdsByRole("BOARD");
+            try {
                 NotificationEndPoint.sendToUsers(boardIds,
                         "Yêu cầu mới cần phê duyệt",
                         "Có phiếu yêu cầu mới từ: " + currentUser.getFullName(),
                         "ASSET_REQUEST",
                         requestId);
-
-                session.setAttribute("type", "success");
-                session.setAttribute("message", "Gửi yêu cầu tài sản thành công!");
-                response.sendRedirect(request.getContextPath() + "/teacher/request-list");
-            } else {
-                session.setAttribute("type", "error");
-                session.setAttribute("message", "Không thể tạo yêu cầu. Vui lòng thử lại!");
-                doGet(request, response);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error sending notification", e);
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            session.setAttribute("type", "success");
+            session.setAttribute("message", "Gửi yêu cầu tài sản thành công!");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
+
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Validation error", e);
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Dữ liệu nhập vào không hợp lệ!");
-            doGet(request, response);
+            session.setAttribute("message", e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/teacher/add-request");
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in AddRequest", ex);
+            response.sendRedirect(request.getContextPath() + "/views/common/500.jsp");
+        }
+    }
+
+    private long validateId(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " không hợp lệ.");
+        }
+
+        try {
+            long id = Long.parseLong(value);
+            if (id <= 0) {
+                throw new IllegalArgumentException(fieldName + " phải lớn hơn 0.");
+            }
+            return id;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(fieldName + " phải là số.");
+        }
+    }
+
+    private void validateItems(String[] categoryIds, String[] quantities) {
+
+        if (categoryIds == null || quantities == null
+                || categoryIds.length == 0
+                || categoryIds.length != quantities.length) {
+            throw new IllegalArgumentException("Danh sách tài sản không hợp lệ!");
+        }
+
+        for (int i = 0; i < categoryIds.length; i++) {
+
+            if (categoryIds[i] == null || categoryIds[i].isBlank()) {
+                throw new IllegalArgumentException("Danh mục tài sản không hợp lệ.");
+            }
+
+            try {
+                long catId = Long.parseLong(categoryIds[i]);
+                if (catId <= 0) {
+                    throw new IllegalArgumentException("Danh mục tài sản không hợp lệ.");
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Danh mục tài sản không hợp lệ.");
+            }
+
+            if (quantities[i] == null || quantities[i].isBlank()) {
+                throw new IllegalArgumentException("Số lượng tài sản không được để trống.");
+            }
+
+            try {
+                int qty = Integer.parseInt(quantities[i]);
+                if (qty <= 0) {
+                    throw new IllegalArgumentException("Số lượng tài sản phải lớn hơn 0.");
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Số lượng tài sản phải là số.");
+            }
         }
     }
 
@@ -140,6 +204,10 @@ public class AddRequest extends HttpServlet {
             conn = DBUtil.getConnection();
             // Start Transaction
             conn.setAutoCommit(false);
+
+            if (catIds == null || qtys == null || catIds.length == 0) {
+                return -1;
+            }
 
             // Create AssetRequest
             AssetRequest request = new AssetRequest();
@@ -155,45 +223,47 @@ public class AddRequest extends HttpServlet {
             // Insert to table AssetRequest
             long requestId = requestDAO.insert(conn, request);
 
-            // Insert table AssetRequestItems
-            if (requestId > 0 && catIds != null) {
-                for (int i = 0; i < catIds.length; i++) {
-                    AssetRequestItem item = new AssetRequestItem();
-                    item.setRequestId(requestId);
-                    item.setCategoryId(Long.parseLong(catIds[i]));
-                    item.setQuantity(Integer.parseInt(qtys[i]));
-                    item.setNote(notes[i]);
+            if (requestId <= 0) {
+                conn.rollback();
+                return -1;
+            }
 
-                    // save data to table AssetRequestItem
-                    requestItemDAO.insert(conn, item);
-                }
+            // Insert table AssetRequestItems
+            for (int i = 0; i < catIds.length; i++) {
+                AssetRequestItem item = new AssetRequestItem();
+                item.setRequestId(requestId);
+                item.setCategoryId(Long.parseLong(catIds[i]));
+                item.setQuantity(Integer.parseInt(qtys[i]));
+
+                String note = (notes != null && notes.length > i) ? notes[i] : null;
+                item.setNote(note);
+
+                // save data to table AssetRequestItem
+                requestItemDAO.insert(conn, item);
             }
 
             conn.commit(); // End Transaction
             return requestId;
 
-        } catch (SQLException e) {
-            System.err.println("[AddRequest] Database error: " + e.getMessage());
-            e.printStackTrace();
+        } catch (Exception e) {
             if (conn != null) {
                 try {
-                    conn.rollback();    //Rollback if have error
+                    conn.rollback();
                 } catch (SQLException ex) {
-                    System.err.println("[AddRequest] Rollback failed: " + ex.getMessage());
-                    ex.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "Rollback failed", ex);
                 }
             }
-            return -1;
-        } catch (Exception e) {
-            System.err.println("[AddRequest] Unexpected error: " + e.getMessage());
-            e.printStackTrace();
+
+            LOGGER.log(Level.SEVERE,
+                    "Unexpected error while creating asset request", e);
             return -1;
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    LOGGER.log(Level.SEVERE,
+                            "Error closing connection in AddRequest", e);
                 }
             }
         }

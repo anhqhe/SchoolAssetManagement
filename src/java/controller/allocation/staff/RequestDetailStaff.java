@@ -20,9 +20,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.sql.SQLException;
 import java.util.List;
 import model.User;
 import model.allocation.AssetAllocation;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -30,66 +33,75 @@ import model.allocation.AssetAllocation;
  */
 @WebServlet(name = "RequestDetailStaff", urlPatterns = {"/staff/request-detail"})
 public class RequestDetailStaff extends HttpServlet {
-    
+
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
+    
+    private static final Logger LOGGER 
+            = Logger.getLogger(RequestDetailStaff.class.getName());
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        String idParam = request.getParameter("id");
+        
+        if (idParam == null || idParam.isEmpty()) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Yêu cầu không tồn tại.");
+                response.sendRedirect("request-list");
+                return;
+            }
+        
+        long requestId;
         try {
-            // Check authentication
-            HttpSession session = request.getSession();
-            User currentUser = (User) session.getAttribute("currentUser");
-            
-            if (currentUser == null) {
-                response.sendRedirect(request.getContextPath() + "/auth/login");
-                return;
-            }
-            
-            // Check authorization - user must have ASSET_STAFF role
-            List<String> roles = currentUser.getRoles();
-            if (roles == null || !roles.contains("ASSET_STAFF")) {
-                response.sendRedirect("request-list");
-                return;
-            }
-            
-            String idParam = request.getParameter("id");
-            if (idParam == null) {
-                response.sendRedirect("request-list");
-                return;
-            }
-            long requestId = Long.parseLong(idParam);
+            requestId = Long.parseLong(idParam);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid request ID format: {0}", idParam);
 
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "ID yêu cầu không hợp lệ.");
+            response.sendRedirect("request-list");
+            return;
+        }
+        
+        try {
             // Get AssetRequest Infor
-            AssetRequestDTO requestDetail = requestDAO.findById(requestId);
+            AssetRequestDTO req = requestDAO.findById(requestId);
+
+            if (req == null) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Yêu cầu không tồn tại.");
+                response.sendRedirect("request-list");
+                return;
+            }
 
             // Get AssetRequestItem Infor
             List<AssetRequestItemDTO> itemList = reqItemDAO.findByRequestId(requestId);
-            
-            
+
             ApprovalDTO approval = approvalDAO.findByRef("ASSET_REQUEST", requestId);
-            
+
             //Get asset info after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
             //Get allocation
             AssetAllocation allocation = allocationDAO.getAllocationByRequestId(requestId);
 
-            request.setAttribute("req", requestDetail);
+            request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
             request.setAttribute("allocation", allocation);
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            HttpSession session = request.getSession();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading request detail. ID=" + requestId, e);
+            
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra khi tải chi tiết yêu cầu.");
+            session.setAttribute("message", "Có lỗi xảy ra. Vui lòng thử lại.");
             response.sendRedirect("request-list");
         }
     }
@@ -101,4 +113,3 @@ public class RequestDetailStaff extends HttpServlet {
     }
 
 }
-
