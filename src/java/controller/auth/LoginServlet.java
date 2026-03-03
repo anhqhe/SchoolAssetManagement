@@ -92,7 +92,7 @@ public class LoginServlet extends HttpServlet {
             if (user.getRoles() != null && user.getRoles().contains("ADMIN")) {
                 resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
             } else if (user.getRoles().contains("ASSET_STAFF")) {
-                resp.sendRedirect(req.getContextPath() + "/assets/list");
+                resp.sendRedirect(req.getContextPath() + "/assets");
             } else if (user.getRoles().contains("TEACHER")) {
                 resp.sendRedirect(req.getContextPath() + "/teacher/request-list");
             } else {
