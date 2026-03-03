@@ -96,7 +96,8 @@
                                                 <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-primary">Đã Phê Duyệt</span></c:when>
                                                 <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Hoàn Thành</span></c:when>
                                                 <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Từ Chối</span></c:when>
-                                                <c:otherwise><span class="badge badge-secondary">${req.status}</span></c:otherwise>
+                                                <c:when test="${req.status == 'OUT_OF_STOCK'}"><span class="badge badge-secondary">Hết tài sản</span></c:when>
+                                                <c:otherwise><span class="badge badge-info">${req.status}</span></c:otherwise>
                                             </c:choose>
                                         </p>
                                         <hr>
@@ -274,19 +275,19 @@
                                                 <h6 class="font-weight-bold mb-1">
                                                     Phản hồi từ Người Phân Phối
                                                 </h6>
-                                                
+
                                                 <c:if test="${req.status == 'COMPLETED'}">
-                                                <div>
-                                                    Ghi chú: ${allocation.note}
-                                                </div>
-                                                <div class="text-muted small">
-                                                    Phân phối bởi 
-                                                    <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
-                                                    • 
-                                                    ${allocation.allocatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
-                                                </div>
+                                                    <div>
+                                                        Ghi chú: ${allocation.note}
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        Phân phối bởi 
+                                                        <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
+                                                        • 
+                                                        ${allocation.allocatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
+                                                    </div>
                                                 </c:if>
-                                                
+
                                                 <c:if test = "${req.status == 'OUT_OF_STOCK'}">
                                                     <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
                                                     Kho đang hết tài sản. Vui lòng chờ!!
@@ -315,7 +316,7 @@
                         </c:if>
 
                         <!-- STAFF ONLY: Allocate Assets Button -->
-                        <c:if test="${isStaff && req.status == 'APPROVED_BY_BOARD'}">
+                        <c:if test="${isStaff && (req.status == 'APPROVED_BY_BOARD' || req.status == 'OUT_OF_STOCK')}">
                             <div class="card-body">
                                 <a href="${pageContext.request.contextPath}/staff/allocate-assets?requestId=${req.requestId}" class="btn btn-primary">
                                     <i class="fas fa-box-open"></i> Bàn giao tài sản

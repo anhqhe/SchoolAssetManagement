@@ -22,6 +22,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import model.User;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -34,24 +36,17 @@ public class RequestListBoard extends HttpServlet {
     private ApprovalDAO approvalDAO = new ApprovalDAO();
     private UserDAO userDAO = new UserDAO();
 
+    private static final Logger LOGGER
+            = Logger.getLogger(RequestListBoard.class.getName());
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        // Check authentication
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
-            return;
-        }
-        
-        // Check authorization - user must have BOARD hoặc ADMIN role
-        List<String> roles = currentUser.getRoles();
-        boolean isBoardOrAdmin = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
-        if (!isBoardOrAdmin) {
-            response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
             return;
         }
 
@@ -61,12 +56,16 @@ public class RequestListBoard extends HttpServlet {
         String status = request.getParameter("status");
         String sortBy = request.getParameter("sortBy");
 
-        List<AssetRequestDTO> list = new ArrayList<>();
+        List<AssetRequestDTO> list;
         try {
             list = requestDAO.getRequestsAdvanced(keyword, status, sortBy);
         } catch (SQLException ex) {
-            System.out.println("controller.allocation.board.RequestListBoard.doGet()");
-            System.out.println(ex);
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading staff asset request list. userId="
+                    + currentUser.getUserId(), ex);
+
+            response.sendRedirect(request.getContextPath() + "/views/common/500.jsp");
+            return;
         }
 
         request.setAttribute("requestList", list);
@@ -74,44 +73,57 @@ public class RequestListBoard extends HttpServlet {
                 .forward(request, response);
     }
 
+    //Process Board approve or reject request
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        // Check authentication
+
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
-        
-        // Check authorization - user must have BOARD hoặc ADMIN role
-        List<String> roles = currentUser.getRoles();
-        boolean isBoardOrAdmin = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
-        if (!isBoardOrAdmin) {
-            response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
-            return;
-        }
 
         // For Board approve or reject
-               
-
         // Get data from form
         String requestIdStr = request.getParameter("requestId");
         String decision = request.getParameter("decision"); // APPROVED or REJECTED
         String note = request.getParameter("note");
 
-        if (currentUser == null || requestIdStr == null) {
+        if (requestIdStr == null || requestIdStr.isEmpty()) {
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra trong quá trình xử lý.");
-            response.sendRedirect("request-list");
+            session.setAttribute("message", "Yêu cầu không tồn tại");
+            response.sendRedirect(request.getContextPath() + "/board/request-list");
             return;
         }
 
-        long requestId = Long.parseLong(requestIdStr);
+        long requestId;
+        try {
+            requestId = Long.parseLong(requestIdStr);
+        } catch (NumberFormatException ex) {
+
+            LOGGER.log(Level.WARNING,
+                    "Invalid requestId in board approval: {0}", requestIdStr);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "ID không hợp lệ.");
+            response.sendRedirect(request.getContextPath() + "/board/request-list");
+            return;
+        }
+
         long approverId = currentUser.getUserId();
+
+        if (!"APPROVED".equals(decision) && !"REJECTED".equals(decision)) {
+            LOGGER.log(Level.WARNING,
+                    "Invalid decision value: {0}", decision);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Thao tác không hợp lệ.");
+            response.sendRedirect(request.getContextPath() + "/board/request-list");
+            return;
+        }
 
         // Save to database
         boolean isSuccess = approveOrRejectRequest(requestId, approverId, decision, note);
@@ -119,15 +131,34 @@ public class RequestListBoard extends HttpServlet {
         if (!isSuccess) {
             session.setAttribute("type", "error");
             session.setAttribute("message", "Có lỗi xảy ra trong quá trình xử lý.");
-            response.sendRedirect("request-list");
+            response.sendRedirect(request.getContextPath() + "/board/request-list");
             return;
         }
 
         //Save to database sucessfully
-        
         // Send Notifications to Teacher, Staff 
-        
-        AssetRequestDTO reqDTO = requestDAO.findById(requestId);
+        AssetRequestDTO reqDTO;
+        try {
+            reqDTO = requestDAO.findById(requestId);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE,
+                    "Error loading request after approval. ID=" + requestId, ex);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra.");
+            response.sendRedirect(request.getContextPath() + "/board/request-list");
+            return;
+        }
+
+        if (reqDTO == null) {
+            LOGGER.log(Level.WARNING,
+                    "Request not found after approval. ID={0}", requestId);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra.");
+            response.sendRedirect(request.getContextPath() + "/board/request-list");
+            return;
+        }
 
         //Board Reject
         if ("REJECTED".equals(decision)) {
@@ -158,7 +189,7 @@ public class RequestListBoard extends HttpServlet {
         // Return result
         session.setAttribute("type", "success");
         session.setAttribute("message", "Đã phê duyệt phiếu thành công!");
-        response.sendRedirect("request-list");
+        response.sendRedirect(request.getContextPath() + "/board/request-list");
 
     }
 
@@ -188,15 +219,17 @@ public class RequestListBoard extends HttpServlet {
             if (conn != null) try {
                 conn.rollback();
             } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Rollback failed", ex);
             }
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE,
+                    "Error approving/rejecting request. ID=" + requestId, e);
             return false;
         } finally {
             if (conn != null) try {
                 conn.close();
             } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", ex);
             }
         }
     }
 }
-

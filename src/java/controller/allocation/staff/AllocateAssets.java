@@ -25,6 +25,9 @@ import java.util.List;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
@@ -34,7 +37,6 @@ import model.allocation.AssetAllocation;
  *
  * @author Leo
  */
-
 @WebServlet(name = "AllocateAsset", urlPatterns = {"/staff/allocate-assets"})
 public class AllocateAssets extends HttpServlet {
 
@@ -45,38 +47,36 @@ public class AllocateAssets extends HttpServlet {
     private AllocationItemDAO allocItemDAO = new AllocationItemDAO();
     private AssetStatusHistoryDAO statusHistoryDAO = new AssetStatusHistoryDAO();
 
+    private static final Logger LOGGER = Logger.getLogger(AllocateAssets.class.getName());
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
 
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
 
-        List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("ASSET_STAFF")) {
-            response.sendRedirect(request.getContextPath() + "/staff/request-list");
-            return;
-        }
-
         try {
-            long requestId = Long.parseLong(request.getParameter("requestId"));
+            long requestId = validateId(request.getParameter("requestId"),
+                    "ID yêu cầu");
 
-            AssetRequestDTO requestDetail = requestDAO.findById(requestId);
-            if (requestDetail == null) {
+            AssetRequestDTO req = requestDAO.findById(requestId);
+            if (req == null) {
                 session.setAttribute("type", "error");
-                session.setAttribute("message", "Không thể tải yêu cầu cấp phát.");
+                session.setAttribute("message", "Yêu cầu không tồn tại.");
                 response.sendRedirect("request-list");
                 return;
             }
-            
-            //Only request approved_by_board can allocate asset
-            if (!requestDetail.getStatus().equals("APPROVED_BY_BOARD")) {
+
+            //Only request approved_by_board, out_of_stock can allocate asset
+            if (!(req.getStatus().equals("APPROVED_BY_BOARD")
+                    || req.getStatus().equals("OUT_OF_STOCK"))) {
                 session.setAttribute("type", "error");
-                session.setAttribute("message", "Yêu cầu chưa được phê duyệt để cấp phát.");
+                session.setAttribute("message", "Bạn không thể phân phối tài sản yêu cầu này");
                 response.sendRedirect("request-list");
                 return;
             }
@@ -86,161 +86,209 @@ public class AllocateAssets extends HttpServlet {
             //Get available assets
             List<AssetDTO> availableAssets = assetDAO.findAvailableAssets();
 
-            request.setAttribute("requestDetail", requestDetail);
+            request.setAttribute("req", req);
             request.setAttribute("neededItems", neededItems);
             request.setAttribute("availableAssets", availableAssets);
 
             request.getRequestDispatcher("/views/allocation/staff/allocate-assets.jsp").forward(request, response);
 
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Validation error: {0}", e.getMessage());
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/staff/request-list");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error loading allocate assets page", e);
+
             session.setAttribute("type", "error");
             session.setAttribute("message", "Không thể tải yêu cầu cấp phát.");
-            response.sendRedirect("request-list");
+            response.sendRedirect(request.getContextPath() + "/staff/request-list");
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        User staff = (session != null) ? (User) session.getAttribute("currentUser") : null;
+        HttpSession session = request.getSession();
+        User staff = (User) session.getAttribute("currentUser");
 
         if (staff == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
 
-        List<String> roles = staff.getRoles();
-        if (roles == null || !roles.contains("ASSET_STAFF")) {
-            response.sendRedirect(request.getContextPath() + "/staff/request-list");
-            return;
-        }
-
-        String action = request.getParameter("action");
-        // Get RequestId, list asset, note
-        long requestId = Long.parseLong(request.getParameter("requestId"));
-
-        if ("notify_out_of_stock".equals(action)) {
-            AssetRequestDTO reqDTO = requestDAO.findById(requestId);
-            if (reqDTO != null) {
-                NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
-                        "Kho hàng không đủ tài sản",
-                        "Kho hàng không đủ tài sản cấp phát cho phiếu " + reqDTO.getRequestCode() + ".",
-                        "ASSET_REQUEST",
-                        requestId);
-                try {
-                    requestDAO.updateStatus(requestId, "OUT_OF_STOCK");
-                } catch (SQLException ex) {
-                    Logger.getLogger(AllocateAssets.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            session.setAttribute("type", "success");
-            session.setAttribute("message", "Đã gửi thông báo hết tài sản cho giáo viên.");
-            response.sendRedirect("request-list");
-            return;
-        }
-
-        String note = request.getParameter("note");
-        String[] selectedAssetIds = request.getParameterValues("selectedAssetIds");
-
-        if (selectedAssetIds == null || selectedAssetIds.length == 0) {
-            session.setAttribute("type", "warning");
-            session.setAttribute("message", "Vui lòng chọn ít nhất một tài sản để cấp phát.");
-            response.sendRedirect("allocate-assets?requestId=" + requestId);
-            return;
-        }
-
-        // Chuyển mảng String[] sang List<Long>
-        List<Long> assetIds = new java.util.ArrayList<>();
-        for (String id : selectedAssetIds) {
-            assetIds.add(Long.parseLong(id));
-        }
-        
-        // Validate: Check if selected assets match required quantities by category
+        long requestId = 0;
         try {
-            List<AssetRequestItemDTO> neededItems = reqItemDAO.findByRequestId(requestId);
-            List<AssetDTO> selectedAssets = new java.util.ArrayList<>();
-            for (Long assetId : assetIds) {
-                AssetDTO asset = assetDAO.findById(assetId);
-                if (asset != null) {
-                    selectedAssets.add(asset);
-                } else {
-                    session.setAttribute("type", "error");
-                    session.setAttribute("message", "Một hoặc nhiều tài sản được chọn không tồn tại.");
-                    response.sendRedirect("allocate-assets?requestId=" + requestId);
-                    return;
+            requestId = validateId(request.getParameter("requestId"),
+                    "ID yêu cầu");
+            AssetRequestDTO reqDTO = validateAllocationRequest(requestId);
+
+            String action = request.getParameter("action");
+
+            //out of stock
+            if ("notify_out_of_stock".equals(action)) {
+
+                if (reqDTO != null) {
+                    NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
+                            "Kho hàng không đủ tài sản",
+                            "Kho hàng không đủ tài sản cấp phát cho phiếu " + reqDTO.getRequestCode() + ".",
+                            "ASSET_REQUEST",
+                            requestId);
+                    try {
+                        requestDAO.updateStatus(requestId, "OUT_OF_STOCK");
+                    } catch (SQLException ex) {
+                        LOGGER.log(Level.SEVERE, "Error updating request status", ex);
+                        throw new RuntimeException("Không thể cập nhật trạng thái yêu cầu.");
+                    }
                 }
+                session.setAttribute("type", "success");
+                session.setAttribute("message", "Đã gửi thông báo hết tài sản cho giáo viên.");
+                response.sendRedirect("request-list");
+                return;
             }
-            
-            // Check selected assets against required items
-            java.util.Map<Long, Integer> requiredByCategory = new java.util.HashMap<>();
-            for (AssetRequestItemDTO item : neededItems) {
-                requiredByCategory.put(item.getCategoryId(), item.getQuantity());
+
+            String[] selectedAssetIds = request.getParameterValues("selectedAssetIds");
+
+            if (selectedAssetIds == null || selectedAssetIds.length == 0) {
+                throw new IllegalArgumentException(
+                        "Vui lòng chọn ít nhất một tài sản để cấp phát.");
             }
-            
-            java.util.Map<Long, Integer> selectedByCategory = new java.util.HashMap<>();
-            for (AssetDTO asset : selectedAssets) {
-                selectedByCategory.put(asset.getCategoryId(), 
-                    selectedByCategory.getOrDefault(asset.getCategoryId(), 0) + 1);
+
+            List<Long> assetIds = new ArrayList<>();
+            for (String id : selectedAssetIds) {
+                assetIds.add(validateId(id, "Tài sản"));
             }
-            
-            // Validate quantities match exactly for each category
-            for (Long categoryId : requiredByCategory.keySet()) {
-                int required = requiredByCategory.get(categoryId);
-                int selected = selectedByCategory.getOrDefault(categoryId, 0);
-                
-                if (selected != required) {
-                    session.setAttribute("type", "warning");
-                    session.setAttribute("message", "Số lượng tài sản được chọn không khớp với yêu cầu. "
-                        + "Vui lòng chọn đúng số lượng tài sản cho từng loại.");
-                    response.sendRedirect("allocate-assets?requestId=" + requestId);
-                    return;
-                }
+
+            validateSelectedAssets(requestId, assetIds);
+            String note = request.getParameter("note");
+
+            // Save data to database
+            // Insert AssetAllocations, AssetAllocationItems & Update Status Assets + Request
+            boolean success = processAllocation(requestId, staff.getUserId(), note, assetIds);
+
+            if (!success) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Có lỗi xảy ra khi cấp phát tài sản.");
+                response.sendRedirect("allocate-assets?requestId=" + requestId);
+                return;
             }
-            
-            // Check for extra assets from categories not in the request
-            for (Long categoryId : selectedByCategory.keySet()) {
-                if (!requiredByCategory.containsKey(categoryId)) {
-                    session.setAttribute("type", "warning");
-                    session.setAttribute("message", "Bạn đã chọn tài sản từ loại không được yêu cầu.");
-                    response.sendRedirect("allocate-assets?requestId=" + requestId);
-                    return;
-                }
+
+            //Save to database sucessfully
+            //Send notification to teacher
+            NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
+                    "Yêu cầu cấp phát đã hoàn thành",
+                    "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!",
+                    "ASSET_REQUEST",
+                    requestId);
+
+            session.setAttribute("type", "success");
+            session.setAttribute("message", "Cấp phát tài sản thành công!");
+            response.sendRedirect("request-list");
+
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Validation error in allocation", e);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", e.getMessage());
+
+            if (requestId > 0) {
+                response.sendRedirect("allocate-assets?requestId=" + requestId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/staff/request-list");
             }
+
         } catch (Exception e) {
-            e.printStackTrace();
-            session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra khi kiểm tra tài sản.");
-            response.sendRedirect("allocate-assets?requestId=" + requestId);
-            return;
-        }
-             
+            LOGGER.log(Level.SEVERE, "Unexpected error in AllocateAssets", e);
 
-        // Save data to database
-        // Insert AssetAllocations, AssetAllocationItems & Update Status Assets + Request
-        boolean success = processAllocation(requestId, staff.getUserId(), note, assetIds);
-        
-        if (!success) {
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra khi cấp phát tài sản.");
-            response.sendRedirect("allocate-assets?requestId=" + requestId);
-            return;
+            session.setAttribute("message", "Có lỗi xảy ra. Vui lòng thử lại.");
+            response.sendRedirect(request.getContextPath() + "/staff/request-list");
         }
-        
-        //Save to database sucessfully
-        
-        //Send notification to teacher
-        AssetRequestDTO reqDTO = requestDAO.findById(requestId);
-        NotificationEndPoint.sendToUser(reqDTO.getTeacherId(), 
-                "Yêu cầu cấp phát đã hoàn thành",
-                "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!",
-                "ASSET_REQUEST",
-                requestId);
+    }
 
-        session.setAttribute("type", "success");
-        session.setAttribute("message", "Cấp phát tài sản thành công!");
-        response.sendRedirect("request-list");
+    private long validateId(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(field + " không hợp lệ.");
+        }
+        try {
+            long id = Long.parseLong(value);
+            if (id <= 0) {
+                throw new IllegalArgumentException(field + " phải lớn hơn 0.");
+            }
+            return id;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(field + " phải là số.");
+        }
+    }
+
+    private AssetRequestDTO validateAllocationRequest(long requestId)
+            throws IllegalArgumentException, SQLException {
+
+        AssetRequestDTO req = requestDAO.findById(requestId);
+
+        if (req == null) {
+            throw new IllegalArgumentException("Yêu cầu không tồn tại.");
+        }
+
+        if (!("APPROVED_BY_BOARD".equals(req.getStatus())
+                || "OUT_OF_STOCK".equals(req.getStatus()))) {
+            throw new IllegalArgumentException("Yêu cầu này không thể cấp phát.");
+        }
+
+        return req;
+    }
+
+    private void validateSelectedAssets(long requestId, List<Long> assetIds)
+            throws Exception {
+
+        List<AssetRequestItemDTO> neededItems = reqItemDAO.findByRequestId(requestId);
+
+        List<AssetDTO> selectedAssets = new ArrayList<>();
+
+        for (Long assetId : assetIds) {
+            AssetDTO asset = assetDAO.findById(assetId);
+
+            if (asset == null) {
+                throw new IllegalArgumentException("Một hoặc nhiều tài sản không tồn tại.");
+            }
+
+//            if (!"AVAILABLE".equals(asset.getStatus())) {
+//                throw new IllegalArgumentException("Tài sản không còn khả dụng.");
+//            }
+            selectedAssets.add(asset);
+        }
+
+        // Gom required theo category
+        Map<Long, Integer> requiredByCategory = new HashMap<>();
+        for (AssetRequestItemDTO item : neededItems) {
+            requiredByCategory.put(item.getCategoryId(), item.getQuantity());
+        }
+
+        // Gom selected theo category
+        Map<Long, Integer> selectedByCategory = new HashMap<>();
+        for (AssetDTO asset : selectedAssets) {
+            selectedByCategory.put(asset.getCategoryId(),
+                    selectedByCategory.getOrDefault(asset.getCategoryId(), 0) + 1);
+        }
+
+        // Check thiếu / dư
+        for (Long categoryId : requiredByCategory.keySet()) {
+            int required = requiredByCategory.get(categoryId);
+            int selected = selectedByCategory.getOrDefault(categoryId, 0);
+
+            if (selected != required) {
+                throw new IllegalArgumentException(
+                        "Số lượng tài sản được chọn không khớp với yêu cầu.");
+            }
+        }
+
+        for (Long categoryId : selectedByCategory.keySet()) {
+            if (!requiredByCategory.containsKey(categoryId)) {
+                throw new IllegalArgumentException(
+                        "Bạn đã chọn tài sản từ loại không được yêu cầu.");
+            }
+        }
     }
 
     // Save data to database
@@ -255,13 +303,13 @@ public class AllocateAssets extends HttpServlet {
             alloc.setRequestId(requestId);
             alloc.setAllocatedById(staffId);
             alloc.setNote(note);
-            
-            AssetRequestDTO req = requestDAO.findById(requestId);
+
+            AssetRequestDTO req = requestDAO.findById(conn, requestId);
             alloc.setToRoomId(req.getRequestedRoomId());
             alloc.setReceiverId(req.getTeacherId());
 
             // Create AllocationCode
-            String timeStamp = String.valueOf(System.currentTimeMillis()).substring(7);
+            String timeStamp = String.valueOf(System.currentTimeMillis());
             alloc.setAllocationCode("ALC-" + timeStamp);
 
             // Save data to table AssetAllocation
@@ -272,16 +320,15 @@ public class AllocateAssets extends HttpServlet {
                 return false;
             }
 
-            // 3. Duyệt danh sách AssetId để chèn vào AllocationItems
+            // Save data to table AllocationItems
             for (Long assetId : assetIds) {
 
                 // Save data to table AssetAllocationItem
                 boolean itemSuccess = allocItemDAO.insertAllocationItem(conn, allocationId, assetId);
 
-               
                 // update table Asset
-                boolean assetSuccess = assetDAO.updateAsset(conn, 
-                        assetId, 
+                boolean assetSuccess = assetDAO.updateAsset(conn,
+                        assetId,
                         req.getRequestedRoomId(),
                         req.getTeacherId(),
                         "IN_USE");
@@ -304,13 +351,16 @@ public class AllocateAssets extends HttpServlet {
             if (conn != null) try {
                 conn.rollback();
             } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Rollback failed while allocating assets", ex);
             }
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error processing allocation", e);
             return false;
         } finally {
             if (conn != null) try {
                 conn.close();
             } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE,
+                            "Error closing connection in AllocateAssset", ex);
             }
         }
     }

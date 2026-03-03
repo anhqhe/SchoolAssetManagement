@@ -25,6 +25,8 @@ import java.util.List;
 import model.User;
 import model.allocation.AssetRequestItem;
 import util.DBUtil;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -39,6 +41,8 @@ public class UpdateRequest extends HttpServlet {
     private final AssetRequestItemDAO itemDAO = new AssetRequestItemDAO();
     private final UserDAO userDAO = new UserDAO();
 
+    private static final Logger LOGGER = Logger.getLogger(UpdateRequest.class.getName());
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -50,14 +54,6 @@ public class UpdateRequest extends HttpServlet {
             return;
         }
 
-        List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("TEACHER")) {
-            session.setAttribute("type", "error");
-            session.setAttribute("message", "Bạn không có quyền chỉnh sửa");
-            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
-            return;
-        }
-
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
             session.setAttribute("type", "error");
@@ -66,8 +62,19 @@ public class UpdateRequest extends HttpServlet {
             return;
         }
 
+        long requestId;
         try {
-            long requestId = Long.parseLong(idParam);
+            requestId = Long.parseLong(idParam);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid request ID: {0}", idParam);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
+            return;
+        }
+
+        try {
             AssetRequestDTO req = requestDAO.findById(requestId);
 
             if (req == null) {
@@ -100,12 +107,9 @@ public class UpdateRequest extends HttpServlet {
 
             request.getRequestDispatcher("/views/allocation/teacher/request-form.jsp")
                     .forward(request, response);
-        } catch (NumberFormatException e) {
-            session.setAttribute("type", "error");
-            session.setAttribute("message", "ID không hợp lệ");
-            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            LOGGER.log(Level.SEVERE, "Error loading update request page", e);
+
             session.setAttribute("type", "error");
             session.setAttribute("message", "Đã xảy ra lỗi!");
             response.sendRedirect(request.getContextPath() + "/teacher/request-list");
@@ -123,61 +127,123 @@ public class UpdateRequest extends HttpServlet {
             return;
         }
 
-        List<String> roles = currentUser.getRoles();
-        if (roles == null || !roles.contains("TEACHER")) {
-            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
-            return;
-        }
-
         try {
-            long requestId = Long.parseLong(request.getParameter("requestId"));
+            long requestId = validateId(request.getParameter("requestId"),
+                    "ID yêu cầu");
 
             AssetRequestDTO req = requestDAO.findById(requestId);
+
             if (req == null) {
-                response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=request_not_found");
-                return;
+                throw new IllegalArgumentException("Không tìm thấy yêu cầu.");
             }
 
             if (req.getTeacherId() != currentUser.getUserId()) {
-                response.sendRedirect(request.getContextPath() + "/teacher/request-list?error=not_allowed");
-                return;
+                throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa yêu cầu này.");
             }
 
             if (!"WAITING_BOARD".equals(req.getStatus())) {
-                response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId + "&error=not_editable");
-                return;
+                throw new IllegalArgumentException("Yêu cầu không thể chỉnh sửa.");
             }
 
-            long roomId = Long.parseLong(request.getParameter("requestedRoomId"));
+            long roomId = validateId(request.getParameter("requestedRoomId"),
+                    "Phòng yêu cầu");
             String purpose = request.getParameter("purpose");
             String[] categoryIds = request.getParameterValues("categoryIds");
             String[] quantities = request.getParameterValues("quantities");
             String[] notes = request.getParameterValues("notes");
 
+            if (purpose == null || purpose.isBlank()) {
+                throw new IllegalArgumentException("Mục đích sử dụng không được để trống.");
+            }
+            validateItems(categoryIds, quantities);
+
             boolean success = updateAssetRequest(requestId, roomId, purpose, categoryIds, quantities, notes);
 
-            if (success) {
-                // Notify board about updated request
-                List<Long> boardIds = userDAO.getIdsByRole("BOARD");
+            if (!success) {
+                throw new RuntimeException("Cập nhật thất bại.");
+            }
+
+            // Notify board about updated request
+            List<Long> boardIds = userDAO.getIdsByRole("BOARD");
+            try {
                 NotificationEndPoint.sendToUsers(boardIds,
                         "Yêu cầu đã được cập nhật",
                         currentUser.getFullName() + " đã cập nhật yêu cầu: " + req.getRequestCode(),
                         "ASSET_REQUEST",
                         requestId);
-
-                session.setAttribute("type", "success");
-                session.setAttribute("message", "Cập nhật yêu cầu thành công!");
-                response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId);
-            } else {
-                session.setAttribute("type", "error");
-                session.setAttribute("message", "Lỗi cập nhật. Vui lòng thử lại!");
-                doGet(request, response);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error sending notification", e);
             }
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
+
+            session.setAttribute("type", "success");
+            session.setAttribute("message", "Cập nhật yêu cầu thành công!");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-detail?id=" + requestId);
+
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Validation error: {0}", e.getMessage());
+
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Invalid Input Data");
-            doGet(request, response);
+            session.setAttribute("message", e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "System error while updating request", e);
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Đã xảy ra lỗi hệ thống.");
+            response.sendRedirect(request.getContextPath() + "/teacher/request-list");
+        }
+    }
+
+    private long validateId(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " không hợp lệ.");
+        }
+
+        try {
+            long id = Long.parseLong(value);
+            if (id <= 0) {
+                throw new IllegalArgumentException(fieldName + " phải lớn hơn 0.");
+            }
+            return id;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(fieldName + " phải là số.");
+        }
+    }
+
+    private void validateItems(String[] categoryIds, String[] quantities) {
+
+        if (categoryIds == null || quantities == null
+                || categoryIds.length == 0
+                || categoryIds.length != quantities.length) {
+            throw new IllegalArgumentException("Danh sách tài sản không hợp lệ!");
+        }
+
+        for (int i = 0; i < categoryIds.length; i++) {
+
+            if (categoryIds[i] == null || categoryIds[i].isBlank()) {
+                throw new IllegalArgumentException("Danh mục tài sản không hợp lệ.");
+            }
+
+            try {
+                long catId = Long.parseLong(categoryIds[i]);
+                if (catId <= 0) {
+                    throw new IllegalArgumentException("Danh mục tài sản không hợp lệ.");
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Danh mục tài sản không hợp lệ.");
+            }
+
+            if (quantities[i] == null || quantities[i].isBlank()) {
+                throw new IllegalArgumentException("Số lượng tài sản không được để trống.");
+            }
+
+            try {
+                int qty = Integer.parseInt(quantities[i]);
+                if (qty <= 0) {
+                    throw new IllegalArgumentException("Số lượng tài sản phải lớn hơn 0.");
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Số lượng tài sản phải là số.");
+            }
         }
     }
 
@@ -196,41 +262,48 @@ public class UpdateRequest extends HttpServlet {
 
             itemDAO.deleteByRequestId(conn, requestId);
 
-            if (categoryIds != null) {
-                for (int i = 0; i < categoryIds.length; i++) {
-                    AssetRequestItem item = new AssetRequestItem();
-                    item.setRequestId(requestId);
-                    item.setCategoryId(Long.parseLong(categoryIds[i]));
-                    item.setQuantity(Integer.parseInt(quantities[i]));
-                    item.setNote(notes[i]);
-                    itemDAO.insert(conn, item);
-                }
+            for (int i = 0; i < categoryIds.length; i++) {
+                AssetRequestItem item = new AssetRequestItem();
+                item.setRequestId(requestId);
+                item.setCategoryId(Long.parseLong(categoryIds[i]));
+                item.setQuantity(Integer.parseInt(quantities[i]));
+
+                String note = (notes != null && notes.length > i) ? notes[i] : null;
+                item.setNote(note);
+                itemDAO.insert(conn, item);
             }
 
             conn.commit();
             return true;
         } catch (SQLException e) {
-            System.err.println("[UpdateRequest] Database error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error while updating request", e);
             if (conn != null) {
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
-                    System.err.println("[UpdateRequest] Rollback failed: " + ex.getMessage());
-                    ex.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "Rollback failed while updating request", ex);
                 }
             }
             return false;
         } catch (Exception e) {
-            System.err.println("[UpdateRequest] Unexpected error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Unexpected error while updating request", e);
+
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Rollback failed", ex);
+                }
+            }
+
             return false;
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    LOGGER.log(Level.SEVERE,
+                            "Error closing connection in UpdateRequest", e);
                 }
             }
         }
