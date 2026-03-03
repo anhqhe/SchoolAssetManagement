@@ -52,20 +52,36 @@ public class AssetRequestDAO {
     }
 
     //update status
-    public boolean updateStatus(Connection conn, long requestId, String status) throws SQLException {
+    public boolean updateStatus(Connection conn, long requestId, String status) throws SQLException{
         String sql = """
                      UPDATE AssetRequests 
                      SET Status = ?, UpdatedAt = SYSDATETIME() 
                      WHERE RequestId = ?
                      """;
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setLong(2, requestId);
 
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
-        }
+        } 
+    }
+    
+    public boolean updateStatus(long requestId, String status) throws SQLException{
+        String sql = """
+                     UPDATE AssetRequests 
+                     SET Status = ?, UpdatedAt = SYSDATETIME() 
+                     WHERE RequestId = ?
+                     """;
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setLong(2, requestId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } 
     }
 
     //update request info (room, purpose)
@@ -92,8 +108,9 @@ public class AssetRequestDAO {
      *
      * AssetRequestDTO DAO
      */
+    
     //Find Request By ID --> Show in request-detail, staff/allocate-asset
-    public AssetRequestDTO findById(long requestId) {
+    public AssetRequestDTO findById(long requestId) throws SQLException{
 
         String sql = """
                     SELECT r.*, u.FullName as TeacherName, rm.RoomName 
@@ -111,10 +128,29 @@ public class AssetRequestDAO {
                     return dto;
                 }
             }
-        } catch(SQLException e) {
-            System.out.println("dao.allocation.AssetRequestDAO.findById()");
-            System.err.println(e.getMessage());
-        }
+        } 
+        return null;
+    }
+    
+    public AssetRequestDTO findById(Connection conn, long requestId) throws SQLException{
+
+        String sql = """
+                    SELECT r.*, u.FullName as TeacherName, rm.RoomName 
+                    FROM AssetRequests r 
+                    JOIN Users u ON r.TeacherId = u.UserId 
+                    LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                    WHERE r.RequestId = ?
+                    """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+                    return dto;
+                }
+            }
+        } 
         return null;
     }
     
@@ -269,7 +305,7 @@ public class AssetRequestDAO {
                 FROM AssetRequests r
                 JOIN Users u ON r.TeacherId = u.UserId 
                 LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
-                WHERE r.Status IN ('APPROVED_BY_BOARD', 'COMPLETED')    
+                WHERE r.Status IN ('APPROVED_BY_BOARD', 'COMPLETED', 'OUT_OF_STOCK')    
                                                                  """);
 
         if (keyword != null && !keyword.trim().isEmpty()) {

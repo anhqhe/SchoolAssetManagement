@@ -21,9 +21,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.sql.SQLException;
 import java.util.List;
 import model.User;
 import model.allocation.AssetAllocation;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -36,37 +39,45 @@ public class RequestDetailBoard extends HttpServlet {
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
+    
+    private static final Logger LOGGER 
+            = Logger.getLogger(RequestDetailBoard.class.getName());
    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        try {
-            // Check authentication
-            HttpSession session = request.getSession();
-            User currentUser = (User) session.getAttribute("currentUser");
-            
-            if (currentUser == null) {
-                response.sendRedirect(request.getContextPath() + "/auth/login");
-                return;
-            }
-            
-            // Check authorization - user must have BOARD hoặc ADMIN role
-            List<String> roles = currentUser.getRoles();
-            boolean isBoardOrAdmin = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
-            if (!isBoardOrAdmin) {
-                response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
-                return;
-            }
-            
-            String idParam = request.getParameter("id");
-            if (idParam == null) {
+        HttpSession session = request.getSession();
+        String idParam = request.getParameter("id");
+        
+        if (idParam == null || idParam.isEmpty()) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Yêu cầu không tồn tại");
                 response.sendRedirect("request-list");
                 return;
             }
-            long requestId = Long.parseLong(idParam);
+        
+        long requestId;
+        try {
+            requestId = Long.parseLong(idParam);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid request ID format: {0}", idParam);
 
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "ID yêu cầu không hợp lệ.");
+            response.sendRedirect("request-list");
+            return;
+        }
+        
+        try {                        
             // Get AssetRequest Infor
-            AssetRequestDTO requestDetail = requestDAO.findById(requestId);
+            AssetRequestDTO req = requestDAO.findById(requestId);
+            
+            if (req == null) {
+                session.setAttribute("type", "error");
+                session.setAttribute("message", "Yêu cầu không tồn tại");
+                response.sendRedirect("request-list");
+                return;
+            }
 
             // Get AssetRequestItem Infor
             List<AssetRequestItemDTO> itemList = reqItemDAO.findByRequestId(requestId);
@@ -79,7 +90,7 @@ public class RequestDetailBoard extends HttpServlet {
             //Get allocation
             AssetAllocation allocation = allocationDAO.getAllocationByRequestId(requestId);
 
-            request.setAttribute("req", requestDetail);
+            request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
@@ -87,11 +98,12 @@ public class RequestDetailBoard extends HttpServlet {
             
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            HttpSession session = request.getSession();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading request detail. ID=" + requestId, e);
+            
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra khi tải chi tiết yêu cầu.");
+            session.setAttribute("message", "Có lỗi xảy ra. Vui lòng thử lại.");
             response.sendRedirect("request-list");
         }
     } 
