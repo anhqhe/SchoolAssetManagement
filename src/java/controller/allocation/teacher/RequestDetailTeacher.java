@@ -19,9 +19,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.sql.SQLException;
 import java.util.List;
 import model.User;
 import model.allocation.AssetAllocation;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -35,38 +38,35 @@ public class RequestDetailTeacher extends HttpServlet {
     private ApprovalDAO approvalDAO = new ApprovalDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
 
+    private static final Logger LOGGER
+            = Logger.getLogger(RequestDetailTeacher.class.getName());
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
+        String idParam = request.getParameter("id");
+
+        if (idParam == null || idParam.isEmpty()) {
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Yêu cầu không tồn tại");
+            response.sendRedirect("request-list");
+            return;
+        }
+
+        long requestId;
+        try {
+            requestId = Long.parseLong(idParam);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid request ID format: {0}", idParam);
+
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "ID yêu cầu không hợp lệ.");
+            response.sendRedirect("request-list");
+            return;
+        }
 
         try {
-            // Check authentication
-            User currentUser = (User) session.getAttribute("currentUser");
-
-            if (currentUser == null) {
-                response.sendRedirect(request.getContextPath() + "/auth/login");
-                return;
-            }
-
-            // Check authorization - user must have TEACHER role
-            List<String> roles = currentUser.getRoles();
-            if (roles == null || !roles.contains("TEACHER")) {
-                //response.sendError(HttpServletResponse.SC_FORBIDDEN);
-                response.sendRedirect(request.getContextPath() + "/views/common/404.jsp");
-                return;
-            }
-
-            String idParam = request.getParameter("id");
-            if (idParam == null || idParam.isEmpty()) {
-                session.setAttribute("type", "error");
-                session.setAttribute("message", "Yêu cầu không tồn tại");
-                response.sendRedirect("request-list");
-                return;
-            }
-
-            long requestId = Long.parseLong(idParam);
-
             AssetRequestDTO req = requestDAO.findById(requestId);
             if (req == null) {
                 session.setAttribute("type", "error");
@@ -77,13 +77,13 @@ public class RequestDetailTeacher extends HttpServlet {
 
             List<AssetRequestItemDTO> itemList = itemDAO.findByRequestId(requestId);
             ApprovalDTO approval = approvalDAO.findByRef("ASSET_REQUEST", requestId);
-            
+
             //Get asset info after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
             //Get allocation
             AssetAllocation allocation = allocationDAO.getAllocationByRequestId(requestId);
-           
+
             request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
@@ -92,15 +92,12 @@ public class RequestDetailTeacher extends HttpServlet {
 
             request.getRequestDispatcher("/views/allocation/request-detail.jsp")
                     .forward(request, response);
-        } catch (NumberFormatException e) {
-            e.printStackTrace(System.err);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading request detail. ID=" + requestId, ex);
+
             session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra!!");
-            response.sendRedirect("request-list");
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            session.setAttribute("type", "error");
-            session.setAttribute("message", "Có lỗi xảy ra!!");
+            session.setAttribute("message", "Có lỗi xảy ra. Vui lòng thử lại.");
             response.sendRedirect("request-list");
         }
     }

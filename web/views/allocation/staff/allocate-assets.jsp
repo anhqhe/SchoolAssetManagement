@@ -41,19 +41,18 @@
 
                     <!-- Page Content -->
                     <div class="container mt-5">
-                        <h1 class="h3 mb-4 text-gray-800">Cấp phát tài sản cho phiếu: ${requestDetail.requestCode}</h1>
+                        <h1 class="h3 mb-4 text-gray-800">Cấp phát tài sản cho phiếu: ${req.requestCode}</h1>
 
                         <form action="${pageContext.request.contextPath}/staff/allocate-assets" method="post">
-                            <input type="hidden" name="requestId" value="${requestDetail.requestId}">
-                            <input type="hidden" name="action" id="actionField" value="">
+                            <input type="hidden" name="requestId" value="${req.requestId}">
 
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
                                     <h6 class="m-0 font-weight-bold text-primary">Thông tin yêu cầu</h6>
                                 </div>
                                 <div class="card-body">
-                                    <p><strong>Người yêu cầu:</strong> ${requestDetail.teacherName}</p>
-                                    <p><strong>Mục đích:</strong> ${requestDetail.purpose}</p>
+                                    <p><strong>Người yêu cầu:</strong> ${req.teacherName}</p>
+                                    <p><strong>Mục đích:</strong> ${req.purpose}</p>
                                 </div>
                             </div>
 
@@ -111,13 +110,21 @@
 
                             <div class="mb-5">
                                 <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-secondary">Quay lại</a>
-                                <button type="submit"
-                                        class="btn btn-warning shadow-sm"
-                                        formnovalidate
-                                        onclick="document.getElementById('actionField').value = 'notify_out_of_stock'; return confirm('Gửi thông báo hết tài sản cho giáo viên ?');">
-                                    <i class="fas fa-bell fa-sm text-white-50"></i> Thông báo hết tài sản
-                                </button>
-                                <button type="submit" id="btnSubmit" class="btn btn-primary shadow-sm">
+                                <c:if test="${!(req.status == 'OUT_OF_STOCK')}">
+                                    <button type="submit"
+                                            class="btn btn-warning shadow-sm"
+                                            name="action"
+                                            value="notify_out_of_stock"
+                                            formnovalidate
+                                            onclick="return confirm('Gửi thông báo hết tài sản cho giáo viên ?');">
+                                        <i class="fas fa-bell fa-sm text-white-50"></i> Thông báo hết tài sản
+                                    </button>
+                                </c:if>
+                                <button type="submit" 
+                                        id="btnSubmit" 
+                                        class="btn btn-primary shadow-sm"
+                                        name="action"
+                                        value="allocate">
                                     <i class="fas fa-check fa-sm text-white-50"></i> Xác nhận bàn giao
                                 </button>
                             </div>
@@ -135,64 +142,84 @@
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                                            $(document).ready(function () {
-                                                function showWarning(groupId, message) {
-                                                    const $warning = $('.category-warning[data-group="' + groupId + '"]');
-                                                    $warning.find('.category-warning-text').text(message);
-                                                    $warning.removeClass('d-none');
-                                                }
-
-                                                function hideWarning(groupId) {
-                                                    const $warning = $('.category-warning[data-group="' + groupId + '"]');
-                                                    $warning.addClass('d-none');
-                                                    $warning.find('.category-warning-text').text('');
-                                                }
-
-                                                $(document).on('click', '.category-warning-close', function () {
-                                                    const groupId = $(this).attr('data-group');
-                                                    hideWarning(groupId);
-                                                });
-
-                                                $('.asset-check').on('change', function () {
-                                                    const groupId = $(this).attr('data-group');
-                                                    const $checks = $('.asset-check[data-group="' + groupId + '"]');
-                                                    const limit = parseInt($(this).attr('data-limit'), 10);
-                                                    const checkedCount = $checks.filter(':checked').length;
-
-                                                    if (Number.isFinite(limit) && $(this).is(':checked') && checkedCount > limit) {
-                                                        this.checked = false;
-                                                        showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu.');
-                                                        return;
+                                                $(document).ready(function () {
+                                                    function showWarning(groupId, message) {
+                                                        const $warning = $('.category-warning[data-group="' + groupId + '"]');
+                                                        $warning.find('.category-warning-text').text(message);
+                                                        $warning.removeClass('d-none');
                                                     }
-                                                    hideWarning(groupId);
-                                                });
 
-                                                $('form').on('submit', function (e) {
-                                                    let hasInvalid = false;
+                                                    function hideWarning(groupId) {
+                                                        const $warning = $('.category-warning[data-group="' + groupId + '"]');
+                                                        $warning.addClass('d-none');
+                                                        $warning.find('.category-warning-text').text('');
+                                                    }
 
-                                                    const groupIds = {};
-                                                    $('.asset-check').each(function () {
-                                                        groupIds[$(this).attr('data-group')] = true;
-                                                    });
-
-                                                    Object.keys(groupIds).some(function (groupId) {
-                                                        const $checks = $('.asset-check[data-group="' + groupId + '"]');
-                                                        const limit = parseInt($checks.first().attr('data-limit'), 10);
-                                                        const checkedCount = $checks.filter(':checked').length;
-                                                        if (Number.isFinite(limit) && checkedCount > limit) {
-                                                            hasInvalid = true;
-                                                            showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu.');
-                                                            return true;
-                                                        }
+                                                    $(document).on('click', '.category-warning-close', function () {
+                                                        const groupId = $(this).attr('data-group');
                                                         hideWarning(groupId);
-                                                        return false;
                                                     });
 
-                                                    if (hasInvalid) {
-                                                        e.preventDefault();
-                                                    }
+                                                    $('.asset-check').on('change', function () {
+                                                        const groupId = $(this).attr('data-group');
+                                                        const $checks = $('.asset-check[data-group="' + groupId + '"]');
+                                                        const limit = parseInt($(this).attr('data-limit'), 10);
+                                                        const checkedCount = $checks.filter(':checked').length;
+
+                                                        if (Number.isFinite(limit) && $(this).is(':checked') && checkedCount > limit) {
+                                                            this.checked = false;
+                                                            showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu. Vui lòng chọn đúng ' + limit + ' tài sản.');
+                                                            return;
+                                                        }
+
+                                                        if (Number.isFinite(limit) && checkedCount < limit) {
+                                                            showWarning(groupId, 'Vui lòng chọn đủ ' + limit + ' tài sản. Hiện tại đã chọn: ' + checkedCount + '/' + limit);
+                                                        } else if (Number.isFinite(limit) && checkedCount === limit) {
+                                                            hideWarning(groupId);
+                                                        }
+                                                    });
+
+                                                    $('form').on('submit', function (e) {
+                                                        // if notifying out of stock skip validation
+                                                        const action = document.activeElement.value;
+                                                        if (action === 'notify_out_of_stock') {
+                                                            return;
+                                                        }
+
+                                                        let hasInvalid = false;
+
+                                                        const groupIds = {};
+                                                        $('.asset-check').each(function () {
+                                                            groupIds[$(this).attr('data-group')] = true;
+                                                        });
+
+                                                        Object.keys(groupIds).some(function (groupId) {
+                                                            const $checks = $('.asset-check[data-group="' + groupId + '"]');
+                                                            const limit = parseInt($checks.first().attr('data-limit'), 10);
+                                                            const checkedCount = $checks.filter(':checked').length;
+
+                                                            if (Number.isFinite(limit) && checkedCount < limit) {
+                                                                hasInvalid = true;
+                                                                showWarning(groupId, 'Chưa chọn đủ tài sản. Cân chọn ' + limit + ' tài sản nhưng hiện tại chỉ chọn ' + checkedCount + '.');
+                                                                return true;
+                                                            }
+
+                                                            if (Number.isFinite(limit) && checkedCount > limit) {
+                                                                hasInvalid = true;
+                                                                showWarning(groupId, 'Chọn quá nhiều tài sản. Cần chọn ' + limit + ' tài sản nhưng hiện tại chọn ' + checkedCount + '.');
+                                                                return true;
+                                                            }
+
+                                                            hideWarning(groupId);
+                                                            return false;
+                                                        });
+
+                                                        if (hasInvalid) {
+                                                            e.preventDefault();
+                                                            alert('Vui lòng kiểm tra lại các tài sản đã chọn để đảm bảo đúng số lượng yêu cầu.');
+                                                        }
+                                                    });
                                                 });
-                                            });
         </script>
 
 

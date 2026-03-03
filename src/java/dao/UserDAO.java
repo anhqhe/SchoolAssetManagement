@@ -208,4 +208,35 @@ public class UserDAO {
             return false;
         }
     }
+
+    /**
+     * Lấy danh sách tất cả giáo viên (role TEACHER) đang active.
+     */
+    public List<User> getAllTeachers() throws SQLException {
+        List<User> teachers = new ArrayList<>();
+
+        String sql = "SELECT u.UserId, u.Username, u.FullName, u.Email, u.IsActive " +
+                     "FROM Users u " +
+                     "JOIN UserRoles ur ON ur.UserId = u.UserId " +
+                     "JOIN Roles r ON ur.RoleId = r.RoleId " +
+                     "WHERE r.RoleCode = 'TEACHER' AND u.IsActive = 1 " +
+                     "ORDER BY u.FullName";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                User teacher = new User();
+                teacher.setUserId(rs.getLong("UserId"));
+                teacher.setUsername(rs.getString("Username"));
+                teacher.setFullName(rs.getString("FullName"));
+                teacher.setEmail(rs.getString("Email"));
+                teacher.setActive(rs.getBoolean("IsActive"));
+                teachers.add(teacher);
+            }
+        }
+
+        return teachers;
+    }
 }

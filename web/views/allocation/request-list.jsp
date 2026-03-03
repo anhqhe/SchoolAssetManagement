@@ -244,7 +244,7 @@
                                                                                            class="btn btn-sm btn-info" title="Xem chi tiết">
                                                                                             <i class="fas fa-eye"></i>
                                                                                         </a>
-                                                                                        <c:if test="${req.status == 'APPROVED_BY_BOARD'}">
+                                                                                        <c:if test="${req.status == 'APPROVED_BY_BOARD' || req.status == 'OUT_OF_STOCK'}">
                                                                                             <a href="allocate-assets?requestId=${req.requestId}" 
                                                                                                class="btn btn-sm btn-success" title="Bàn giao tài sản">
                                                                                                 <i class="fas fa-box-open"></i>

@@ -21,7 +21,7 @@
     <p class="text-gray-500 mb-3">
         Có vẻ như bạn đã truy cập vào một đường dẫn không tồn tại.
     </p>
-    <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/dashboard">
+    <a class="btn btn-primary" href="${pageContext.request.contextPath}/views/admin/dashboard.jsp">
         &larr; Quay lại Trang tổng quan
     </a>
 </div>

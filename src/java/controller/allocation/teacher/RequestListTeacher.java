@@ -17,7 +17,8 @@ import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import model.allocation.AssetRequest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.User;
 
 /**
@@ -30,6 +31,9 @@ public class RequestListTeacher extends HttpServlet {
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
     private RoomDAO roomDAO = new RoomDAO();
 
+    private static final Logger LOGGER
+            = Logger.getLogger(RequestListTeacher.class.getName());
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -41,24 +45,26 @@ public class RequestListTeacher extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
-        
+
         //currentUser != null
-        
         //Filter
         // Get parameters
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
         String sortBy = request.getParameter("sortBy");
 
-
-        List<AssetRequestDTO> list = new ArrayList<>();
+        List<AssetRequestDTO> list;
         try {
             list = requestDAO.getRequestsByTeacher(currentUser.getUserId(), keyword, status, sortBy);
         } catch (SQLException ex) {
-            System.out.println("controller.allocation.teacher.RequestListTeacher.doGet()");
-            System.out.println(ex);
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading teacher asset request list. userId="
+                    + currentUser.getUserId(), ex);
+
+            response.sendRedirect(request.getContextPath() + "/views/common/500.jsp");
+            return;
         }
-        
+
         request.setAttribute("roomDAO", roomDAO);
         request.setAttribute("requestList", list);
         request.getRequestDispatcher("/views/allocation/request-list.jsp")

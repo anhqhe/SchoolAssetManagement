@@ -92,8 +92,9 @@ public class AssetRequestDAO {
      *
      * AssetRequestDTO DAO
      */
+    
     //Find Request By ID --> Show in request-detail, staff/allocate-asset
-    public AssetRequestDTO findById(long requestId) {
+    public AssetRequestDTO findById(long requestId) throws SQLException{
 
         String sql = """
                     SELECT r.*, u.FullName as TeacherName, rm.RoomName 
@@ -111,10 +112,29 @@ public class AssetRequestDAO {
                     return dto;
                 }
             }
-        } catch(SQLException e) {
-            System.out.println("dao.allocation.AssetRequestDAO.findById()");
-            System.err.println(e.getMessage());
-        }
+        } 
+        return null;
+    }
+    
+    public AssetRequestDTO findById(Connection conn, long requestId) throws SQLException{
+
+        String sql = """
+                    SELECT r.*, u.FullName as TeacherName, rm.RoomName 
+                    FROM AssetRequests r 
+                    JOIN Users u ON r.TeacherId = u.UserId 
+                    LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                    WHERE r.RequestId = ?
+                    """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
+                    return dto;
+                }
+            }
+        } 
         return null;
     }
     

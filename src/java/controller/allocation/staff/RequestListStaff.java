@@ -16,6 +16,8 @@ import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import model.User;
 
 /**
@@ -26,41 +28,36 @@ import model.User;
 public class RequestListStaff extends HttpServlet {
 
     private AssetRequestDAO requestDAO = new AssetRequestDAO();
+    private static final Logger LOGGER
+            = Logger.getLogger(RequestListStaff.class.getName());
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Check authentication
-        HttpSession session = request.getSession(false);
-        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
 
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
-
-        // Check authorization - user must have ASSET_STAFF hoặc ADMIN role
-        List<String> roles = currentUser.getRoles();
-        boolean isStaffOrAdmin = roles != null && (roles.contains("ASSET_STAFF") || roles.contains("ADMIN"));
-        if (!isStaffOrAdmin) {
-            response.sendRedirect(request.getContextPath() + "/views/common/403.jsp");
-            return;
-        }
-
         //Filter
-        
+
         // Get parameters
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
         String sortBy = request.getParameter("sortBy");
 
-        
-        List<AssetRequestDTO> list = new ArrayList<>();
+        List<AssetRequestDTO> list;
         try {
             list = requestDAO.getRequestsForStaff(keyword, status, sortBy);
         } catch (SQLException ex) {
-            System.out.println("controller.allocation.staff.RequestListStaff.doGet()");
-            System.out.println(ex);
+            LOGGER.log(Level.SEVERE,
+                    "Database error while loading staff asset request list. userId="
+                    + currentUser.getUserId(), ex);
+
+            response.sendRedirect(request.getContextPath() + "/views/common/500.jsp");
+            return;
         }
 
         request.setAttribute("requestList", list);
@@ -74,4 +71,3 @@ public class RequestListStaff extends HttpServlet {
     }
 
 }
-
