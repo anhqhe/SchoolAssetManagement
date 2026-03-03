@@ -13,8 +13,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import model.Room;
 import model.Transfer;
 
 @WebServlet(name = "TransferListServlet", urlPatterns = {"/transfers/list"})
@@ -22,51 +24,35 @@ public class TransferListServlet extends HttpServlet {
     
     private final AssetDAO assetDAO = new AssetDAO();
     
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-                TransferDAO dao = new TransferDAO();
-       // List<Transfer> transfers = dao.getAllTransfers();
- List<Transfer> transfers = new ArrayList<>();
+@Override
+protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
 
-    for (int i = 1; i <= 5; i++) {
-        Transfer t = new Transfer();
-        t.setTransferId(i);
-        t.setTransferCode("TRF-00" + i);
-        t.setFromRoomName("Phòng A" + i);
-        t.setToRoomName("Phòng B" + i);
-        t.setRequestedByName("Nguyễn Văn " + i);
-        t.setReason("Điều chuyển thiết bị phục vụ giảng dạy");
-        t.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+    String keyword = request.getParameter("keyword");
+    String status = request.getParameter("status");
 
-        // Fake status
-        switch (i % 4) {
-            case 0:
-                t.setStatus("PENDING");
-                t.setStatusText("Chờ duyệt");
-                t.setStatusBadgeClass("badge-warning");
-                break;
-            case 1:
-                t.setStatus("APPROVED");
-                t.setStatusText("Đã duyệt");
-                t.setStatusBadgeClass("badge-info");
-                break;
-            case 2:
-                t.setStatus("COMPLETED");
-                t.setStatusText("Hoàn tất");
-                t.setStatusBadgeClass("badge-success");
-                break;
-            default:
-                t.setStatus("REJECTED");
-                t.setStatusText("Từ chối");
-                t.setStatusBadgeClass("badge-danger");
-        }
-
-        transfers.add(t);
-    }
+    try {
+      
+        TransferDAO transferDAO = new TransferDAO();
+        List<Transfer> transfers = transferDAO.getTransfers(keyword, status);
         request.setAttribute("transfers", transfers);
-        request.getRequestDispatcher("/views/asset_transfer/asset-transfer-list.jsp")
-               .forward(request, response);
-    
+
+        dao.RoomDAO roomDAO = new dao.RoomDAO(); 
+        List<Room> rooms = roomDAO.getAllRooms();
+        List<Asset> assets = assetDAO.getAvailableAssets();
+
+   
+        request.setAttribute("rooms", rooms);
+        request.setAttribute("assets", assets); 
+        
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("selectedStatus", status);
+
+    } catch (SQLException e) {
+        throw new ServletException(e);
     }
+
+    request.getRequestDispatcher("/views/asset_transfer/asset-transfer-list.jsp")
+           .forward(request, response);
+}
 }

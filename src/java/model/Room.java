@@ -1,18 +1,24 @@
 package model;
 
+
 public class Room {
+    private int roomId;          
+    private String roomName;     
+    private String description;  
+    public Room() {
+    }
 
-    private long roomId;
-    private String roomName;
-    private String location;
-    // Tên trưởng phòng (nếu có) - dùng cho màn list
-    private String headTeacherName;
+    public Room(int roomId, String roomName, String description) {
+        this.roomId = roomId;
+        this.roomName = roomName;
+        this.description = description;
+    }
 
-    public long getRoomId() {
+    public int getRoomId() {
         return roomId;
     }
 
-    public void setRoomId(long roomId) {
+    public void setRoomId(int roomId) {
         this.roomId = roomId;
     }
 
@@ -24,20 +30,16 @@ public class Room {
         this.roomName = roomName;
     }
 
-    public String getLocation() {
-        return location;
+    public String getDescription() {
+        return description;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public String getHeadTeacherName() {
-        return headTeacherName;
-    }
-
-    public void setHeadTeacherName(String headTeacherName) {
-        this.headTeacherName = headTeacherName;
+    @Override
+    public String toString() {
+        return "Room{" + "roomId=" + roomId + ", roomName=" + roomName + ", description=" + description + '}';
     }
 }
-

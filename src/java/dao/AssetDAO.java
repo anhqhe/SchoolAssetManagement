@@ -178,5 +178,23 @@ public class AssetDAO {
         
         return assets;
     }
+    public List<Asset> getAvailableAssets() throws SQLException {
+    List<Asset> list = new ArrayList<>();
+    // Chỉ lấy các tài sản có trạng thái cho phép điều chuyển 
+    String sql = "SELECT AssetId, AssetName, AssetCode FROM Assets WHERE Status != 'Disposed'";
+    
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            Asset a = new Asset();
+            a.setAssetId(rs.getInt("AssetId"));
+            a.setAssetName(rs.getString("AssetName"));
+            a.setAssetCode(rs.getString("AssetCode"));
+            list.add(a);
+        }
+    }
+    return list;
+}
 }
 

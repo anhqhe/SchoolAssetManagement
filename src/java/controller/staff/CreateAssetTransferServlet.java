@@ -1,0 +1,81 @@
+package controller.staff;
+
+import dao.TransferDAO;
+import model.Transfer;
+import model.User;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+@WebServlet(name = "CreateAssetTransferServlet", urlPatterns = {"/transfers/create"})
+public class CreateAssetTransferServlet extends HttpServlet {
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser"); // khớp với JSP
+
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        try {
+            int fromRoomId = Integer.parseInt(request.getParameter("fromRoomId"));
+            int toRoomId   = Integer.parseInt(request.getParameter("toRoomId"));
+            String reason  = request.getParameter("reason");
+
+            // Nhận nhiều assetId
+            String[] assetIdParams = request.getParameterValues("assetIds");
+            List<Integer> assetIds = new ArrayList<>();
+            if (assetIdParams != null) {
+                for (String id : assetIdParams) {
+                    assetIds.add(Integer.parseInt(id));
+                }
+            }
+
+            if (assetIds.isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/transfers/list?error=noAsset");
+                return;
+            }
+
+            Transfer transfer = new Transfer();
+            transfer.setFromRoomId(fromRoomId);
+            transfer.setToRoomId(toRoomId);
+            transfer.setReason(reason);
+            transfer.setRequestedById((int) currentUser.getUserId());
+
+            TransferDAO dao = new TransferDAO();
+            boolean ok = dao.insertTransferWithItems(transfer, assetIds);
+
+            if (ok) {
+                response.sendRedirect(request.getContextPath() + "/transfers/list");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/transfers/list");
+            }
+
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            throw new ServletException("Lỗi khi tạo điều chuyển", e);
+        } catch (SQLException ex) {
+            Logger.getLogger(CreateAssetTransferServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/transfers/list");
+    }
+}
