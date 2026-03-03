@@ -25,6 +25,8 @@ import java.util.List;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.User;
 import model.allocation.AssetAllocation;
 
@@ -127,10 +129,15 @@ public class AllocateAssets extends HttpServlet {
                         "Kho hàng không đủ tài sản cấp phát cho phiếu " + reqDTO.getRequestCode() + ".",
                         "ASSET_REQUEST",
                         requestId);
+                try {
+                    requestDAO.updateStatus(requestId, "OUT_OF_STOCK");
+                } catch (SQLException ex) {
+                    Logger.getLogger(AllocateAssets.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-            session.setAttribute("type", "info");
+            session.setAttribute("type", "success");
             session.setAttribute("message", "Đã gửi thông báo hết tài sản cho giáo viên.");
-            response.sendRedirect("allocate-assets?requestId=" + requestId);
+            response.sendRedirect("request-list");
             return;
         }
 
@@ -148,6 +155,65 @@ public class AllocateAssets extends HttpServlet {
         List<Long> assetIds = new java.util.ArrayList<>();
         for (String id : selectedAssetIds) {
             assetIds.add(Long.parseLong(id));
+        }
+        
+        // Validate: Check if selected assets match required quantities by category
+        try {
+            List<AssetRequestItemDTO> neededItems = reqItemDAO.findByRequestId(requestId);
+            List<AssetDTO> selectedAssets = new java.util.ArrayList<>();
+            for (Long assetId : assetIds) {
+                AssetDTO asset = assetDAO.findById(assetId);
+                if (asset != null) {
+                    selectedAssets.add(asset);
+                } else {
+                    session.setAttribute("type", "error");
+                    session.setAttribute("message", "Một hoặc nhiều tài sản được chọn không tồn tại.");
+                    response.sendRedirect("allocate-assets?requestId=" + requestId);
+                    return;
+                }
+            }
+            
+            // Check selected assets against required items
+            java.util.Map<Long, Integer> requiredByCategory = new java.util.HashMap<>();
+            for (AssetRequestItemDTO item : neededItems) {
+                requiredByCategory.put(item.getCategoryId(), item.getQuantity());
+            }
+            
+            java.util.Map<Long, Integer> selectedByCategory = new java.util.HashMap<>();
+            for (AssetDTO asset : selectedAssets) {
+                selectedByCategory.put(asset.getCategoryId(), 
+                    selectedByCategory.getOrDefault(asset.getCategoryId(), 0) + 1);
+            }
+            
+            // Validate quantities match exactly for each category
+            for (Long categoryId : requiredByCategory.keySet()) {
+                int required = requiredByCategory.get(categoryId);
+                int selected = selectedByCategory.getOrDefault(categoryId, 0);
+                
+                if (selected != required) {
+                    session.setAttribute("type", "warning");
+                    session.setAttribute("message", "Số lượng tài sản được chọn không khớp với yêu cầu. "
+                        + "Vui lòng chọn đúng số lượng tài sản cho từng loại.");
+                    response.sendRedirect("allocate-assets?requestId=" + requestId);
+                    return;
+                }
+            }
+            
+            // Check for extra assets from categories not in the request
+            for (Long categoryId : selectedByCategory.keySet()) {
+                if (!requiredByCategory.containsKey(categoryId)) {
+                    session.setAttribute("type", "warning");
+                    session.setAttribute("message", "Bạn đã chọn tài sản từ loại không được yêu cầu.");
+                    response.sendRedirect("allocate-assets?requestId=" + requestId);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Có lỗi xảy ra khi kiểm tra tài sản.");
+            response.sendRedirect("allocate-assets?requestId=" + requestId);
+            return;
         }
              
 

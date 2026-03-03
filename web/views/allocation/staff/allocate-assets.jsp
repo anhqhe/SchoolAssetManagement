@@ -161,13 +161,23 @@
 
                                                     if (Number.isFinite(limit) && $(this).is(':checked') && checkedCount > limit) {
                                                         this.checked = false;
-                                                        showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu.');
+                                                        showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu. Vui lòng chọn đúng ' + limit + ' tài sản.');
                                                         return;
                                                     }
-                                                    hideWarning(groupId);
+                                                    
+                                                    if (Number.isFinite(limit) && checkedCount < limit) {
+                                                        showWarning(groupId, 'Vui lòng chọn đủ ' + limit + ' tài sản. Hiện tại đã chọn: ' + checkedCount + '/' + limit);
+                                                    } else if (Number.isFinite(limit) && checkedCount === limit) {
+                                                        hideWarning(groupId);
+                                                    }
                                                 });
 
                                                 $('form').on('submit', function (e) {
+                                                    // if notifying out of stock skip validation
+                                                    if ($('#actionField').val() === 'notify_out_of_stock') {
+                                                        return;
+                                                    }
+
                                                     let hasInvalid = false;
 
                                                     const groupIds = {};
@@ -179,17 +189,26 @@
                                                         const $checks = $('.asset-check[data-group="' + groupId + '"]');
                                                         const limit = parseInt($checks.first().attr('data-limit'), 10);
                                                         const checkedCount = $checks.filter(':checked').length;
-                                                        if (Number.isFinite(limit) && checkedCount > limit) {
+                                                        
+                                                        if (Number.isFinite(limit) && checkedCount < limit) {
                                                             hasInvalid = true;
-                                                            showWarning(groupId, 'Số lượng tài sản đã chọn vượt quá số lượng yêu cầu.');
+                                                            showWarning(groupId, 'Chưa chọn đủ tài sản. Cân chọn ' + limit + ' tài sản nhưng hiện tại chỉ chọn ' + checkedCount + '.');
                                                             return true;
                                                         }
+                                                        
+                                                        if (Number.isFinite(limit) && checkedCount > limit) {
+                                                            hasInvalid = true;
+                                                            showWarning(groupId, 'Chọn quá nhiều tài sản. Cần chọn ' + limit + ' tài sản nhưng hiện tại chọn ' + checkedCount + '.');
+                                                            return true;
+                                                        }
+                                                        
                                                         hideWarning(groupId);
                                                         return false;
                                                     });
 
                                                     if (hasInvalid) {
                                                         e.preventDefault();
+                                                        alert('Vui lòng kiểm tra lại các tài sản đã chọn để đảm bảo đúng số lượng yêu cầu.');
                                                     }
                                                 });
                                             });
