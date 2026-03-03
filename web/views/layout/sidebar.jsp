@@ -67,7 +67,12 @@
             <span>Báo cáo</span>
         </a>
     </li>
-    
+      <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>Điều chuyển tài sản</span>
+        </a>
+    </li>
     <% } %>
     
     <!-- ASSET_STAFF ONLY -->
@@ -143,6 +148,12 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/board/reports">
             <i class="fas fa-fw fa-chart-bar"></i>
             <span>Báo cáo</span>
+        </a>
+    </li>
+      <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>Điều chuyển tài sản</span>
         </a>
     </li>
     
