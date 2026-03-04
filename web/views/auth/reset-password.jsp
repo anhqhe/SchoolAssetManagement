@@ -20,14 +20,15 @@
 
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
+            justify-content: center;
         }
 
         .reset-password-left {
-            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -74,8 +75,8 @@
         }
 
         .input-password:focus {
-            border-color: #28a745;
-            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
         }
 
         .btn-reset {
@@ -83,15 +84,15 @@
             border-radius: 25px;
             font-size: 16px;
             font-weight: 600;
-            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
             border: none;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            box-shadow: 0 4px 15px rgba(78, 115, 223, 0.4);
         }
 
         .btn-reset:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+            box-shadow: 0 6px 20px rgba(78, 115, 223, 0.6);
         }
 
         .password-strength {
@@ -135,14 +136,14 @@
         }
 
         .back-link {
-            color: #28a745;
+            color: #4e73df;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s;
         }
 
         .back-link:hover {
-            color: #1e7e34;
+            color: #224abe;
             text-decoration: none;
         }
     </style>
@@ -223,9 +224,7 @@
                                             <div class="requirement" id="req-uppercase">
                                                 <i class="fas fa-circle"></i> Ít nhất 1 chữ hoa
                                             </div>
-                                            <div class="requirement" id="req-lowercase">
-                                                <i class="fas fa-circle"></i> Ít nhất 1 chữ thường
-                                            </div>
+                                           
                                             <div class="requirement" id="req-number">
                                                 <i class="fas fa-circle"></i> Ít nhất 1 số
                                             </div>
@@ -358,15 +357,18 @@
             const newPass = newPasswordInput.val();
             const confirmPass = confirmPasswordInput.val();
 
+            const hasUppercase = /[A-Z]/.test(newPass);
+            const hasDigit = /[0-9]/.test(newPass);
+
             if (newPass !== confirmPass) {
                 e.preventDefault();
                 mismatchMsg.removeClass('d-none');
                 return false;
             }
 
-            if (newPass.length < 6) {
+            if (newPass.length < 6 || !hasUppercase || !hasDigit) {
                 e.preventDefault();
-                alert('Mật khẩu phải có ít nhất 6 ký tự');
+                alert('Mật khẩu phải có ít nhất 6 ký tự, chứa ít nhất 1 chữ hoa và 1 số');
                 return false;
             }
 
