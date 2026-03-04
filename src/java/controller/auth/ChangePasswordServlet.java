@@ -113,8 +113,8 @@ public class ChangePasswordServlet extends HttpServlet {
             return;
         }
 
-        if (newPass.length() < 6) {
-            request.setAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự.");
+        if (!isValidPassword(newPass)) {
+            request.setAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự, chứa ít nhất 1 chữ hoa và 1 số.");
             request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }
@@ -139,5 +139,19 @@ public class ChangePasswordServlet extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+
+    private boolean isValidPassword(String password) {
+        if (password == null) {
+            return false;
+        }
+        if (password.length() < 6) {
+            return false;
+        }
+
+        boolean hasUppercase = password.matches(".*[A-Z].*");
+        boolean hasDigit = password.matches(".*\\d.*");
+
+        return hasUppercase && hasDigit;
+    }
 
 }

@@ -7,11 +7,14 @@
     User currentUser = (User) session.getAttribute("currentUser");
     List<String> roles = null;
     boolean isAssetStaff = false;
+     boolean canApprove = false;
     if (currentUser != null) {
         roles = currentUser.getRoles();
-        isAssetStaff = roles != null && (roles.contains("ASSET_STAFF") || roles.contains("ADMIN"));
+        isAssetStaff = roles != null && (roles.contains("ASSET_STAFF") || roles.contains("BOARD") || roles.contains("ADMIN") );
+           canApprove = roles != null && (roles.contains("BOARD") || roles.contains("ADMIN"));
     }
     request.setAttribute("isAssetStaff", isAssetStaff);
+    request.setAttribute("canApprove", canApprove);
 %>
 
 <!DOCTYPE html>
@@ -168,12 +171,14 @@
                                             <i class="fas fa-eye"></i>
                                         </button>
 
-                                        <button class="btn btn-sm btn-success approve-open-btn"
-                                                data-id="${t.transferId}"
-                                                data-code="${t.transferCode}"
-                                                ${t.status == 'APPROVED' || t.status == 'COMPLETED' ? 'disabled' : ''}>
-                                            <i class="fas fa-check"></i>
-                                        </button>
+                                                <c:if test="${isAssetStaff}">
+                   <button class="btn btn-sm btn-success approve-open-btn"
+                           data-id="${t.transferId}"
+                           data-code="${t.transferCode}"
+                           ${t.status == 'APPROVED' || t.status == 'COMPLETED' ? 'disabled' : ''}>
+                       <i class="fas fa-check"></i>
+                   </button>
+               </c:if>
                                     </td>
                                 </tr>
                                         </c:forEach>
@@ -323,15 +328,16 @@
                         </div>
 
                         <div class="table-responsive border rounded p-2"
-                             style="max-height:250px; overflow-y:auto; overflow-x:hidden;">
+                             style="max-height:300px; overflow-y:auto; overflow-x:hidden;">
                             <table class="table table-sm table-hover">
                                 <thead class="thead-light">
                                     <tr>
                                         <th width="40px">
                                             <input type="checkbox" id="checkAllAssets">
                                         </th>
-                                        <th>Mã tài sản</th>
+                                        <th width="120px">Mã tài sản</th>
                                         <th>Tên tài sản</th>
+                                        <th width="220px">Ghi chú</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -343,6 +349,14 @@
                                             </td>
                                             <td>${a.assetCode}</td>
                                             <td>${a.assetName}</td>
+                                            <td>
+                                                
+                                                <input type="text"
+                                                       name="assetNote_${a.assetId}"
+                                                       class="form-control form-control-sm asset-note"
+                                                       placeholder="Ghi chú..."
+                                                       disabled>
+                                            </td>
                                         </tr>
                                     </c:forEach>
                                 </tbody>
@@ -501,6 +515,22 @@ function resetModalButtons() {
     $("#confirmRejectBtn").prop("disabled", false).html("<i class='fas fa-ban'></i> Từ chối");
 }
 
+$(document).on('change', '.asset-checkbox', function () {
+    const row  = $(this).closest('tr');
+    const note = row.find('.asset-note');
+    if ($(this).is(':checked')) {
+        note.prop('disabled', false).focus();
+    } else {
+        note.prop('disabled', true).val('');
+    }
+});
+
+$('#checkAllAssets').on('change', function () {
+    const checked = $(this).is(':checked');
+    $('.asset-checkbox').each(function () {
+        $(this).prop('checked', checked).trigger('change');
+    });
+});
 $("#approveModal").on("hidden.bs.modal", function () {
     approveId = null;
     $("#approveErrorMsg").addClass("d-none");

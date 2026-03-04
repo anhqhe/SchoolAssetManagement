@@ -86,8 +86,8 @@ public class ResetPasswordServlet extends HttpServlet {
         }
         
         // Validate password strength
-        if (newPassword.length() < 6) {
-            request.setAttribute("errorMessage", "Mật khẩu phải có ít nhất 6 ký tự.");
+        if (!isValidPassword(newPassword)) {
+            request.setAttribute("errorMessage", "Mật khẩu phải có ít nhất 6 ký tự, chứa ít nhất 1 chữ hoa và 1 số.");
             request.setAttribute("token", token);
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
@@ -127,6 +127,20 @@ public class ResetPasswordServlet extends HttpServlet {
             request.setAttribute("token", token);
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
         }
+    }
+
+    private boolean isValidPassword(String password) {
+        if (password == null) {
+            return false;
+        }
+        if (password.length() < 6) {
+            return false;
+        }
+
+        boolean hasUppercase = password.matches(".*[A-Z].*");
+        boolean hasDigit = password.matches(".*\\d.*");
+
+        return hasUppercase && hasDigit;
     }
 }
 

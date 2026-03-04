@@ -12,66 +12,66 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @WebServlet(name = "CreateAssetTransferServlet", urlPatterns = {"/transfers/create"})
 public class CreateAssetTransferServlet extends HttpServlet {
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+ @Override
+protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    HttpSession session = request.getSession();
+    User currentUser = (User) session.getAttribute("currentUser");
+    if (currentUser == null) {
+        response.sendRedirect(request.getContextPath() + "/login");
+        return;
+    }
+    try {
+        int fromRoomId = Integer.parseInt(request.getParameter("fromRoomId"));
+        int toRoomId   = Integer.parseInt(request.getParameter("toRoomId"));
+        String reason  = request.getParameter("reason");
 
-        HttpSession session = request.getSession();
-        User currentUser = (User) session.getAttribute("currentUser"); // khớp với JSP
+        String[] assetIdParams = request.getParameterValues("assetIds");
+       
+        Map<Integer, String> assetNoteMap = new LinkedHashMap<>();
+        if (assetIdParams != null) {
+            for (String id : assetIdParams) {
+                int assetId = Integer.parseInt(id);
 
-        if (currentUser == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+                String note = request.getParameter("assetNote_" + id);
+                assetNoteMap.put(assetId, note != null ? note.trim() : "");
+            }
+        }
+
+        if (assetNoteMap.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/transfers/list?error=noAsset");
             return;
         }
 
-        try {
-            int fromRoomId = Integer.parseInt(request.getParameter("fromRoomId"));
-            int toRoomId   = Integer.parseInt(request.getParameter("toRoomId"));
-            String reason  = request.getParameter("reason");
+        Transfer transfer = new Transfer();
+        transfer.setFromRoomId(fromRoomId);
+        transfer.setToRoomId(toRoomId);
+        transfer.setReason(reason);
+        transfer.setRequestedById((int) currentUser.getUserId());
 
-            // Nhận nhiều assetId
-            String[] assetIdParams = request.getParameterValues("assetIds");
-            List<Integer> assetIds = new ArrayList<>();
-            if (assetIdParams != null) {
-                for (String id : assetIdParams) {
-                    assetIds.add(Integer.parseInt(id));
-                }
-            }
-
-            if (assetIds.isEmpty()) {
-                response.sendRedirect(request.getContextPath() + "/transfers/list?error=noAsset");
-                return;
-            }
-
-            Transfer transfer = new Transfer();
-            transfer.setFromRoomId(fromRoomId);
-            transfer.setToRoomId(toRoomId);
-            transfer.setReason(reason);
-            transfer.setRequestedById((int) currentUser.getUserId());
-
-            TransferDAO dao = new TransferDAO();
-            boolean ok = dao.insertTransferWithItems(transfer, assetIds);
-
-            if (ok) {
-                response.sendRedirect(request.getContextPath() + "/transfers/list");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/transfers/list");
-            }
-
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            throw new ServletException("Lỗi khi tạo điều chuyển", e);
-        } catch (SQLException ex) {
-            Logger.getLogger(CreateAssetTransferServlet.class.getName()).log(Level.SEVERE, null, ex);
+        TransferDAO dao = new TransferDAO();
+        boolean ok = dao.insertTransferWithItems(transfer, assetNoteMap);
+        if (ok) {
+            response.sendRedirect(request.getContextPath() + "/transfers/list");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/transfers/list?error=insertFail");
         }
-    }
+    } catch (NumberFormatException e) {
+        e.printStackTrace();
+        throw new ServletException("Lỗi khi tạo điều chuyển", e);
+    } catch (SQLException ex) {
+         Logger.getLogger(CreateAssetTransferServlet.class.getName()).log(Level.SEVERE, null, ex);
+     }
+}
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

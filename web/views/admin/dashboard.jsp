@@ -41,16 +41,16 @@
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-tachometer-alt text-primary"></i> Trang tổng quan
                     </h1>
-                    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                        <i class="fas fa-download fa-sm text-white-50"></i> Tải báo cáo
-                    </a>
+                    <span class="text-muted small">
+                        Xin chào, ${sessionScope.currentUser.fullName}!
+                    </span>
                 </div>
 
-                <!-- Content Row - Statistics Cards -->
+                <!-- Content Row - Asset Statistics Cards -->
                 <div class="row">
 
                     <!-- Total Assets Card -->
-                    <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="col-xl-4 col-md-6 mb-4">
                         <div class="card border-left-primary shadow h-100 py-2">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
@@ -70,13 +70,34 @@
                         </div>
                     </div>
 
-                    <!-- In Use Card -->
-                    <div class="col-xl-3 col-md-6 mb-4">
+                    <!-- In Stock Card -->
+                    <div class="col-xl-4 col-md-6 mb-4">
                         <div class="card border-left-success shadow h-100 py-2">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Trong kho
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${inStockAssets}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-warehouse fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- In Use Card -->
+                    <div class="col-xl-4 col-md-6 mb-4">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Đang sử dụng
                                         </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
@@ -91,42 +112,92 @@
                         </div>
                     </div>
 
-                    <!-- Maintenance Card -->
+                </div>
+
+                <!-- Content Row - Request & Workflow Statistics Cards -->
+                <div class="row">
+
+                    <!-- Total Requests Card -->
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card border-left-info shadow h-100 py-2">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                            Đang bảo trì
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Phiếu yêu cầu tài sản
                                         </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            ${maintenanceAssets}
+                                            ${totalRequests}
+                                        </div>
+                                        <div class="text-xs text-muted mt-1">
+                                            Đang chờ xử lý: ${pendingRequests + waitingBoardRequests}
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-tools fa-2x text-gray-300"></i>
+                                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Damaged Card -->
+                    <!-- Approved Requests Card -->
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card border-left-primary shadow h-100 py-2">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                            Hỏng hóc
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Đã phê duyệt bởi HĐ
                                         </div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            ${damagedAssets}
+                                            ${approvedRequests}
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                                        <i class="fas fa-check fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Requests Card -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Phiếu yêu cầu đã hoàn thành
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${completedRequests}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-box-open fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Transfers Card -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Phiếu điều chuyển đang chờ
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            ${pendingTransfers}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -137,11 +208,11 @@
                 <!-- Content Row - Charts -->
                 <div class="row">
 
-                    <!-- Area Chart -->
+                    <!-- Area / Bar Chart -->
                     <div class="col-xl-8 col-lg-7">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">Tổng quan tài sản theo tháng</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">Thống kê phiếu yêu cầu theo trạng thái</h6>
                                 <div class="dropdown no-arrow">
                                     <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                                        data-toggle="dropdown">
@@ -166,7 +237,7 @@
                     <div class="col-xl-4 col-lg-5">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">Phân loại tài sản</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">Phân bố trạng thái tài sản</h6>
                             </div>
                             <div class="card-body">
                                 <div class="chart-pie pt-4 pb-2">
@@ -174,13 +245,10 @@
                                 </div>
                                 <div class="mt-4 text-center small">
                                     <span class="mr-2">
-                                        <i class="fas fa-circle text-primary"></i> Thiết bị IT
+                                        <i class="fas fa-circle text-primary"></i> Trong kho
                                     </span>
                                     <span class="mr-2">
-                                        <i class="fas fa-circle text-success"></i> Nội thất
-                                    </span>
-                                    <span class="mr-2">
-                                        <i class="fas fa-circle text-info"></i> Khác
+                                        <i class="fas fa-circle text-success"></i> Đang sử dụng
                                     </span>
                                 </div>
                             </div>
@@ -248,45 +316,51 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-primary btn-sm">
+                                <a href="${pageContext.request.contextPath}/assets" class="btn btn-primary btn-sm">
                                     Xem tất cả <i class="fas fa-arrow-right"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Upcoming Maintenance -->
+                    <!-- Latest Notifications -->
                     <div class="col-xl-4 col-lg-5">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
                                 <h6 class="m-0 font-weight-bold text-primary">
-                                    <i class="fas fa-calendar-check"></i> Bảo trì sắp tới
+                                    <i class="fas fa-bell"></i> Thông báo mới nhất
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <div class="small text-gray-500">22/01/2024</div>
-                                    <div class="font-weight-bold">Máy tính phòng Lab A</div>
-                                    <div class="text-xs text-muted">15 thiết bị cần bảo trì</div>
+                                <c:choose>
+                                    <c:when test="${empty recentNotifications}">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                                            <div>Hiện chưa có thông báo nào</div>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:forEach var="noti" items="${recentNotifications}" varStatus="st">
+                                            <c:if test="${st.index < 5}">
+                                                <div class="mb-3">
+                                                    <div class="small text-gray-500">
+                                                        ${noti.createdAt}
+                                                    </div>
+                                                    <div class="font-weight-bold">
+                                                        ${noti.title}
+                                                        <c:if test="${!noti.read}">
+                                                            <span class="badge badge-pill badge-warning ml-1">Mới</span>
+                                                        </c:if>
+                                                    </div>
+                                                    <div class="text-xs text-muted">${noti.content}</div>
+                                                </div>
+                                            </c:if>
+                                        </c:forEach>
+                                    </c:otherwise>
+                                </c:choose>
+                                <div class="mt-2 text-right text-xs text-muted">
+                                    Thông báo chưa đọc: ${unreadNotificationCount}
                                 </div>
-                                <div class="mb-3">
-                                    <div class="small text-gray-500">25/01/2024</div>
-                                    <div class="font-weight-bold">Máy chiếu phòng 301</div>
-                                    <div class="text-xs text-muted">Bảo trì định kỳ</div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="small text-gray-500">28/01/2024</div>
-                                    <div class="font-weight-bold">Điều hòa phòng họp</div>
-                                    <div class="text-xs text-muted">Vệ sinh hệ thống</div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="small text-gray-500">01/02/2024</div>
-                                    <div class="font-weight-bold">Máy in văn phòng</div>
-                                    <div class="text-xs text-muted">Kiểm tra và bảo trì</div>
-                                </div>
-                                <a href="#" class="btn btn-warning btn-sm btn-block">
-                                    <i class="fas fa-calendar"></i> Xem lịch bảo trì
-                                </a>
                             </div>
                         </div>
 
@@ -298,23 +372,23 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <a href="#" class="btn btn-primary btn-icon-split btn-sm btn-block mb-2">
+                                <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-primary btn-icon-split btn-sm btn-block mb-2">
                                     <span class="icon text-white-50">
                                         <i class="fas fa-plus"></i>
                                     </span>
-                                    <span class="text">Thêm tài sản mới</span>
+                                    <span class="text">Quản lý tài sản</span>
                                 </a>
-                                <a href="#" class="btn btn-success btn-icon-split btn-sm btn-block mb-2">
+                                <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-success btn-icon-split btn-sm btn-block mb-2">
                                     <span class="icon text-white-50">
                                         <i class="fas fa-clipboard-list"></i>
                                     </span>
-                                    <span class="text">Yêu cầu tài sản</span>
+                                    <span class="text">Phiếu yêu cầu tài sản</span>
                                 </a>
-                                <a href="#" class="btn btn-info btn-icon-split btn-sm btn-block mb-2">
+                                <a href="${pageContext.request.contextPath}/transfers/list" class="btn btn-info btn-icon-split btn-sm btn-block mb-2">
                                     <span class="icon text-white-50">
                                         <i class="fas fa-file-alt"></i>
                                     </span>
-                                    <span class="text">Tạo báo cáo</span>
+                                    <span class="text">Phiếu điều chuyển tài sản</span>
                                 </a>
                             </div>
                         </div>
@@ -347,13 +421,13 @@ Chart.defaults.global.defaultFontColor = '#858796';
 
 var ctx = document.getElementById("myAreaChart");
 var myLineChart = new Chart(ctx, {
-  type: 'line',
+  type: 'bar',
   data: {
-    labels: ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"],
+    labels: ["Chờ xử lý", "Chờ HĐ trường", "Đã phê duyệt", "Hoàn thành", "Thiếu tài sản"],
     datasets: [{
-      label: "Tài sản",
+      label: "Số lượng phiếu yêu cầu",
       lineTension: 0.3,
-      backgroundColor: "rgba(78, 115, 223, 0.05)",
+      backgroundColor: "rgba(78, 115, 223, 0.5)",
       borderColor: "rgba(78, 115, 223, 1)",
       pointRadius: 3,
       pointBackgroundColor: "rgba(78, 115, 223, 1)",
@@ -363,7 +437,13 @@ var myLineChart = new Chart(ctx, {
       pointHoverBorderColor: "rgba(78, 115, 223, 1)",
       pointHitRadius: 10,
       pointBorderWidth: 2,
-      data: [850, 920, 980, 1050, 1100, 1150, 1180, 1200, 1220, 1230, 1240, 1247],
+      data: [
+        '${pendingRequests}',
+        '${waitingBoardRequests}',
+        '${approvedRequests}',
+        '${completedRequests}',
+        '${outOfStockRequests}'
+      ],
     }],
   },
   options: {
@@ -429,11 +509,14 @@ var ctx2 = document.getElementById("myPieChart");
 var myPieChart = new Chart(ctx2, {
   type: 'doughnut',
   data: {
-    labels: ["Thiết bị IT", "Nội thất", "Khác"],
+    labels: ["Trong kho", "Đang sử dụng"],
     datasets: [{
-      data: [55, 30, 15],
-      backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-      hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+      data: [
+        '${inStockAssets}',
+        '${inUseAssets}'
+      ],
+      backgroundColor: ['#4e73df', '#1cc88a'],
+      hoverBackgroundColor: ['#2e59d9', '#17a673'],
       hoverBorderColor: "rgba(234, 236, 244, 1)",
     }],
   },
