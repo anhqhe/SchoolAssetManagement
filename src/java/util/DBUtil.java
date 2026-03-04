@@ -10,7 +10,7 @@ public class DBUtil {
 
     private static final String DB_USER = "SA";         // hoặc user SQL của bạn
 
-    private static final String DB_PASS = "123456";
+    private static final String DB_PASS = "123";
 
     static {
         try {
