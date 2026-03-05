@@ -1,4 +1,4 @@
-package controller;
+package controller.staff.categories;
 
 import dao.AssetCategoryDAO;
 import model.User;
