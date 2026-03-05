@@ -9,6 +9,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import model.asset.Room;
+import java.util.ArrayList;
+import java.util.List;
 /**
  *
  * @author An
@@ -23,5 +26,21 @@ public class RoomDao {
                 return rs.next();
             }
         }
+    }
+    
+    public List<Room> findAllActive() throws SQLException{
+        List<Room> list = new ArrayList<>();
+        String sql = "SELECT RoomId, RoomName FROM Rooms WHERE IsActive = 1 ORDER BY RoomName";
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()){
+            while(rs.next()){
+                Room r = new Room();
+                r.setRoomId(rs.getLong("RoomId"));
+                r.setRoomName(rs.getString("RoomName"));
+                list.add(r);
+            }
+        } 
+        return list;
     }
 }

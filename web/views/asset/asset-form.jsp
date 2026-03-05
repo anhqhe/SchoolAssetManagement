@@ -1,5 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.asset.Asset" %>
+<%@ page import="model.asset.Room" %>
+<%@ page import="model.asset.Teacher" %>
 <%@ page import="model.User" %>
 <%@ page import="model.asset.AssetCategory" %>
 <%@ page import="java.util.List" %>
@@ -203,18 +205,46 @@
 
                                             <!-- Current Room ID -->
                                             <div class="form-group">
-                                                <label for="currentRoomId">Phòng hiện tại (ID)</label>
-                                                <input type="number" class="form-control" id="currentRoomId" name="currentRoomId" min="0"
-                                                       value="<%= asset != null && asset.getCurrentRoomId() != 0 ? asset.getCurrentRoomId() : ""%>">
-                                                <small class="form-text text-muted">Nhập ID phòng từ bảng Rooms (để trống nếu chưa có)</small>
+                                                <label for="currentRoomId">Phòng hiện tại</label>
+                                                <select class="form-control" id="currentRoomId" name="currentRoomId">
+                                                    <option value="">---Chọn phòng hiện tại (Bỏ trống nếu chưa có)---</option>
+                                                    <%
+                                                        List<Room> rooms = (List<Room>) request.getAttribute("rooms");
+                                                        long selectedRoomId = (asset != null) ? asset.getCurrentRoomId() : 0;
+                                                        if (rooms != null) {
+                                                            for (Room r : rooms) {
+                                                    %>
+                                                    <option value="<%= r.getRoomId()%>" <%= (selectedRoomId != 0 && selectedRoomId == r.getRoomId()) ? "selected" : "" %>>
+                                                        <%= r.getRoomName() != null ? r.getRoomName() : "" %>
+                                                    </option>
+                                                    <%
+                                                            }
+                                                        }
+                                                    %>
+                                                </select>
+
                                             </div>
 
                                             <!-- Current Holder ID -->
                                             <div class="form-group">
-                                                <label for="currentHolderId">Người giữ hiện tại (ID)</label>
-                                                <input type="number" class="form-control" id="currentHolderId" name="currentHolderId" min="0"
-                                                       value="<%= asset != null && asset.getCurrentHolderId() != 0 ? asset.getCurrentHolderId() : ""%>">
-                                                <small class="form-text text-muted">Nhập ID người dùng từ bảng Users (để trống nếu chưa có)</small>
+                                                <label for="currentHolderId">Người giữ hiện tại</label>
+                                                <select class="form-control" id="currentHolderId" name="currentHolderId">
+                                                    <option value="">---Chọn giáo viên (Bỏ trống nếu chưa có)---</option>
+                                                    <%
+                                                        List<Teacher> teachers = (List<Teacher>) request.getAttribute("teachers");
+                                                        long selectedHolderId = (asset != null) ? asset.getCurrentHolderId() : 0;
+                                                        if (teachers != null) {
+                                                            for (Teacher t : teachers) {
+                                                    %>
+                                                    <option value="<%= t.getUserId()%>" <%= (selectedHolderId != 0 && selectedHolderId == t.getUserId()) ? "selected" : ""%>>
+                                                        <%= t.getFullName() != null ? t.getFullName() : "" %>
+                                                    </option>
+                                                    <%
+                                                            }
+                                                        }
+                                                    %>
+                                                </select>
+
                                             </div>
 
                                             <!-- Is Active -->

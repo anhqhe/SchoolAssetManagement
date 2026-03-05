@@ -4,6 +4,9 @@
  */
 package dao.asset;
 
+import model.asset.Teacher;
+import java.util.ArrayList;
+import java.util.List;
 import util.DBUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,4 +28,27 @@ public class UserDao {
             }
         }
     }
+
+    //Only Teacher role active for dropdown
+    public List<Teacher> findAllTeachers() throws SQLException {
+        List<Teacher> list = new ArrayList<>();
+        String sql = "SELECT u.UserId, u.FullName "
+                + "FROM Users u "
+                + "JOIN UserRoles ur ON ur.UserId = u.UserId "
+                + "JOIN Roles r ON ur.RoleId = r.RoleId "
+                + "WHERE r.RoleCode = 'TEACHER' AND u.IsActive = 1 "
+                + "ORDER BY u.FullName";
+        try(Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()){
+            while(rs.next()){
+                Teacher t = new Teacher();
+                t.setUserId(rs.getLong("UserId"));
+                t.setFullName(rs.getNString("FullName"));
+                list.add(t);
+            }
+        }
+        return list;
+    }
+
 }
