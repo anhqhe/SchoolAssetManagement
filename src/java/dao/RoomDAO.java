@@ -22,8 +22,12 @@ public class RoomDAO {
     
     public List<Room> getAllRooms() throws SQLException {
     List<Room> list = new ArrayList<>();
-    // Truy vấn lấy danh sách phòng từ bảng Rooms theo thiết kế [4]
-    String sql = "SELECT RoomId, RoomName FROM Rooms ORDER BY RoomName ASC";
+    // Lấy danh sách phòng; Trưởng phòng lấy từ TeacherRoomAssignments (giáo viên được gán IsPrimary=1)
+    String sql = "SELECT r.RoomId, r.RoomName, r.Location, u.FullName AS HeadTeacherName "
+            + "FROM Rooms r "
+            + "LEFT JOIN TeacherRoomAssignments tra ON tra.RoomId = r.RoomId AND tra.IsPrimary = 1 "
+            + "LEFT JOIN Users u ON tra.TeacherId = u.UserId "
+            + "ORDER BY r.RoomName ASC";
     
     try (Connection conn = DBUtil.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql);
@@ -32,6 +36,8 @@ public class RoomDAO {
             Room r = new Room();
             r.setRoomId(rs.getInt("RoomId"));
             r.setRoomName(rs.getString("RoomName"));
+            r.setLocation(rs.getString("Location"));
+            r.setHeadTeacherName(rs.getString("HeadTeacherName"));
             list.add(r);
         }
     }
