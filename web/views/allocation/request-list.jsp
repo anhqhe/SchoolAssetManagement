@@ -103,11 +103,10 @@
                                                             <option value="WAITING_BOARD" ${param.status == 'WAITING_BOARD' ? 'selected' : ''}>Chờ Phê Duyệt</option>
                                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
-                                                            <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
-                                                            
+                                                            <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>                                          
                                                             <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết tài sản</option>
                                                         </c:when>
-                                                            
+
                                                         <c:when test="${isStaff}">
                                                             <option value="">-- Tất cả trạng thái --</option>
                                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
@@ -119,10 +118,10 @@
                                             </div>
 
                                             <button type="submit" class="btn btn-primary mb-2 mr-2">
-                                            Tìm kiếm
+                                                <i class="fas fa-search"></i> Tìm kiếm
                                             </button>
 
-                                              <i class="fas fa-search"></i>   <c:choose>
+                                            <c:choose>
                                                 <c:when test="${isTeacher}">
                                                     <a href="${pageContext.request.contextPath}/teacher/request-list" class="btn btn-secondary mb-2">
                                                         <i class="fas fa-redo"></i> Đặt lại
@@ -336,6 +335,7 @@
                                         <script>
                                                                                                         $(document).ready(function () {
                                                                                                             $('#dataTable').DataTable({
+                                                                                                                "searching": false,
                                                                                                                 "language": {
                                                                                                                     "lengthMenu": "Hiển thị _MENU_ yêu cầu mỗi trang",
                                                                                                                     "zeroRecords": "Không tìm thấy yêu cầu nào",
