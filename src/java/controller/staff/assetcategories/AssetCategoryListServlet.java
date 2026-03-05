@@ -1,4 +1,4 @@
-package controller.staff.categories;
+package controller.staff.assetcategories;
 
 import dao.AssetCategoryDAO;
 import model.AssetCategory;
@@ -15,8 +15,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "CategoryListServlet", urlPatterns = {"/admin/categories"})
-public class CategoryListServlet extends HttpServlet {
+@WebServlet(name = "AssetCategoryListServlet", urlPatterns = {"/admin/categories"})
+public class AssetCategoryListServlet extends HttpServlet {
 
     private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
 
@@ -43,7 +43,6 @@ public class CategoryListServlet extends HttpServlet {
             req.setAttribute("error", "Không thể tải danh sách danh mục tài sản. Vui lòng thử lại sau.");
         }
 
-        req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/allocation/staff/assetcategory-list.jsp").forward(req, resp);
     }
 }
-

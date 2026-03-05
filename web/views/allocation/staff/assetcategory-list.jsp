@@ -72,7 +72,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="categoryTable" width="100%" cellspacing="0">
+                            <table class="table table-bordered table-hover" id="assetcategoryTable" width="100%" cellspacing="0">
                                 <thead class="thead-light">
                                 <tr>
                                     <th>ID</th>
@@ -152,7 +152,7 @@
 
 <script>
     $(document).ready(function () {
-        $('#categoryTable').DataTable({
+        $('#assetcategoryTable').DataTable({
             "language": {
                 "lengthMenu": "Hiển thị _MENU_ danh mục mỗi trang",
                 "zeroRecords": "Không tìm thấy danh mục nào",
@@ -174,4 +174,3 @@
 
 </body>
 </html>
-
