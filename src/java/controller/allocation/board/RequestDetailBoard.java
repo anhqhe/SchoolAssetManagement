@@ -87,14 +87,14 @@ public class RequestDetailBoard extends HttpServlet {
             //Get asset info after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
-            //Get allocation
-            AssetAllocation allocation = allocationDAO.getAllocationByRequestId(requestId);
+            //Get allocations
+            List<AssetAllocation> allocations = allocationDAO.getAllocationsByRequestId(requestId);
 
             request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
-            request.setAttribute("allocation", allocation);
+            request.setAttribute("allocations", allocations);
             
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
