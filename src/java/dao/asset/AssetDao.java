@@ -15,6 +15,8 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.sql.Types;
 import util.DBUtil;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
@@ -23,7 +25,7 @@ import util.DBUtil;
 public class AssetDao {
 
     public List<Asset> findAll() throws SQLException {
-        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, a.CurrentHolderId, "
@@ -41,6 +43,7 @@ public class AssetDao {
                 a.setAssetId(rs.getLong("AssetId"));
                 a.setAssetCode(rs.getString("AssetCode"));
                 a.setAssetName(rs.getString("AssetName"));
+                a.setUnit(rs.getString("Unit"));
                 a.setCategoryId(rs.getLong("CategoryId"));
                 a.setSerialNumber(rs.getString("SerialNumber"));
                 a.setModel(rs.getString("Model"));
@@ -99,8 +102,8 @@ public class AssetDao {
         String sql = "INSERT INTO Assets ("
                 + "AssetCode, AssetName, CategoryId, SerialNumber, Model, Brand, OriginNote, "
                 + "PurchaseDate, ReceivedDate, ConditionNote, Status, "
-                + "CurrentRoomId, CurrentHolderId, IsActive"
-                + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                + "CurrentRoomId, CurrentHolderId, IsActive, Unit"
+                + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
@@ -136,6 +139,7 @@ public class AssetDao {
                 ps.setNull(13, Types.INTEGER);
             }
             ps.setBoolean(14, a.isIsActive());
+            ps.setString(15, a.getUnit());
             ps.executeUpdate();
         }
     }
@@ -144,7 +148,7 @@ public class AssetDao {
         String sql = "UPDATE Assets SET "
                 + "AssetCode=?, AssetName=?, CategoryId=?, SerialNumber=?, Model=?, Brand=?, OriginNote=?, "
                 + "PurchaseDate=?, ReceivedDate=?, ConditionNote=?, Status=?, "
-                + "CurrentRoomId=?, CurrentHolderId=?, IsActive=?, UpdatedAt=SYSDATETIME() "
+                + "CurrentRoomId=?, CurrentHolderId=?, IsActive=?, Unit=?, UpdatedAt=SYSDATETIME() "
                 + "WHERE AssetId=?";
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
@@ -181,7 +185,8 @@ public class AssetDao {
                 ps.setNull(13, Types.INTEGER);
             }
             ps.setBoolean(14, a.isIsActive());
-            ps.setLong(15, a.getAssetId());
+            ps.setString(15, a.getUnit());
+            ps.setLong(16, a.getAssetId());
             ps.executeUpdate();
         }
     }
@@ -231,7 +236,7 @@ public class AssetDao {
     }
 
     public Asset findById(int id) throws SQLException {
-        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, r.Location AS RoomLocation, "
@@ -250,6 +255,7 @@ public class AssetDao {
                     a.setAssetId(rs.getLong("AssetId"));
                     a.setAssetCode(rs.getString("AssetCode"));
                     a.setAssetName(rs.getString("AssetName"));
+                    a.setUnit(rs.getString("Unit"));
                     a.setCategoryId(rs.getLong("CategoryId"));
                     a.setSerialNumber(rs.getString("SerialNumber"));
                     a.setModel(rs.getString("Model"));
@@ -309,7 +315,7 @@ public class AssetDao {
     public List<Asset> searchAssets(String keyword, String status, Long categoryId, Boolean isActive) throws SQLException {
         List<Asset> assets = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+                "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
                 + "a.ConditionNote, a.IsActive, a.CreatedAt, "
@@ -329,7 +335,7 @@ public class AssetDao {
         if (categoryId != null && categoryId > 0) {
             sql.append("AND a.CategoryId = ? ");
         }
-        if(isActive != null){
+        if (isActive != null) {
             sql.append("AND a.IsActive = ? ");
         }
         sql.append("ORDER BY a.CreatedAt DESC");
@@ -349,7 +355,7 @@ public class AssetDao {
             if (categoryId != null && categoryId > 0) {
                 ps.setLong(paramIndex++, categoryId);
             }
-            if (isActive != null){
+            if (isActive != null) {
                 ps.setBoolean(paramIndex++, isActive);
             }
 
@@ -359,6 +365,7 @@ public class AssetDao {
                     asset.setAssetId(rs.getLong("AssetId"));
                     asset.setAssetCode(rs.getString("AssetCode"));
                     asset.setAssetName(rs.getString("AssetName"));
+                    asset.setUnit(rs.getString("Unit"));
                     asset.setCategoryId(rs.getLong("CategoryId"));
                     asset.setCategoryName(rs.getString("CategoryName"));
                     asset.setSerialNumber(rs.getString("SerialNumber"));
@@ -393,28 +400,38 @@ public class AssetDao {
 
         return assets;
     }
-    
-    public boolean existsByCode(String assetCode) throws SQLException{
-        String sql = "SELECT 1 FROM Assets WHERE AssetCode = ?";
-        try (Connection con = DBUtil.getConnection();
-                PreparedStatement ps = con.prepareStatement(sql)){
-            ps.setString(1, assetCode);
-            try(ResultSet rs = ps.executeQuery()){
-                return rs.next();
-            }
-        } 
-    }
 
-    /** Kiểm tra mã tài sản đã tồn tại bởi tài sản KHÁC (dùng khi edit - loại trừ asset hiện tại) */
-    public boolean existsByCodeExcludingId(String assetCode, int excludeAssetId) throws SQLException {
-        String sql = "SELECT 1 FROM Assets WHERE AssetCode = ? AND AssetId != ?";
-        try (Connection con = DBUtil.getConnection();
-                PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, assetCode);
-            ps.setInt(2, excludeAssetId);
+    //Generated auto mã sản phẩm 
+    public List<String> generateAssetCodes(long categoryId, int count) throws SQLException {
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String prefix = "TS-" + datePart + "-";
+
+        // Lấy max sequence: SELECT mã có prefix, parse số cuối, lấy max
+        String sql = "SELECT AssetCode FROM Assets WHERE AssetCode LIKE ? ORDER BY AssetCode DESC";
+        int nextSeq = 1;
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, prefix + "%");
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
+                while (rs.next()) {
+                    String code = rs.getString("AssetCode");
+                    if (code != null && code.length() > prefix.length()) {
+                        try {
+                            int seq = Integer.parseInt(code.substring(prefix.length()));
+                            if (seq >= nextSeq) {
+                                nextSeq = seq + 1;
+                            }
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                    break;// Chỉ cần 1 bản ghi (đã ORDER BY DESC)
+                }
             }
         }
+        
+        List<String> codes = new ArrayList<>();
+        for (int i = 0; i < count; i++){
+            codes.add(prefix + String.format("%04d", nextSeq + i));
+        }
+        return codes;
     }
 }

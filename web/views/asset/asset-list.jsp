@@ -114,6 +114,7 @@
                                                 <th>Danh mục</th>
                                                 <th>Số lượng</th>
                                                 <th>Số seri</th>
+                                                <th>Đơn vị tính</th>
                                                 <th>Model</th>
                                                 <th>Hãng</th>
                                                 <th>Trạng thái</th>
@@ -132,6 +133,7 @@
                                                 <td><%= a.getAssetName() != null ? a.getAssetName() : "" %></td>
                                                 <td><%= a.getCategoryName() != null ? a.getCategoryName() : "-" %></td>
                                                 <td class="text-center"><span class="badge badge-primary"><%= a.getQuantity() %></span></td>
+                                                <td><%= a.getUnit() != null ? a.getUnit() : "-" %></td>
                                                 <td><%= a.getSerialNumber() != null ? a.getSerialNumber() : "-" %></td>
                                                 <td><%= a.getModel() != null ? a.getModel() : "-" %></td>
                                                 <td><%= a.getBrand() != null ? a.getBrand() : "-" %></td>
@@ -172,7 +174,7 @@
                                                 } else {
                                             %>
                                             <tr>
-                                                <td colspan="11" class="text-center">Chưa có dữ liệu</td>
+                                                <td colspan="12" class="text-center">Chưa có dữ liệu</td>
                                             </tr>
                                             <%
                                                 }
