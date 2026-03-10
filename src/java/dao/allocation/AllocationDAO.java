@@ -82,8 +82,21 @@ public class AllocationDAO {
     }
 
     public AssetAllocation getAllocationByRequestId(long requestId) throws SQLException {
-        String sql = "SELECT TOP 1 AllocationId, AllocationCode, RequestId, FromRoomId, ToRoomId, ReceiverId, AllocatedById, Status, Note, AllocatedAt "
-                + "FROM AssetAllocations WHERE RequestId = ? ORDER BY AllocatedAt DESC";
+        String sql = """
+                     SELECT TOP 1 AllocationId, 
+                            AllocationCode, 
+                            RequestId, 
+                            FromRoomId, 
+                            ToRoomId, 
+                            ReceiverId, 
+                            AllocatedById, 
+                            Status, 
+                            Note, 
+                            AllocatedAt 
+                     FROM AssetAllocations 
+                     WHERE RequestId = ? 
+                     ORDER BY AllocatedAt DESC
+                     """;
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
             ps.setLong(1, requestId);
@@ -104,6 +117,72 @@ public class AllocationDAO {
                 }
             }
         }
+        return null;
+    }
+
+    public List<AssetAllocation> getAllocationsByRequestId(long requestId) throws SQLException {
+        List<AssetAllocation> list = new ArrayList<>();
+        String sql = """
+                     SELECT AllocationId, 
+                            AllocationCode, 
+                            RequestId, 
+                            FromRoomId, 
+                            ToRoomId, 
+                            ReceiverId, 
+                            AllocatedById, 
+                            Status, 
+                            Note, 
+                            AllocatedAt 
+                     FROM AssetAllocations 
+                     WHERE RequestId = ?
+                     """;
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+            ps.setLong(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    model.allocation.AssetAllocation alloc = new model.allocation.AssetAllocation();
+                    alloc.setAllocationId(rs.getLong("AllocationId"));
+                    alloc.setAllocationCode(rs.getString("AllocationCode"));
+                    alloc.setRequestId(rs.getLong("RequestId"));
+                    alloc.setFromRoomId(rs.getLong("FromRoomId"));
+                    alloc.setToRoomId(rs.getLong("ToRoomId"));
+                    alloc.setReceiverId(rs.getLong("ReceiverId"));
+                    alloc.setAllocatedById(rs.getLong("AllocatedById"));
+                    alloc.setStatus(rs.getString("Status"));
+                    alloc.setNote(rs.getString("Note"));
+                    alloc.setAllocatedAt(rs.getTimestamp("AllocatedAt").toLocalDateTime());
+
+                    list.add(alloc);
+                }
+            }
+        }
+        return list;
+    }
+
+    //Get user allocate each asset
+    public String getAllocatedBy(long assetId) throws Exception {
+
+        String sql = """
+                    SELECT u.FullName
+                    FROM AssetAllocationItems aai
+                    JOIN AssetAllocations aa ON aai.AllocationId = aa.AllocationId
+                    JOIN Users u ON aa.AllocatedById = u.UserId
+                    WHERE aai.AssetId = ?
+                    ORDER BY aa.AllocatedAt DESC
+                                                """;
+
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, assetId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("FullName");
+            }
+        }
+
         return null;
     }
 

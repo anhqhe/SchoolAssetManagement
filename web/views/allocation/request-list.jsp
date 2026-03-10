@@ -105,6 +105,7 @@
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                                             <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>                                          
                                                             <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết tài sản</option>
+                                                            <option value="OUT_OF_STOCK" ${param.status == 'INCOMPLETE' ? 'selected' : ''}>Chưa Hoàn Thành</option>
                                                         </c:when>
 
                                                         <c:when test="${isStaff}">
@@ -112,6 +113,7 @@
                                                             <option value="APPROVED_BY_BOARD" ${param.status == 'APPROVED_BY_BOARD' ? 'selected' : ''}>Đã Phê Duyệt</option>
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                                             <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết tài sản</option>
+                                                            <option value="INCOMPLETE" ${param.status == 'INCOMPLETE' ? 'selected' : ''}>Chưa Hoàn Thành</option>
                                                         </c:when>
                                                     </c:choose>
                                                 </select>
@@ -220,12 +222,27 @@
                                                                             <!-- Status -->
                                                                             <td>
                                                                                 <c:choose>
-                                                                                    <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">Chờ Phê Duyệt</span></c:when>
-                                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-primary">Đã Phê Duyệt</span></c:when>
-                                                                                    <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Hoàn Thành</span></c:when>
-                                                                                    <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Từ Chối</span></c:when>
-                                                                                    <c:when test="${req.status == 'OUT_OF_STOCK'}"><span class="badge badge-secondary">Hết tài sản</span></c:when>
-                                                                                    <c:otherwise><span class="badge badge-info">${req.status}</span></c:otherwise>
+                                                                                    <c:when test="${req.status == 'WAITING_BOARD'}">
+                                                                                        <span class="badge badge-warning">Chờ Phê Duyệt</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${req.status == 'APPROVED_BY_BOARD'}">
+                                                                                        <span class="badge badge-primary">Đã Phê Duyệt</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${req.status == 'COMPLETED'}">
+                                                                                        <span class="badge badge-success">Hoàn Thành</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${req.status == 'REJECTED'}">
+                                                                                        <span class="badge badge-danger">Từ Chối</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${req.status == 'OUT_OF_STOCK'}">
+                                                                                        <span class="badge badge-dark">Hết Tài Sản</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${req.status == 'INCOMPLETE'}">
+                                                                                        <span class="badge badge-secondary">Chưa Hoàn Thành</span>
+                                                                                    </c:when>
+                                                                                    <c:otherwise>
+                                                                                        <span class="badge badge-info">${req.status}</span>
+                                                                                    </c:otherwise>
                                                                                 </c:choose>
                                                                             </td>
                                                                             <!-- Actions (role-specific) -->
@@ -248,7 +265,7 @@
                                                                                            class="btn btn-sm btn-info" title="Xem chi tiết">
                                                                                             <i class="fas fa-eye"></i>
                                                                                         </a>
-                                                                                        <c:if test="${req.status == 'APPROVED_BY_BOARD' || req.status == 'OUT_OF_STOCK'}">
+                                                                                        <c:if test="${req.status == 'APPROVED_BY_BOARD' || req.status == 'OUT_OF_STOCK' || req.status == 'INCOMPLETE'}">
                                                                                             <a href="allocate-assets?requestId=${req.requestId}" 
                                                                                                class="btn btn-sm btn-success" title="Bàn giao tài sản">
                                                                                                 <i class="fas fa-box-open"></i>

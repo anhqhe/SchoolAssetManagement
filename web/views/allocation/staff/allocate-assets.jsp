@@ -70,8 +70,10 @@
                                 <div class="category-group" data-group="${st.index}" data-category="${item.categoryId}" data-limit="${item.quantity}">
                                     <div class="card shadow mb-4">
                                         <div class="card-header py-3">
-                                            <h6 class="m-0 font-weight-bold text-primary">
-                                                Loại tài sản: ${item.categoryName} (Số lượng cần: ${item.quantity})
+                                            <h6 class="m-0 font-weight-bold text-primary category-title"
+                                                data-title="Loại tài sản: ${item.categoryName} (Số lượng cần: ${item.quantity})">
+                                                Loại tài sản: ${item.categoryName} 
+                                                (Số lượng cần: ${item.quantity} | Đã cấp: ${item.allocatedQuantity} | Còn thiếu: ${item.remainingQuantity})
                                             </h6>
                                         </div>
 
@@ -82,11 +84,11 @@
                                                     <span aria-hidden="true">&times;</span>
                                                 </button>
                                             </div>
-                                            <p class="small text-muted">Vui lòng chọn đủ ${item.quantity} tài sản từ kho bên dưới:</p>
+                                            <p class="small text-muted">Vui lòng chọn đủ ${item.remainingQuantity} tài sản từ kho bên dưới:</p>
 
                                             <button type="button" class="btn btn-primary btn-select-assets" 
                                                     data-category="${item.categoryId}" 
-                                                    data-limit="${item.quantity}" 
+                                                    data-limit="${item.remainingQuantity}" 
                                                     data-group="${st.index}">
                                                 <i class="fas fa-plus"></i> Chọn Tài Sản
                                             </button>
@@ -102,12 +104,12 @@
 
                             <div class="mb-5">
                                 <label class="form-label">Ghi chú phản hồi</label>
-                                <textarea name="note" class="form-control" rows="3" placeholder="Notes..." required></textarea>
+                                <textarea name="note" class="form-control" rows="3" placeholder="Notes..."></textarea>
                             </div>
 
                             <div class="mb-5">
                                 <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-secondary">Quay lại</a>
-                                <c:if test="${!(req.status == 'OUT_OF_STOCK')}">
+                                <c:if test="${!(req.status == 'OUT_OF_STOCK' || req.status == 'INCOMPLETE')}">
                                     <button type="submit"
                                             class="btn btn-warning shadow-sm"
                                             name="action"
@@ -198,173 +200,257 @@
                                                 let currentGroup = null;
                                                 let currentCategory = null;
                                                 let currentLimit = null;
-                                                let selectedAssets = {}; // group -> array of asset objects
+
+                                                let selectedAssets = {}; // group -> assets
 
                                                 $(document).ready(function () {
-                                                    // Initialize selectedAssets for each group
-                                                    $('.category-group').each(function() {
-                                                        let group = $(this).attr('data-group');
+
+                                                    // init groups
+                                                    $('.category-group').each(function () {
+                                                        let group = $(this).data('group');
                                                         selectedAssets[group] = [];
                                                     });
 
-                                                    $('.btn-select-assets').on('click', function() {
-                                                        currentGroup = $(this).attr('data-group');
-                                                        currentCategory = $(this).attr('data-category');
-                                                        currentLimit = $(this).attr('data-limit');
-                                                        
-                                                        // initialize DataTable (first time only)
+                                                    // open modal
+                                                    $('.btn-select-assets').click(function () {
+
+                                                        currentGroup = $(this).data('group');
+                                                        currentCategory = $(this).data('category');
+                                                        currentLimit = $(this).data('limit');
+
                                                         initSelectionTable();
-                                                        
-                                                        // Show only assets of this category
-                                                        $('.asset-item').hide();
-                                                        $('.asset-item[data-category="' + currentCategory + '"]').show();
-                                                        
-                                                        // Check selected ones
+
+                                                        // show assets by category
+                                                        $('#assetSelectionTable tbody tr').hide();
+                                                        $('#assetSelectionTable tbody tr[data-category="' + currentCategory + '"]').show();
+
+                                                        // reset checkbox
                                                         $('.modal-asset-check').prop('checked', false);
-                                                        selectedAssets[currentGroup].forEach(function(asset) {
-                                                            $('#modal_asset_' + asset.assetId).prop('checked', true);
+
+                                                        selectedAssets[currentGroup].forEach(a => {
+                                                            $('#modal_asset_' + a.assetId).prop('checked', true);
                                                         });
-                                                        
+
+                                                        updateModalDisabledAssets();
+
                                                         $('#assetSearch').val('');
                                                         $('#assetModal').modal('show');
                                                     });
 
-                                                    $('#assetSearch').on('input', function() {
+                                                    // search
+                                                    $('#assetSearch').on('input', function () {
+
                                                         let search = $(this).val().toLowerCase();
-                                                        $('#assetSelectionTable tbody tr[data-category="' + currentCategory + '"]').each(function() {
-                                                            let code = $(this).attr('data-code').toLowerCase();
-                                                            let name = $(this).attr('data-name').toLowerCase();
-                                                            if (code.includes(search) || name.includes(search)) {
-                                                                $(this).show();
-                                                            } else {
-                                                                $(this).hide();
-                                                            }
+
+                                                        $('#assetSelectionTable tbody tr[data-category="' + currentCategory + '"]').each(function () {
+
+                                                            let code = $(this).data('code').toLowerCase();
+                                                            let name = $(this).data('name').toLowerCase();
+
+                                                            $(this).toggle(code.includes(search) || name.includes(search));
+
                                                         });
+
                                                     });
 
-                                                    // allow clicking on the whole row to toggle selection
-                                                    $(document).on('click', '#assetSelectionTable .asset-item', function(e) {
+                                                    // click row
+                                                    $(document).on('click', '#assetSelectionTable .asset-item', function (e) {
+
                                                         if (!$(e.target).is('input') && !$(e.target).is('label')) {
-                                                            let $check = $(this).find('.modal-asset-check');
-                                                            $check.prop('checked', !$check.prop('checked')).trigger('change');
+
+                                                            let check = $(this).find('.modal-asset-check');
+
+                                                            check.prop('checked', !check.prop('checked')).trigger('change');
+
                                                         }
+
                                                     });
 
-                                                    $(document).on('change', '.modal-asset-check', function() {
+                                                    // checkbox change
+                                                    $(document).on('change', '.modal-asset-check', function () {
+
                                                         let assetId = parseInt($(this).val());
-                                                        let $row = $(this).closest('tr');
+                                                        let row = $(this).closest('tr');
+
                                                         let asset = {
                                                             assetId: assetId,
-                                                            assetCode: $row.find('td:nth-child(2)').text(),
-                                                            assetName: $row.find('td:nth-child(3)').text()
+                                                            assetCode: row.data('code'),
+                                                            assetName: row.data('name')
                                                         };
+
                                                         if ($(this).is(':checked')) {
-                                                            if (selectedAssets[currentGroup].length < currentLimit) {
-                                                                selectedAssets[currentGroup].push(asset);
-                                                            } else {
+
+                                                            // check duplicate across groups
+                                                            if (isAssetUsed(assetId)) {
+
+                                                                alert("Tài sản này đã được chọn ở nhóm khác.");
                                                                 $(this).prop('checked', false);
-                                                                alert('Đã chọn đủ ' + currentLimit + ' tài sản.');
+                                                                return;
+
                                                             }
+
+                                                            if (selectedAssets[currentGroup].length >= currentLimit) {
+
+                                                                alert("Chỉ được chọn tối đa " + currentLimit + " tài sản.");
+                                                                $(this).prop('checked', false);
+                                                                return;
+
+                                                            }
+
+                                                            selectedAssets[currentGroup].push(asset);
+
                                                         } else {
-                                                            selectedAssets[currentGroup] = selectedAssets[currentGroup].filter(a => a.assetId !== assetId);
+
+                                                            selectedAssets[currentGroup] =
+                                                                    selectedAssets[currentGroup].filter(a => a.assetId !== assetId);
+
                                                         }
+
+                                                        updateCounter();
+
                                                     });
 
-                                                    $('#confirmSelection').on('click', function() {
+                                                    // confirm
+                                                    $('#confirmSelection').click(function () {
+
                                                         updateSelectedAssetsDisplay();
+                                                        updateCounter();
                                                         $('#assetModal').modal('hide');
-                                                        validateSelection(currentGroup);
+
                                                     });
 
-                                                    function updateSelectedAssetsDisplay() {
-                                                        let html = '<h6>Tài sản đã chọn:</h6><ul class="list-group">';
-                                                        selectedAssets[currentGroup].forEach(function(asset) {
-                                                            html += '<li class="list-group-item"><strong>' + asset.assetCode + '</strong> - ' + asset.assetName + '</li>';
+                                                    // submit
+                                                    $('form').submit(function (e) {
+
+                                                        let allAssets = [];
+
+                                                        Object.values(selectedAssets).forEach(list => {
+
+                                                            list.forEach(a => allAssets.push(a.assetId));
+
                                                         });
-                                                        html += '</ul>';
-                                                        $('.selected-assets[data-group="' + currentGroup + '"]').html(html);
-                                                    }
 
-                                                    // initialize DataTable for modal when opened
-                                                    function initSelectionTable() {
-                                                        if (!$.fn.DataTable.isDataTable('#assetSelectionTable')) {
-                                                            $('#assetSelectionTable').DataTable({
-                                                                paging: false,
-                                                                info: false,
-                                                                searching: false,
-                                                                order: []
-                                                            });
+                                                        if (allAssets.length === 0) {
+
+                                                            e.preventDefault();
+                                                            alert("Vui lòng chọn ít nhất một tài sản.");
+                                                            return;
+
                                                         }
-                                                    }
 
-                                                    function validateSelection(groupId) {
-                                                        const limit = parseInt($('.category-group[data-group="' + groupId + '"]').attr('data-limit'), 10);
-                                                        const selectedCount = selectedAssets[groupId].length;
-
-                                                        if (selectedCount < limit) {
-                                                            showWarning(groupId, 'Vui lòng chọn đủ ' + limit + ' tài sản. Hiện tại đã chọn: ' + selectedCount + '/' + limit);
-                                                        } else if (selectedCount === limit) {
-                                                            hideWarning(groupId);
-                                                        }
-                                                    }
-
-                                                    function showWarning(groupId, message) {
-                                                        const $warning = $('.category-warning[data-group="' + groupId + '"]');
-                                                        $warning.find('.category-warning-text').text(message);
-                                                        $warning.removeClass('d-none');
-                                                    }
-
-                                                    function hideWarning(groupId) {
-                                                        const $warning = $('.category-warning[data-group="' + groupId + '"]');
-                                                        $warning.addClass('d-none');
-                                                        $warning.find('.category-warning-text').text('');
-                                                    }
-
-                                                    $(document).on('click', '.category-warning-close', function () {
-                                                        const groupId = $(this).attr('data-group');
-                                                        hideWarning(groupId);
-                                                    });
-
-                                                    $('form').on('submit', function (e) {
-                                                        // Collect all selectedAssetIds
-                                                        let allSelected = [];
-                                                        Object.values(selectedAssets).forEach(function(assets) {
-                                                            assets.forEach(function(asset) {
-                                                                allSelected.push(asset.assetId);
-                                                            });
-                                                        });
-                                                        // Create hidden inputs
                                                         $('input[name="selectedAssetIds"]').remove();
-                                                        allSelected.forEach(function(id) {
+
+                                                        allAssets.forEach(id => {
+
                                                             $('<input>').attr({
                                                                 type: 'hidden',
                                                                 name: 'selectedAssetIds',
                                                                 value: id
                                                             }).appendTo('form');
+
                                                         });
 
-                                                        let hasInvalid = false;
-                                                        $('.category-group').each(function() {
-                                                            let groupId = $(this).attr('data-group');
-                                                            let limit = parseInt($(this).attr('data-limit'), 10);
-                                                            let selectedCount = selectedAssets[groupId].length;
-                                                            if (selectedCount !== limit) {
-                                                                hasInvalid = true;
-                                                                showWarning(groupId, 'Chưa chọn đủ tài sản. Cần ' + limit + ' nhưng chỉ chọn ' + selectedCount + '.');
-                                                            }
-                                                        });
-
-                                                        if (hasInvalid) {
-                                                            e.preventDefault();
-                                                            alert('Vui lòng kiểm tra lại các tài sản đã chọn.');
-                                                        }
                                                     });
+
                                                 });
+
+                                                function isAssetUsed(assetId) {
+
+                                                    let used = false;
+
+                                                    Object.values(selectedAssets).forEach(list => {
+
+                                                        list.forEach(a => {
+
+                                                            if (a.assetId === assetId)
+                                                                used = true;
+
+                                                        });
+
+                                                    });
+
+                                                    return used;
+
+                                                }
+
+                                                function updateSelectedAssetsDisplay() {
+
+                                                    $('.category-group').each(function () {
+
+                                                        let group = $(this).data('group');
+                                                        let container = $('.selected-assets[data-group="' + group + '"]');
+
+                                                        let html = '<ul class="list-group">';
+
+                                                        selectedAssets[group].forEach(a => {
+
+                                                            html += '<li class="list-group-item">' +
+                                                                    '<strong>' + a.assetCode + '</strong> - ' + a.assetName +
+                                                                    '</li>';
+
+                                                        });
+
+                                                        html += '</ul>';
+
+                                                        container.html(html);
+
+                                                    });
+
+                                                }
+
+                                                function updateCounter() {
+
+                                                    $('.category-group').each(function () {
+
+                                                        let group = $(this).data('group');
+                                                        let limit = $(this).data('limit');
+                                                        let count = selectedAssets[group].length;
+
+                                                        let title = $(this).find('.category-title').data('title');
+
+                                                        $(this).find('.category-title')
+                                                                .text(title + " - Đã chọn: " + count + "/" + limit);
+
+                                                    });
+
+                                                }
+
+                                                function updateModalDisabledAssets() {
+
+                                                    $('.modal-asset-check').each(function () {
+
+                                                        let id = parseInt($(this).val());
+
+                                                        if (isAssetUsed(id) &&
+                                                                !selectedAssets[currentGroup].some(a => a.assetId === id)) {
+
+                                                            $(this).prop('disabled', true);
+
+                                                        } else {
+
+                                                            $(this).prop('disabled', false);
+
+                                                        }
+
+                                                    });
+
+                                                }
+
+                                                function initSelectionTable() {
+
+                                                    if (!$.fn.DataTable.isDataTable('#assetSelectionTable')) {
+
+                                                        $('#assetSelectionTable').DataTable({
+                                                            paging: false,
+                                                            info: false,
+                                                            searching: false,
+                                                            order: []
+                                                        });
+
+                                                    }
+
+                                                }
         </script>
-
-
-
-
 
     </body>
 </html>
