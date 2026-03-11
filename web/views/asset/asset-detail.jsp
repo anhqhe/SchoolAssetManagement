@@ -294,15 +294,7 @@
                                                     <a href="${pageContext.request.contextPath}/assets?action=edit&id=${asset.assetId}" 
                                                        class="btn btn-primary btn-block mb-2">
                                                         <i class="fas fa-edit"></i> Cập nhật thông tin
-                                                    </a>
-
-                                                    <button class="btn btn-info btn-block mb-2" onclick="alert('Chức năng Transfer - Coming soon!')">
-                                                        <i class="fas fa-exchange-alt"></i> Chuyển phòng
-                                                    </button>
-
-                                                    <button class="btn btn-success btn-block mb-2" onclick="alert('Chức năng Allocate - Coming soon!')">
-                                                        <i class="fas fa-hand-holding"></i> Cấp phát
-                                                    </button>
+                                                    </a>                                                  
                                                     <hr>
 
                                                     <button class="btn btn-danger btn-block" onclick="confirmDelete()">
