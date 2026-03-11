@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@page import="dao.allocation.UserDAO" %>
+<%@page import="dao.allocation.AllocationDAO" %>
 
 <!-- Set role flags -->
 <c:set var="isTeacher" value="false"/>
@@ -17,6 +18,8 @@
 <%
     UserDAO userDAO = new UserDAO();
     request.setAttribute("userDAO", userDAO);
+    AllocationDAO allocationDAO = new AllocationDAO();
+    request.setAttribute("allocationDAO", allocationDAO);
 %>
 
 <!DOCTYPE html>
@@ -92,12 +95,27 @@
                                         <p>
                                             <strong>Trạng thái:</strong> 
                                             <c:choose>
-                                                <c:when test="${req.status == 'WAITING_BOARD'}"><span class="badge badge-warning">Chờ Phê Duyệt</span></c:when>
-                                                <c:when test="${req.status == 'APPROVED_BY_BOARD'}"><span class="badge badge-primary">Đã Phê Duyệt</span></c:when>
-                                                <c:when test="${req.status == 'COMPLETED'}"><span class="badge badge-success">Hoàn Thành</span></c:when>
-                                                <c:when test="${req.status == 'REJECTED'}"><span class="badge badge-danger">Từ Chối</span></c:when>
-                                                <c:when test="${req.status == 'OUT_OF_STOCK'}"><span class="badge badge-secondary">Hết tài sản</span></c:when>
-                                                <c:otherwise><span class="badge badge-info">${req.status}</span></c:otherwise>
+                                                <c:when test="${req.status == 'WAITING_BOARD'}">
+                                                    <span class="badge badge-warning">Chờ Phê Duyệt</span>
+                                                </c:when>
+                                                <c:when test="${req.status == 'APPROVED_BY_BOARD'}">
+                                                    <span class="badge badge-primary">Đã Phê Duyệt</span>
+                                                </c:when>
+                                                <c:when test="${req.status == 'COMPLETED'}">
+                                                    <span class="badge badge-success">Hoàn Thành</span>
+                                                </c:when>
+                                                <c:when test="${req.status == 'REJECTED'}">
+                                                    <span class="badge badge-danger">Từ Chối</span>
+                                                </c:when>
+                                                <c:when test="${req.status == 'OUT_OF_STOCK'}">
+                                                    <span class="badge badge-dark">Hết Tài Sản</span>
+                                                </c:when>
+                                                <c:when test="${req.status == 'INCOMPLETE'}">
+                                                    <span class="badge badge-secondary">Chưa Hoàn Thành</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge badge-info">${req.status}</span>
+                                                </c:otherwise>
                                             </c:choose>
                                         </p>
                                         <hr>
@@ -146,7 +164,6 @@
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Tài sản đã được phân phối</h6>
-                                    <small class="text-muted">Người phân phối: <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong></small>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -158,6 +175,7 @@
                                                     <th>Danh mục</th>
                                                     <th>Giao cho</th>
                                                     <th>Tình trạng</th>
+                                                    <th>Người phân phối</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -195,6 +213,7 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
+                                                        <td>${allocationDAO.getAllocatedBy(asset.assetId)}</td>
                                                     </tr>
                                                 </c:forEach>
                                             </tbody>
@@ -261,7 +280,7 @@
                                     </div>
 
                                     <!-- ===== Phản hồi Người phân phối ===== -->
-                                    <c:if test="${req.status == 'COMPLETED' || req.status == 'OUT_OF_STOCK'}">
+                                    <c:if test="${req.status == 'COMPLETED' || req.status == 'OUT_OF_STOCK' || req.status == 'INCOMPLETE'}">
                                         <hr class="my-3">
 
                                         <div class="d-flex align-items-start">
@@ -276,20 +295,23 @@
                                                     Phản hồi từ Người Phân Phối
                                                 </h6>
 
-                                                <c:if test="${req.status == 'COMPLETED'}">
-                                                    <div>
-                                                        Ghi chú: ${allocation.note}
-                                                    </div>
-                                                    <div class="text-muted small">
-                                                        Phân phối bởi 
-                                                        <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
-                                                        • 
-                                                        ${allocation.allocatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
-                                                    </div>
+                                                <c:if test="${req.status == 'COMPLETED' || req.status == 'INCOMPLETE'}">
+                                                    <ul class="list-group list-group-flush small">
+                                                        <c:forEach items="${allocations}" var="allo">
+                                                            <li class="list-group-item py-1">
+                                                                <span class="text-muted">
+                                                                    ${allo.allocatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
+                                                                </span>
+                                                                - <strong>${userDAO.getByUserId(allo.allocatedById).fullName}</strong>
+                                                                <c:if test="${not empty allo.note}">
+                                                                    <div class="text-secondary">Ghi chú: ${allo.note}</div>
+                                                                </c:if>
+                                                            </li>
+                                                        </c:forEach>
+                                                    </ul>
                                                 </c:if>
 
                                                 <c:if test = "${req.status == 'OUT_OF_STOCK'}">
-                                                    <strong>${userDAO.getByUserId(allocation.getAllocatedById()).fullName}</strong>
                                                     Kho đang hết tài sản. Vui lòng chờ!!
                                                 </c:if>
                                             </div>
@@ -316,12 +338,14 @@
                         </c:if>
 
                         <!-- STAFF ONLY: Allocate Assets Button -->
-                        <c:if test="${isStaff && (req.status == 'APPROVED_BY_BOARD' || req.status == 'OUT_OF_STOCK')}">
-                            <div class="card-body">
-                                <a href="${pageContext.request.contextPath}/staff/allocate-assets?requestId=${req.requestId}" class="btn btn-primary">
-                                    <i class="fas fa-box-open"></i> Bàn giao tài sản
-                                </a>
-                            </div>
+                        <c:if test="${isStaff && (req.status == 'APPROVED_BY_BOARD' 
+                                      || req.status == 'OUT_OF_STOCK' 
+                                      || req.status == 'INCOMPLETE')}">
+                              <div class="card-body">
+                                  <a href="${pageContext.request.contextPath}/staff/allocate-assets?requestId=${req.requestId}" class="btn btn-primary">
+                                      <i class="fas fa-box-open"></i> Bàn giao tài sản
+                                  </a>
+                              </div>
                         </c:if>
                     </div>
 

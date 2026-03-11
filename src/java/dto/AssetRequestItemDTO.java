@@ -9,14 +9,18 @@ package dto;
  * @author Leo
  */
 public class AssetRequestItemDTO {
+
     private Long requestItemId;
     private Long requestId;
     private Long categoryId;
     private String assetNameHint;
     private int quantity;
     private String note;
-    
+
     private String CategoryName;
+
+    private int allocatedQuantity;
+    private int remainingQuantity;
 
     public AssetRequestItemDTO() {
     }
@@ -30,10 +34,8 @@ public class AssetRequestItemDTO {
         this.note = note;
         this.CategoryName = CategoryName;
     }
-    
 
     //getters
-
     public Long getRequestItemId() {
         return requestItemId;
     }
@@ -61,9 +63,17 @@ public class AssetRequestItemDTO {
     public String getCategoryName() {
         return CategoryName;
     }
-    
-    //setters
 
+    public int getAllocatedQuantity() {
+        return allocatedQuantity;
+    }
+
+    public int getRemainingQuantity() {
+        return remainingQuantity;
+    }
+    
+
+    //setters
     public void setRequestItemId(Long requestItemId) {
         this.requestItemId = requestItemId;
     }
@@ -91,5 +101,14 @@ public class AssetRequestItemDTO {
     public void setCategoryName(String CategoryName) {
         this.CategoryName = CategoryName;
     }
+
+    public void setAllocatedQuantity(int allocatedQuantity) {
+        this.allocatedQuantity = allocatedQuantity;
+    }
+
+    public void setRemainingQuantity(int remainingQuantity) {
+        this.remainingQuantity = remainingQuantity;
+    }
+
     
 }

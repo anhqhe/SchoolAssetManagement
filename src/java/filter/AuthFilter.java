@@ -22,7 +22,9 @@ import model.User;
             "/teacher/*",
             "/board/*",
             "/transfers/*",
-            "/change-password"
+            "/change-password",
+            "/profile",
+            "/profile/*"
         }
 )
 public class AuthFilter implements Filter {

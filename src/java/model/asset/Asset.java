@@ -36,6 +36,9 @@ public class Asset {
     private String roomLocation;   // từ JOIN Rooms
     private String holderName;     // từ JOIN Users
     private int quantity;         // số lượng loại tài sản (cùng AssetName + CategoryId)
+    private String unit;
+
+    
 
     public Asset() {
     }
@@ -214,6 +217,14 @@ public class Asset {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+    
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 
     public String getStatusBadgeClass() {

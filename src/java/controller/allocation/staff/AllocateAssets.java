@@ -74,14 +74,30 @@ public class AllocateAssets extends HttpServlet {
 
             //Only request approved_by_board, out_of_stock can allocate asset
             if (!(req.getStatus().equals("APPROVED_BY_BOARD")
-                    || req.getStatus().equals("OUT_OF_STOCK"))) {
+                    || req.getStatus().equals("OUT_OF_STOCK")
+                    || req.getStatus().equals("INCOMPLETE"))) {
                 session.setAttribute("type", "error");
-                session.setAttribute("message", "Bạn không thể phân phối tài sản yêu cầu này");
+                session.setAttribute("message", "Không thể cấp phát yêu cầu này.");
                 response.sendRedirect("request-list");
                 return;
             }
 
             List<AssetRequestItemDTO> neededItems = reqItemDAO.findByRequestId(requestId);
+            for (AssetRequestItemDTO item : neededItems) {
+
+                int allocated = allocItemDAO.countAllocatedByCategory(
+                        requestId,
+                        item.getCategoryId()
+                );
+
+                int remaining = item.getQuantity() - allocated;
+                if (remaining < 0) {
+                    remaining = 0;
+                }
+
+                item.setAllocatedQuantity(allocated);
+                item.setRemainingQuantity(remaining);
+            }
 
             //Get available assets
             List<AssetDTO> availableAssets = assetDAO.findAvailableAssets();
@@ -148,18 +164,17 @@ public class AllocateAssets extends HttpServlet {
                 return;
             }
 
+            //Allocate
             String[] selectedAssetIds = request.getParameterValues("selectedAssetIds");
-
             if (selectedAssetIds == null || selectedAssetIds.length == 0) {
                 throw new IllegalArgumentException(
-                        "Vui lòng chọn ít nhất một tài sản để cấp phát.");
+                        "Vui lòng chọn ít nhất một tài sản.");
             }
 
             List<Long> assetIds = new ArrayList<>();
             for (String id : selectedAssetIds) {
                 assetIds.add(validateId(id, "Tài sản"));
             }
-
             validateSelectedAssets(requestId, assetIds);
             String note = request.getParameter("note");
 
@@ -169,16 +184,26 @@ public class AllocateAssets extends HttpServlet {
 
             if (!success) {
                 session.setAttribute("type", "error");
-                session.setAttribute("message", "Có lỗi xảy ra khi cấp phát tài sản.");
+                session.setAttribute("message", "Có lỗi xảy ra khi cấp phát.");
                 response.sendRedirect("allocate-assets?requestId=" + requestId);
                 return;
             }
 
             //Save to database sucessfully
+            
+            boolean isComplete = checkRequestCompleted(requestId);
+            String message, title;
+            if (isComplete) {
+                title = "Yêu cầu cấp phát hoàn thành";
+                message = "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!";
+            } else {
+                title = "Yêu cầu cấp phát một phần";
+                message = "Yêu cầu " + reqDTO.getRequestCode() + " đã được cấp phát một phần.";
+            }
             //Send notification to teacher
             NotificationEndPoint.sendToUser(reqDTO.getTeacherId(),
-                    "Yêu cầu cấp phát đã hoàn thành",
-                    "Tài sản của phiếu " + reqDTO.getRequestCode() + " đã được chuẩn bị xong. Hãy đến nhận!",
+                    title,
+                    message,
                     "ASSET_REQUEST",
                     requestId);
 
@@ -232,13 +257,15 @@ public class AllocateAssets extends HttpServlet {
         }
 
         if (!("APPROVED_BY_BOARD".equals(req.getStatus())
-                || "OUT_OF_STOCK".equals(req.getStatus()))) {
-            throw new IllegalArgumentException("Yêu cầu này không thể cấp phát.");
+                || "OUT_OF_STOCK".equals(req.getStatus())
+                || "INCOMPLETE".equals(req.getStatus()))) {
+            throw new IllegalArgumentException("Yêu cầu không thể cấp phát.");
         }
 
         return req;
     }
 
+    
     private void validateSelectedAssets(long requestId, List<Long> assetIds)
             throws Exception {
 
@@ -253,9 +280,9 @@ public class AllocateAssets extends HttpServlet {
                 throw new IllegalArgumentException("Một hoặc nhiều tài sản không tồn tại.");
             }
 
-//            if (!"AVAILABLE".equals(asset.getStatus())) {
-//                throw new IllegalArgumentException("Tài sản không còn khả dụng.");
-//            }
+            if (!"IN_STOCK".equals(asset.getStatus())) {
+                throw new IllegalArgumentException("Tài sản không còn khả dụng.");
+            }
             selectedAssets.add(asset);
         }
 
@@ -277,9 +304,9 @@ public class AllocateAssets extends HttpServlet {
             int required = requiredByCategory.get(categoryId);
             int selected = selectedByCategory.getOrDefault(categoryId, 0);
 
-            if (selected != required) {
+            if (selected > required) {
                 throw new IllegalArgumentException(
-                        "Số lượng tài sản được chọn không khớp với yêu cầu.");
+                        "Số lượng tài sản được chọn vượt quá yêu cầu.");
             }
         }
 
@@ -299,18 +326,18 @@ public class AllocateAssets extends HttpServlet {
             conn.setAutoCommit(false);
 
             // Create new AssetAllocation
+            AssetRequestDTO req = requestDAO.findById(conn, requestId);
+
             AssetAllocation alloc = new AssetAllocation();
             alloc.setRequestId(requestId);
             alloc.setAllocatedById(staffId);
-            alloc.setNote(note);
-
-            AssetRequestDTO req = requestDAO.findById(conn, requestId);
             alloc.setToRoomId(req.getRequestedRoomId());
             alloc.setReceiverId(req.getTeacherId());
+            alloc.setNote(note);
 
             // Create AllocationCode
-            String timeStamp = String.valueOf(System.currentTimeMillis());
-            alloc.setAllocationCode("ALC-" + timeStamp);
+            String code = String.valueOf(System.currentTimeMillis());
+            alloc.setAllocationCode("ALC-" + code);
 
             // Save data to table AssetAllocation
             long allocationId = allocationDAO.insertAllocation(conn, alloc);
@@ -327,14 +354,20 @@ public class AllocateAssets extends HttpServlet {
                 boolean itemSuccess = allocItemDAO.insertAllocationItem(conn, allocationId, assetId);
 
                 // update table Asset
-                boolean assetSuccess = assetDAO.updateAsset(conn,
+                boolean assetSuccess = assetDAO.updateAsset(
+                        conn,
                         assetId,
                         req.getRequestedRoomId(),
                         req.getTeacherId(),
                         "IN_USE");
 
                 // Save data to table AssetStatusHistory
-                statusHistoryDAO.insertStatusHistory(conn, assetId, "IN_USE", "Cấp phát cho yêu cầu #" + requestId, staffId);
+                statusHistoryDAO.insertStatusHistory(
+                        conn,
+                        assetId,
+                        "IN_USE",
+                        "Cấp phát cho yêu cầu #" + requestId,
+                        staffId);
 
                 if (!itemSuccess || !assetSuccess) {
                     conn.rollback();
@@ -343,7 +376,7 @@ public class AllocateAssets extends HttpServlet {
             }
 
             // Update status in table AssetRequest
-            requestDAO.updateStatus(conn, requestId, "COMPLETED");
+            updateRequestStatus(conn, requestId);
 
             conn.commit();
             return true;
@@ -356,12 +389,62 @@ public class AllocateAssets extends HttpServlet {
             LOGGER.log(Level.SEVERE, "Error processing allocation", e);
             return false;
         } finally {
+
             if (conn != null) try {
                 conn.close();
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE,
-                            "Error closing connection in AllocateAssset", ex);
+                        "Error closing connection in AllocateAssset", ex);
             }
         }
+    }
+
+    private void updateRequestStatus(Connection conn, long requestId) throws Exception {
+
+        List<AssetRequestItemDTO> items = reqItemDAO.findByRequestId(conn, requestId);
+
+        boolean isComplete = true;
+
+        for (AssetRequestItemDTO item : items) {
+
+            int required = item.getQuantity();
+
+            int allocated = allocItemDAO.countAllocatedByCategory(
+                    conn,
+                    requestId,
+                    item.getCategoryId()
+            );
+
+            if (allocated < required) {
+                isComplete = false;
+                break;
+            }
+        }
+
+        if (isComplete) {
+            requestDAO.updateStatus(conn, requestId, "COMPLETED");
+        } else {
+            requestDAO.updateStatus(conn, requestId, "INCOMPLETE");
+        }
+    }
+
+    private boolean checkRequestCompleted(long requestId) throws Exception {
+
+        List<AssetRequestItemDTO> items = reqItemDAO.findByRequestId(requestId);
+
+        for (AssetRequestItemDTO item : items) {
+
+            int required = item.getQuantity();
+
+            int allocated = allocItemDAO.countAllocatedByCategory(
+                    requestId,
+                    item.getCategoryId());
+
+            if (allocated < required) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

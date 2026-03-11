@@ -11,7 +11,7 @@ public class UserDAO {
 
     // Xác thực username/password (plain text theo seed data)
     public User authenticate(String username, String password) throws SQLException {
-        String sql = "SELECT UserId, Username, FullName, IsActive FROM Users WHERE Username = ? AND PasswordHash = ?";
+        String sql = "SELECT UserId, Username, FullName, Email, Phone, IsActive FROM Users WHERE Username = ? AND PasswordHash = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -27,6 +27,8 @@ public class UserDAO {
                     user.setUserId(rs.getLong("UserId"));
                     user.setUsername(rs.getString("Username"));
                     user.setFullName(rs.getString("FullName"));
+                    user.setEmail(rs.getString("Email"));
+                    user.setPhone(rs.getString("Phone"));
 
                     // load roles
                     user.setRoles(getRolesByUserId(conn, user.getUserId()));
@@ -54,7 +56,7 @@ public class UserDAO {
 
     // Optional: lấy user theo username để kiểm tra tồn tại (đăng ký ...)
     public User findByUsername(String username) throws SQLException {
-        String sql = "SELECT UserId, Username, FullName, IsActive FROM Users WHERE Username = ?";
+        String sql = "SELECT UserId, Username, FullName, Email, Phone, IsActive FROM Users WHERE Username = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
@@ -64,6 +66,8 @@ public class UserDAO {
                     user.setUserId(rs.getLong("UserId"));
                     user.setUsername(rs.getString("Username"));
                     user.setFullName(rs.getString("FullName"));
+                    user.setEmail(rs.getString("Email"));
+                    user.setPhone(rs.getString("Phone"));
                     user.setActive(rs.getBoolean("IsActive"));
                     user.setRoles(getRolesByUserId(conn, user.getUserId()));
                     return user;
@@ -238,5 +242,49 @@ public class UserDAO {
         }
 
         return teachers;
+    }
+
+    public User findById(long userId) throws SQLException {
+        String sql = "SELECT UserId, Username, FullName, Email, Phone, IsActive FROM Users WHERE UserId = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                User user = new User();
+                user.setUserId(rs.getLong("UserId"));
+                user.setUsername(rs.getString("Username"));
+                user.setFullName(rs.getString("FullName"));
+                user.setEmail(rs.getString("Email"));
+                user.setPhone(rs.getString("Phone"));
+                user.setActive(rs.getBoolean("IsActive"));
+                user.setRoles(getRolesByUserId(conn, user.getUserId()));
+                return user;
+            }
+        }
+    }
+
+    public boolean updateProfile(long userId, String fullName, String email, String phone) throws SQLException {
+        String sql = "UPDATE Users SET FullName = ?, Email = ?, Phone = ? WHERE UserId = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, email);
+            ps.setString(3, phone);
+            ps.setLong(4, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean isPhoneTaken(String phone, long excludeUserId) throws SQLException {
+        String sql = "SELECT 1 FROM Users WHERE Phone = ? AND UserId <> ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ps.setLong(2, excludeUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 }

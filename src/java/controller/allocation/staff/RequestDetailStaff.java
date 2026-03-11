@@ -38,8 +38,8 @@ public class RequestDetailStaff extends HttpServlet {
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
-    
-    private static final Logger LOGGER 
+
+    private static final Logger LOGGER
             = Logger.getLogger(RequestDetailStaff.class.getName());
 
     @Override
@@ -47,14 +47,14 @@ public class RequestDetailStaff extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession();
         String idParam = request.getParameter("id");
-        
+
         if (idParam == null || idParam.isEmpty()) {
-                session.setAttribute("type", "error");
-                session.setAttribute("message", "Yêu cầu không tồn tại.");
-                response.sendRedirect("request-list");
-                return;
-            }
-        
+            session.setAttribute("type", "error");
+            session.setAttribute("message", "Yêu cầu không tồn tại.");
+            response.sendRedirect("request-list");
+            return;
+        }
+
         long requestId;
         try {
             requestId = Long.parseLong(idParam);
@@ -66,7 +66,7 @@ public class RequestDetailStaff extends HttpServlet {
             response.sendRedirect("request-list");
             return;
         }
-        
+
         try {
             // Get AssetRequest Infor
             AssetRequestDTO req = requestDAO.findById(requestId);
@@ -86,20 +86,20 @@ public class RequestDetailStaff extends HttpServlet {
             //Get asset info after allocating
             List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
 
-            //Get allocation
-            AssetAllocation allocation = allocationDAO.getAllocationByRequestId(requestId);
+            //Get allocations
+            List<AssetAllocation> allocations = allocationDAO.getAllocationsByRequestId(requestId);
 
             request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
-            request.setAttribute("allocation", allocation);
+            request.setAttribute("allocations", allocations);
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE,
                     "Database error while loading request detail. ID=" + requestId, e);
-            
+
             session.setAttribute("type", "error");
             session.setAttribute("message", "Có lỗi xảy ra. Vui lòng thử lại.");
             response.sendRedirect("request-list");
