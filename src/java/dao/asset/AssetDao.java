@@ -23,6 +23,23 @@ import java.time.format.DateTimeFormatter;
  * @author An
  */
 public class AssetDao {
+    // ===== THÊM 3 DÒNG NÀY =====
+
+    private Connection injectedConnection;
+
+    public AssetDao() {
+    }  // constructor cũ giữ nguyên
+
+    public AssetDao(Connection conn) {  // constructor mới cho test
+        this.injectedConnection = conn;
+    }
+
+    private Connection getConn() throws SQLException {
+        if (injectedConnection != null) {
+            return injectedConnection;
+        }
+        return DBUtil.getConnection();
+    }
 
     public List<Asset> findAll() throws SQLException {
         String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
@@ -37,7 +54,7 @@ public class AssetDao {
                 + "WHERE a.IsActive = 1"
                 + "ORDER BY a.CreatedAt DESC";
         List<Asset> list = new ArrayList<>();
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection con = getConn(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Asset a = new Asset();
                 a.setAssetId(rs.getLong("AssetId"));
@@ -104,7 +121,7 @@ public class AssetDao {
                 + "PurchaseDate, ReceivedDate, ConditionNote, Status, "
                 + "CurrentRoomId, CurrentHolderId, IsActive, Unit"
                 + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = getConn(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
             ps.setLong(3, a.getCategoryId());
@@ -150,7 +167,7 @@ public class AssetDao {
                 + "PurchaseDate=?, ReceivedDate=?, ConditionNote=?, Status=?, "
                 + "CurrentRoomId=?, CurrentHolderId=?, IsActive=?, Unit=?, UpdatedAt=SYSDATETIME() "
                 + "WHERE AssetId=?";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = getConn(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
             ps.setLong(3, a.getCategoryId());
@@ -193,7 +210,7 @@ public class AssetDao {
 
     public void delete(int assetId) throws SQLException {
         String sql = "UPDATE Assets SET IsActive = 0, UpdatedAt = SYSDATETIME() WHERE AssetId = ?";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = getConn(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, assetId);
             ps.executeUpdate();
         }
@@ -203,7 +220,7 @@ public class AssetDao {
      * Cập nhật trạng thái tài sản và ghi lịch sử vào AssetStatusHistory
      */
     public void updateStatus(long assetId, String newStatus, String reason, long changedByUserId) throws SQLException {
-        try (Connection con = DBUtil.getConnection()) {
+        try (Connection con = getConn()) {
             String oldStatus = null;
             String selSql = "SELECT Status FROM Assets WHERE AssetId = ?";
             try (PreparedStatement ps = con.prepareStatement(selSql)) {
@@ -247,7 +264,7 @@ public class AssetDao {
                 + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
                 + "LEFT JOIN Users u ON a.CurrentHolderId = u.UserId "
                 + "WHERE a.AssetId = ?";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = getConn(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -340,7 +357,7 @@ public class AssetDao {
         }
         sql.append("ORDER BY a.CreatedAt DESC");
 
-        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -409,7 +426,7 @@ public class AssetDao {
         // Lấy max sequence: SELECT mã có prefix, parse số cuối, lấy max
         String sql = "SELECT AssetCode FROM Assets WHERE AssetCode LIKE ? ORDER BY AssetCode DESC";
         int nextSeq = 1;
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = getConn(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, prefix + "%");
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -427,9 +444,9 @@ public class AssetDao {
                 }
             }
         }
-        
+
         List<String> codes = new ArrayList<>();
-        for (int i = 0; i < count; i++){
+        for (int i = 0; i < count; i++) {
             codes.add(prefix + String.format("%04d", nextSeq + i));
         }
         return codes;
