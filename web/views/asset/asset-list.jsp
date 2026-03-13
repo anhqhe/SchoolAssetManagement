@@ -3,6 +3,7 @@
 <%@ page import="model.User" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <%
     List<Asset> assets = (List<Asset>) request.getAttribute("assets");
@@ -113,8 +114,8 @@
                                                 <th>Tên tài sản</th>
                                                 <th>Danh mục</th>
                                                 <th>Số lượng</th>
-                                                <th>Số seri</th>
                                                 <th>Đơn vị tính</th>
+                                                <th>Số seri</th>                                                
                                                 <th>Model</th>
                                                 <th>Hãng</th>
                                                 <th>Trạng thái</th>
@@ -124,25 +125,38 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <%
-                                                if (assets != null && !assets.isEmpty()) {
+                                            <%                                                if (assets != null && !assets.isEmpty()) {
                                                     for (Asset a : assets) {
                                             %>
                                             <tr>
-                                                <td><%= a.getAssetCode() != null ? a.getAssetCode() : "" %></td>
-                                                <td><%= a.getAssetName() != null ? a.getAssetName() : "" %></td>
-                                                <td><%= a.getCategoryName() != null ? a.getCategoryName() : "-" %></td>
-                                                <td class="text-center"><span class="badge badge-primary"><%= a.getQuantity() %></span></td>
-                                                <td><%= a.getUnit() != null ? a.getUnit() : "-" %></td>
-                                                <td><%= a.getSerialNumber() != null ? a.getSerialNumber() : "-" %></td>
-                                                <td><%= a.getModel() != null ? a.getModel() : "-" %></td>
-                                                <td><%= a.getBrand() != null ? a.getBrand() : "-" %></td>
+                                                <td><%= a.getAssetCode() != null ? a.getAssetCode() : ""%></td>
+                                                <td><%= a.getAssetName() != null ? a.getAssetName() : ""%></td>
+                                                <td><%= a.getCategoryName() != null ? a.getCategoryName() : "-"%></td>
+                                                <td class="text-center"><span class="badge badge-primary"><%= a.getQuantity()%></span></td>
+                                                <td><%= a.getUnit() != null ? a.getUnit() : "-"%></td>
                                                 <td>
-                                                    <span class="badge <%= a.getStatusBadgeClass() %>">
-                                                        <%= a.getStatusText() %>
+                                                    <%
+                                                        String serial = a.getSerialNumber();
+                                                        if (serial == null || serial.isEmpty()) {
+                                                    %>
+                                                    -
+                                                    <%
+                                                    } else {
+                                                        String display = serial.length() > 10 ? serial.substring(0, 10) + "..." : serial;
+                                                    %>
+                                                    <%= display%>
+                                                    <%
+                                                        }
+                                                    %>
+                                                </td>
+                                                <td><%= a.getModel() != null ? a.getModel() : "-"%></td>
+                                                <td><%= a.getBrand() != null ? a.getBrand() : "-"%></td>
+                                                <td>
+                                                    <span class="badge <%= a.getStatusBadgeClass()%>">
+                                                        <%= a.getStatusText()%>
                                                     </span>
                                                 </td>
-                                                <td><%= a.getRoomName() != null ? a.getRoomName() : "-" %></td>
+                                                <td><%= a.getRoomName() != null ? a.getRoomName() : "-"%></td>
                                                 <td>
                                                     <% if (a.isIsActive()) { %>
                                                     <span class="badge badge-success">Hoạt động</span>
@@ -151,18 +165,18 @@
                                                     <% } %>
                                                 </td>
                                                 <td>
-                                                    <% if (isAssetStaff) { %>
-                                                    <a href="${pageContext.request.contextPath}/assets?action=edit&id=<%= a.getAssetId() %>" 
+                                                    <% if (isAssetStaff) {%>
+                                                    <a href="${pageContext.request.contextPath}/assets?action=edit&id=<%= a.getAssetId()%>" 
                                                        class="btn btn-sm btn-warning">
                                                         <i class="fas fa-edit"></i> Sửa
                                                     </a>
-                                                    <a href="${pageContext.request.contextPath}/assets?action=delete&id=<%= a.getAssetId() %>" 
+                                                    <a href="${pageContext.request.contextPath}/assets?action=delete&id=<%= a.getAssetId()%>" 
                                                        class="btn btn-sm btn-danger"
                                                        onclick="return confirm('Bạn chắc chắn muốn xóa tài sản này?');">
                                                         <i class="fas fa-trash"></i> Xóa
                                                     </a>
-                                                    <% } %>
-                                                    <a href="${pageContext.request.contextPath}/assets?action=detail&id=<%= a.getAssetId() %>" 
+                                                    <% }%>
+                                                    <a href="${pageContext.request.contextPath}/assets?action=detail&id=<%= a.getAssetId()%>" 
                                                        class="btn btn-sm btn-info" title="Chi tiết">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
@@ -170,8 +184,8 @@
 
                                             </tr>
                                             <%
-                                                    }
-                                                } else {
+                                                }
+                                            } else {
                                             %>
                                             <tr>
                                                 <td colspan="12" class="text-center">Chưa có dữ liệu</td>
@@ -181,6 +195,53 @@
                                             %>
                                         </tbody>
                                     </table>
+
+                                    <!-- Phân trang -->
+                                    <c:if test="${totalPages != null && totalPages > 1}">
+                                        <nav aria-label="Page navigation">
+                                            <ul class="pagination justify-content-center mt-3">
+                                                <!-- Previous -->
+                                                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                                    <a class="page-link"
+                                                       href="${pageContext.request.contextPath}/assets?action=list
+                                                       &page=${currentPage - 1}
+                                                       &keyword=${fn:escapeXml(keyword)}
+                                                       &status=${status}
+                                                       &categoryId=${categoryId}
+                                                       &activeState=${activeState}">
+                                                        Trước
+                                                    </a>
+                                                </li>
+                                                <!-- Page numbers -->
+                                                <c:forEach var="i" begin="1" end="${totalPages}">
+                                                    <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                                        <a class="page-link"
+                                                           href="${pageContext.request.contextPath}/assets?action=list
+                                                           &page=${i}
+                                                           &keyword=${fn:escapeXml(keyword)}
+                                                           &status=${status}
+                                                           &categoryId=${categoryId}
+                                                           &activeState=${activeState}">
+                                                            ${i}
+                                                        </a>
+                                                    </li>
+                                                </c:forEach>
+                                                <!-- Next -->
+                                                <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                                    <a class="page-link"
+                                                       href="${pageContext.request.contextPath}/assets?action=list
+                                                       &page=${currentPage + 1}
+                                                       &keyword=${fn:escapeXml(keyword)}
+                                                       &status=${status}
+                                                       &categoryId=${categoryId}
+                                                       &activeState=${activeState}">
+                                                        Sau
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </c:if>
+
                                 </div>
                             </div>
                         </div>
