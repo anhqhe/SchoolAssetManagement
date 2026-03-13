@@ -287,4 +287,121 @@ public class UserDAO {
             }
         }
     }
+
+    // ==================== ADMIN USER MANAGEMENT ====================
+
+    public List<User> getAllUsers() throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT UserId, Username, FullName, Email, Phone, IsActive FROM Users ORDER BY UserId DESC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getLong("UserId"));
+                u.setUsername(rs.getString("Username"));
+                u.setFullName(rs.getString("FullName"));
+                u.setEmail(rs.getString("Email"));
+                u.setPhone(rs.getString("Phone"));
+                u.setActive(rs.getBoolean("IsActive"));
+                list.add(u);
+            }
+            for (User u : list) {
+                u.setRoles(getRolesByUserId(conn, u.getUserId()));
+            }
+        }
+        return list;
+    }
+
+    public List<String> getAllRoleCodes() throws SQLException {
+        List<String> codes = new ArrayList<>();
+        String sql = "SELECT RoleCode FROM Roles ORDER BY RoleId";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                codes.add(rs.getString("RoleCode"));
+            }
+        }
+        return codes;
+    }
+
+    public boolean isUsernameTaken(String username) throws SQLException {
+        String sql = "SELECT 1 FROM Users WHERE Username = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean isEmailTaken(String email) throws SQLException {
+        String sql = "SELECT 1 FROM Users WHERE Email = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public long createUser(String username, String password, String fullName,
+                           String email, String phone, boolean active,
+                           List<String> roleCodes) throws SQLException {
+        String insertSql = "INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, IsActive) "
+                         + "VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBUtil.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                long newId;
+                try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, username);
+                    ps.setString(2, password);
+                    ps.setString(3, fullName);
+                    ps.setString(4, email);
+                    ps.setString(5, phone);
+                    ps.setBoolean(6, active);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (!keys.next()) throw new SQLException("Insert user failed");
+                        newId = keys.getLong(1);
+                    }
+                }
+
+                if (roleCodes != null && !roleCodes.isEmpty()) {
+                    for (String roleCode : roleCodes) {
+                        if (roleCode == null || roleCode.trim().isEmpty()) continue;
+                        String roleSql = "INSERT INTO UserRoles (UserId, RoleId) "
+                                       + "SELECT ?, RoleId FROM Roles WHERE RoleCode = ?";
+                        try (PreparedStatement ps2 = conn.prepareStatement(roleSql)) {
+                            ps2.setLong(1, newId);
+                            ps2.setString(2, roleCode.trim());
+                            ps2.executeUpdate();
+                        }
+                    }
+                }
+
+                conn.commit();
+                return newId;
+            } catch (SQLException ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    public boolean setUserActive(long userId, boolean active) throws SQLException {
+        String sql = "UPDATE Users SET IsActive = ? WHERE UserId = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, active);
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 }
