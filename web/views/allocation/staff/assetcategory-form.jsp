@@ -1,14 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.AssetCategory" %>
-<%@ page import="java.util.List" %>
 
 <%
     AssetCategory category = (AssetCategory) request.getAttribute("category");
     String error = (String) request.getAttribute("error");
     String success = (String) request.getAttribute("success");
-
-    @SuppressWarnings("unchecked")
-    List<AssetCategory> allCategories = (List<AssetCategory>) request.getAttribute("allCategories");
 
     boolean isEdit = (category != null && category.getCategoryId() > 0);
     String contextPath = request.getContextPath();
@@ -102,30 +98,6 @@
                                        class="form-control"
                                        value="<%= (category != null && category.getCategoryName() != null) ? category.getCategoryName() : "" %>"
                                        required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="parentCategoryId">Danh mục cha (tuỳ chọn)</label>
-                                <select id="parentCategoryId" name="parentCategoryId" class="form-control">
-                                    <option value="">-- Không có (danh mục gốc) --</option>
-                                    <%
-                                        if (allCategories != null) {
-                                            for (AssetCategory c : allCategories) {
-                                                if (isEdit && category != null && c.getCategoryId() == category.getCategoryId()) {
-                                                    continue;
-                                                }
-                                                boolean selected = category != null
-                                                        && category.getParentCategoryId() != null
-                                                        && category.getParentCategoryId().equals(c.getCategoryId());
-                                    %>
-                                    <option value="<%= c.getCategoryId() %>" <%= selected ? "selected" : "" %>>
-                                        <%= c.getCategoryName() %>
-                                    </option>
-                                    <%
-                                            }
-                                        }
-                                    %>
-                                </select>
                             </div>
 
                             <div class="form-group">

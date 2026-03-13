@@ -1,9 +1,9 @@
-package controller.admin.room;
+package controller.staff.assetcategories;
 
+import dao.AssetCategoryDAO;
 import dao.AssetDAO;
-import dao.RoomDAO;
 import model.Asset;
-import model.Room;
+import model.AssetCategory;
 import model.User;
 
 import jakarta.servlet.ServletException;
@@ -17,10 +17,10 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "RoomDetailServlet", urlPatterns = {"/rooms/detail"})
-public class RoomDetailServlet extends HttpServlet {
+@WebServlet(name = "AssetCategoryDetailServlet", urlPatterns = {"/admin/categories/detail"})
+public class AssetCategoryDetailServlet extends HttpServlet {
 
-    private final RoomDAO roomDAO = new RoomDAO();
+    private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
     private final AssetDAO assetDAO = new AssetDAO();
 
     @Override
@@ -33,35 +33,34 @@ public class RoomDetailServlet extends HttpServlet {
 
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
-        if (roles == null || !roles.contains("ADMIN")) {
+        if (roles == null || !(roles.contains("ASSET_STAFF") || roles.contains("ADMIN"))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            resp.sendRedirect(req.getContextPath() + "/rooms");
+            resp.sendRedirect(req.getContextPath() + "/admin/categories");
             return;
         }
 
         try {
-            long roomId = Long.parseLong(idParam);
-            Room room = roomDAO.getRoomById(roomId);
-            if (room == null) {
-                req.setAttribute("error", "Không tìm thấy phòng.");
+            long categoryId = Long.parseLong(idParam.trim());
+            AssetCategory category = categoryDAO.getCategoryById(categoryId);
+
+            if (category == null) {
+                req.setAttribute("error", "Không tìm thấy danh mục tài sản.");
             } else {
-                req.setAttribute("room", room);
-                List<Asset> assetsInRoom = assetDAO.getAssetsByRoomId(roomId);
-                req.setAttribute("assetsInRoom", assetsInRoom);
+                req.setAttribute("category", category);
+                req.setAttribute("assets", assetDAO.getAssetsByCategoryId(categoryId));
             }
         } catch (NumberFormatException e) {
-            req.setAttribute("error", "ID phòng không hợp lệ.");
+            req.setAttribute("error", "ID danh mục không hợp lệ.");
         } catch (SQLException e) {
             e.printStackTrace();
-            req.setAttribute("error", "Không thể tải thông tin phòng. Vui lòng thử lại sau.");
+            req.setAttribute("error", "Không thể tải chi tiết danh mục tài sản. Vui lòng thử lại sau.");
         }
 
-        req.getRequestDispatcher("/views/admin/room-detail.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/allocation/staff/assetcategory-detail.jsp").forward(req, resp);
     }
 }
-

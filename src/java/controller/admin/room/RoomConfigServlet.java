@@ -1,7 +1,6 @@
 package controller.admin.room;
 
 import dao.RoomDAO;
-import dao.UserDAO;
 import model.Room;
 import model.User;
 
@@ -20,7 +19,6 @@ import java.util.List;
 public class RoomConfigServlet extends HttpServlet {
 
     private final RoomDAO roomDAO = new RoomDAO();
-    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -65,7 +63,6 @@ public class RoomConfigServlet extends HttpServlet {
         String roomIdParam = req.getParameter("roomId");
         String roomName = req.getParameter("roomName");
         String location = req.getParameter("location");
-        String headTeacherIdParam = req.getParameter("headTeacherId");
 
         if (roomIdParam == null || roomIdParam.trim().isEmpty()) {
             resp.sendRedirect(req.getContextPath() + "/rooms");
@@ -97,27 +94,7 @@ public class RoomConfigServlet extends HttpServlet {
             if (!updated) {
                 req.setAttribute("error", "Không thể cập nhật thông tin phòng.");
             } else {
-                Long headTeacherId = null;
-                if (headTeacherIdParam != null && !headTeacherIdParam.trim().isEmpty()) {
-                    try {
-                        headTeacherId = Long.parseLong(headTeacherIdParam.trim());
-                    } catch (NumberFormatException ignored) {
-                        headTeacherId = null;
-                    }
-                }
-
-                if (headTeacherIdParam != null) {
-                    try {
-                        roomDAO.setPrimaryTeacherForRoom(roomId, headTeacherId);
-                    } catch (SQLException ex) {
-                        // không chặn việc update RoomName/Location; chỉ báo lỗi phần trưởng phòng
-                        req.setAttribute("error", "Đã cập nhật phòng, nhưng không thể cập nhật trưởng phòng (kiểm tra bảng TeacherRoomAssignments).");
-                    }
-                }
-
-                if (req.getAttribute("error") == null) {
-                    req.setAttribute("success", "Cập nhật cấu hình phòng thành công.");
-                }
+                req.setAttribute("success", "Cập nhật thông tin phòng thành công.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -133,22 +110,6 @@ public class RoomConfigServlet extends HttpServlet {
             long roomId = Long.parseLong(roomIdParam.trim());
             Room room = roomDAO.getRoomById(roomId);
             req.setAttribute("room", room);
-
-            try {
-                req.setAttribute("teachers", userDAO.getAllTeachers());
-            } catch (SQLException e) {
-                e.printStackTrace();
-                req.setAttribute("teachers", null);
-                if (req.getAttribute("error") == null) {
-                    req.setAttribute("error", "Không thể tải danh sách giáo viên.");
-                }
-            }
-
-            try {
-                req.setAttribute("roomHead", roomDAO.getPrimaryTeacherByRoomId(roomId));
-            } catch (SQLException ignored) {
-                req.setAttribute("roomHead", null);
-            }
         } catch (Exception e) {
             req.setAttribute("room", null);
             if (req.getAttribute("error") == null) {

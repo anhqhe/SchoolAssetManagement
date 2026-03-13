@@ -35,14 +35,6 @@ public class AssetCategoryCreateServlet extends HttpServlet {
             return;
         }
 
-        try {
-            List<AssetCategory> allCategories = categoryDAO.getAllCategories();
-            req.setAttribute("allCategories", allCategories);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            req.setAttribute("error", "Không thể tải danh sách danh mục cha.");
-        }
-
         req.getRequestDispatcher("/views/allocation/staff/assetcategory-form.jsp").forward(req, resp);
     }
 
@@ -63,20 +55,13 @@ public class AssetCategoryCreateServlet extends HttpServlet {
 
         String code = req.getParameter("categoryCode");
         String name = req.getParameter("categoryName");
-        String parentIdParam = req.getParameter("parentCategoryId");
         String activeParam = req.getParameter("active");
 
         AssetCategory category = new AssetCategory();
         category.setCategoryCode(code != null ? code.trim() : null);
         category.setCategoryName(name != null ? name.trim() : null);
 
-        if (parentIdParam != null && !parentIdParam.trim().isEmpty()) {
-            try {
-                category.setParentCategoryId(Long.parseLong(parentIdParam));
-            } catch (NumberFormatException e) {
-                category.setParentCategoryId(null);
-            }
-        }
+        category.setParentCategoryId(null);
 
         category.setActive("on".equalsIgnoreCase(activeParam) || "true".equalsIgnoreCase(activeParam));
 
@@ -97,13 +82,6 @@ public class AssetCategoryCreateServlet extends HttpServlet {
                 e.printStackTrace();
                 req.setAttribute("error", "Có lỗi xảy ra khi tạo danh mục. Kiểm tra lại mã danh mục có bị trùng không.");
             }
-        }
-
-        try {
-            List<AssetCategory> allCategories = categoryDAO.getAllCategories();
-            req.setAttribute("allCategories", allCategories);
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         if (category != null) {

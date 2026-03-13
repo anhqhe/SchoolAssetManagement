@@ -10,7 +10,7 @@
     boolean isAssetStaff = false;
     if (currentUser != null) {
         roles = currentUser.getRoles();
-        isAssetStaff = roles != null && (roles.contains("ASSET_STAFF") || roles.contains("ADMIN"));
+        isAssetStaff = roles != null && roles.contains("ASSET_STAFF");
     }
     request.setAttribute("isAssetStaff", isAssetStaff);
 %>
@@ -293,18 +293,6 @@
                                         <div class="card-body">
                                             <button class="btn btn-primary btn-block mb-2" onclick="alert('Chức năng Update Asset - Coming soon!')">
                                                 <i class="fas fa-edit"></i> Cập nhật thông tin
-                                            </button>
-                                            
-                                            <button class="btn btn-info btn-block mb-2" onclick="alert('Chức năng Transfer - Coming soon!')">
-                                                <i class="fas fa-exchange-alt"></i> Chuyển phòng
-                                            </button>
-                                            
-                                            <button class="btn btn-success btn-block mb-2" onclick="alert('Chức năng Allocate - Coming soon!')">
-                                                <i class="fas fa-hand-holding"></i> Cấp phát
-                                            </button>
-                                            
-                                            <button class="btn btn-warning btn-block mb-2" onclick="alert('Chức năng Maintenance - Coming soon!')">
-                                                <i class="fas fa-tools"></i> Bảo trì
                                             </button>
                                             
                                             <hr>
