@@ -250,32 +250,6 @@ public class AssetRequestDAO {
         return list;
     }
 
-    
-    // not use
-    public List<AssetRequestDTO> getRequestsForStaff() {
-        List<AssetRequestDTO> list = new ArrayList<>();
-        String sql = "SELECT r.*, u.FullName AS TeacherName, rm.RoomName "
-                + "FROM AssetRequests r "
-                + "JOIN Users u ON r.TeacherId = u.UserId "
-                + "LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId "
-                + "WHERE r.Status = 'APPROVED_BY_BOARD' "
-                + "ORDER BY r.CreatedAt ASC";
-
-        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                AssetRequestDTO dto = mapResultSetToRequestDTO(rs);
-
-                list.add(dto);
-            }
-        } catch (SQLException e) {
-            System.err.println("dao.allocation.AssetRequestDAO.getRequestsForStaff()");
-            System.err.println(e);
-        }
-        return list;
-        
-        
-    }
-
     // view in staff/request-list
     public List<AssetRequestDTO> getRequestsForStaff(String keyword, String status, String sortBy) throws SQLException {
         
@@ -305,7 +279,11 @@ public class AssetRequestDAO {
                 FROM AssetRequests r
                 JOIN Users u ON r.TeacherId = u.UserId 
                 LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
-                WHERE r.Status IN ('APPROVED_BY_BOARD', 'COMPLETED', 'OUT_OF_STOCK')    
+                WHERE r.Status IN (
+                                    'APPROVED_BY_BOARD', 
+                                    'COMPLETED', 
+                                    'OUT_OF_STOCK',
+                                    'INCOMPLETE')    
                                                                  """);
 
         if (keyword != null && !keyword.trim().isEmpty()) {

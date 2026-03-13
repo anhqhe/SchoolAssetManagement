@@ -8,6 +8,7 @@ public class User {
     private String username;
     private String fullName;
     private String email;
+    private String phone;
     private boolean isActive;
     private List<String> roles; // store role codes like "ADMIN", "TEACHER"
     private String resetToken;
@@ -22,6 +23,8 @@ public class User {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
     public List<String> getRoles() { return roles; }
