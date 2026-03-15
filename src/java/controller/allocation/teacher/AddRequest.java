@@ -55,7 +55,7 @@ public class AddRequest extends HttpServlet {
         }
 
         try {
-            request.setAttribute("rooms", roomDAO.getAllActiveRooms());
+            request.setAttribute("rooms", roomDAO.getActiveRoomsByTeacherId(currentUser.getUserId()));
             request.setAttribute("categories", assetCategoryDAO.getAllActiveCategories());
             request.getRequestDispatcher("/views/allocation/teacher/request-form.jsp")
                     .forward(request, response);
@@ -87,6 +87,10 @@ public class AddRequest extends HttpServlet {
             // Get data from Request Form
             long roomId = validateId(request.getParameter("requestedRoomId"), "Phòng");
             String purpose = request.getParameter("purpose");
+
+            if (!roomDAO.isTeacherAssignedToRoom(currentUser.getUserId(), roomId)) {
+                throw new IllegalArgumentException("Phòng không thuộc quyền sử dụng.");
+            }
 
             // Get list data
             String[] categoryIds = request.getParameterValues("categoryIds");
