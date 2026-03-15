@@ -2,6 +2,7 @@
 <%@ page import="model.User" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <%
     User currentUser = (User) session.getAttribute("currentUser");
@@ -156,20 +157,22 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                 <td>${t.createdAt}</td>
+                               <td>
+                                <fmt:formatDate value="${t.createdAt}" pattern="dd/MM/yyyy HH:mm" />
+                                 </td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-warning view-btn"
-                                                data-id="${t.transferId}"
-                                                data-code="${t.transferCode}"
-                                                data-from="${t.fromRoomName}"
-                                                data-to="${t.toRoomName}"
-                                                data-user="${t.requestedByName}"
-                                                data-reason="${t.reason}"
-                                                data-status="${t.status}"
-                                                data-date="${t.createdAt}"
-                                                data-assets="${not empty t.assetNames ? t.assetNames : ''}"> 
-                                            <i class="fas fa-eye"></i>
-                                        </button>
+                               <button class="btn btn-sm btn-warning view-btn"
+                                data-id="${t.transferId}"
+                                data-code="${t.transferCode}"
+                                data-from="${t.fromRoomName}"
+                                data-to="${t.toRoomName}"
+                                data-user="${t.requestedByName}"
+                                data-reason="${t.reason}"
+                                data-status="${t.status}"
+                                data-date="<fmt:formatDate value='${t.createdAt}' pattern='dd/MM/yyyy HH:mm' />"
+                                data-assets="${not empty t.assetNames ? t.assetNames : ''}">
+                            <i class="fas fa-eye"></i>
+                            </button>
 
                                                 <c:if test="${isAssetStaff}">
                    <button class="btn btn-sm btn-success approve-open-btn"
@@ -367,12 +370,16 @@
                         <small class="text-muted">Có thể chọn nhiều tài sản</small>
                     </div>
 
-                    <div class="form-group">
-                        <label>Lý do điều chuyển</label>
-                        <textarea name="reason" class="form-control" rows="3"
-                                  placeholder="Nhập lý do điều chuyển..." required></textarea>
-                    </div>
+                <div class="form-group">
+                    <label>Lý do điều chuyển</label>
+                    <textarea id="reason"
+                              name="reason"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Nhập lý do điều chuyển..."></textarea>
 
+                    <small id="reasonError" class="text-danger"></small>
+                </div>
                 </div>
 
                 <div class="modal-footer">
@@ -472,7 +479,7 @@ function handleAction(url, type) {
     let $approveBtn = $("#confirmApproveBtn");
     let $rejectBtn  = $("#confirmRejectBtn");
 
-    // Disable cả 2 nút, hiện spinner trên nút đang click
+
     $approveBtn.prop("disabled", true);
     $rejectBtn.prop("disabled", true);
 
@@ -565,14 +572,26 @@ $("#approveModal").on("hidden.bs.modal", function () {
     $("#checkAllAssets").click(function () {
         $(".asset-checkbox").prop("checked", this.checked);
     });
+    function validateReason() {
+        let reason = $("#reason").val().trim();
+
+        if (reason === "") {
+            $("#reasonError").text("Vui lòng nhập lý do điều chuyển!");
+            return false;
+        }
+
+        $("#reasonError").text("");
+        return true;
+    }
 
     $("#createTransferForm").submit(function (e) {
         let isRoomValid = validateRooms();
         let isAssetValid = validateAssets();
-        if (!isRoomValid || !isAssetValid) {
-            e.preventDefault();
-            return false;
-        }
+        let isReasonValid = validateReason();
+        if (!isRoomValid || !isAssetValid || !isReasonValid) {
+        e.preventDefault();
+        return false;
+    }
     });
 
     // === Asset Search ===

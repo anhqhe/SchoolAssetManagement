@@ -9,7 +9,7 @@ public class TransferDAO {
 
 
 public List<Transfer> getTransfers(String keyword, String status) throws SQLException {
-    String sql = " SELECT \n" +
+String sql = " SELECT \n" +
 "            t.TransferId, t.TransferCode,\n" +
 "            t.RequestedById, t.FromRoomId, t.ToRoomId,\n" +
 "            t.Status, t.Reason,\n" +
@@ -17,7 +17,15 @@ public List<Transfer> getTransfers(String keyword, String status) throws SQLExce
 "            u.FullName AS RequestedByName,\n" +
 "            fr.RoomName AS FromRoomName,\n" +
 "            tr2.RoomName AS ToRoomName,\n" +
-"            STRING_AGG(a.AssetName, ', ') AS AssetNames\n" +
+"            STRING_AGG(\n" +
+"                a.AssetName +\n" +
+"                CASE \n" +
+"                    WHEN ti.Note IS NOT NULL AND LTRIM(RTRIM(ti.Note)) <> ''\n" +
+"                    THEN ' (' + ti.Note + ')'\n" +
+"                    ELSE ''\n" +
+"                END,\n" +
+"                ', '\n" +
+"            ) AS AssetNames\n" +
 "        FROM AssetTransfers t\n" +
 "        LEFT JOIN Users u ON t.RequestedById = u.UserId\n" +
 "        LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId\n" +
