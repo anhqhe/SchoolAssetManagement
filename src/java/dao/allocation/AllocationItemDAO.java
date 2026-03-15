@@ -8,6 +8,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import dto.AssetDTO;
 import util.DBUtil;
 
 /**
@@ -83,4 +86,30 @@ public class AllocationItemDAO {
         return 0;
     }
 
+    public List<AssetDTO> getAssetsByAllocationId(long allocationId) throws SQLException {
+        List<AssetDTO> assets = new ArrayList<>();
+        String sql = """
+                     SELECT a.AssetId, a.AssetCode, a.AssetName, a.SerialNumber, a.ConditionNote
+                     FROM AssetAllocationItems aai
+                     JOIN Assets a ON aai.AssetId = a.AssetId
+                     WHERE aai.AllocationId = ?
+                     ORDER BY a.AssetName
+                     """;
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+            ps.setLong(1, allocationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetDTO asset = new AssetDTO();
+                    asset.setAssetId(rs.getLong("AssetId"));
+                    asset.setAssetCode(rs.getString("AssetCode"));
+                    asset.setAssetName(rs.getString("AssetName"));
+                    asset.setSerialNumber(rs.getString("SerialNumber"));
+                    asset.setConditionNote(rs.getString("ConditionNote"));
+                    assets.add(asset);
+                }
+            }
+        }
+        return assets;
+    }
 }
