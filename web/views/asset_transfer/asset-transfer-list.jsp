@@ -65,30 +65,95 @@
                             <i class="fas fa-filter"></i> Tìm kiếm & Lọc
                         </h6>
                     </div>
-                    <div class="card-body">
-                        <form method="get" action="${pageContext.request.contextPath}/transfers/list" class="form-inline">
-                            <input type="text" name="keyword" class="form-control mr-3 mb-2"
-                                   placeholder="Mã phiếu, lý do..."
-                                   value="${keyword}">
+                        <div class="card-body">
+                        <form method="get"
+                              action="${pageContext.request.contextPath}/transfers/list">
 
-                      <select name="status" class="form-control mr-3 mb-2">
-                        <option value="">-- Tất cả trạng thái --</option>
-                        <option value="PENDING" ${selectedStatus == 'PENDING' ? 'selected' : ''}>Chờ duyệt</option>
-                        <option value="APPROVED" ${selectedStatus == 'APPROVED' ? 'selected' : ''}>Đã duyệt</option>
-                        <option value="COMPLETED" ${selectedStatus == 'COMPLETED' ? 'selected' : ''}>Hoàn tất</option>
-                        <option value="REJECTED" ${selectedStatus == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
-                    </select>
+                        <div class="row">
 
-                            <button class="btn btn-primary mb-2 mr-2">
-                                <i class="fas fa-search"></i> Tìm kiếm
-                            </button>
+                            <!-- Keyword -->
+                            <div class="col-md-3 mb-2">
+                                <input type="text"
+                                       name="keyword"
+                                       class="form-control"
+                                       placeholder="Mã phiếu, lý do..."
+                                       value="${keyword}">
+                            </div>
 
-                            <a href="${pageContext.request.contextPath}/transfers/list" class="btn btn-secondary mb-2">
-                                <i class="fas fa-redo"></i> Đặt lại
-                            </a>
+                            <!-- Status -->
+                            <div class="col-md-2 mb-2">
+                                <select name="status" class="form-control">
+                                    <option value="">-- Tất cả trạng thái --</option>
+                                    <option value="PENDING" ${selectedStatus == 'PENDING' ? 'selected' : ''}>Chờ duyệt</option>
+                                    <option value="APPROVED" ${selectedStatus == 'APPROVED' ? 'selected' : ''}>Đã duyệt</option>
+                                    <option value="COMPLETED" ${selectedStatus == 'COMPLETED' ? 'selected' : ''}>Hoàn tất</option>
+                                    <option value="REJECTED" ${selectedStatus == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
+                                </select>
+                            </div>
+
+                            <!-- Phòng đi -->
+                            <div class="col-md-2 mb-2">
+                                <select name="fromRoomId" class="form-control">
+                                    <option value="">-- Phòng đi --</option>
+                                    <c:forEach var="r" items="${rooms}">
+                                        <option value="${r.roomId}" ${fromRoomId == r.roomId ? 'selected' : ''}>
+                                            ${r.roomName}
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+
+                            <!-- Phòng đến -->
+                            <div class="col-md-2 mb-2">
+                                <select name="toRoomId" class="form-control">
+                                    <option value="">-- Phòng đến --</option>
+                                    <c:forEach var="r" items="${rooms}">
+                                        <option value="${r.roomId}" ${toRoomId == r.roomId ? 'selected' : ''}>
+                                            ${r.roomName}
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+
+                            <!-- From date -->
+                            <div class="col-md-1 mb-2">
+                                <input type="date"
+                                       id="fromDate"
+                                       name="fromDate"
+                                       class="form-control"
+                                       value="${fromDate}">
+                            </div>
+
+                            <!-- To date -->
+                            <div class="col-md-1 mb-2">
+                                <input type="date"
+                                       id="toDate"
+                                       name="toDate"
+                                       class="form-control"
+                                       value="${toDate}">
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="col-md-1 mb-2 d-flex">
+                                <button class="btn btn-primary mr-2">
+                                    <i class="fas fa-search"></i>
+                                </button>
+
+                                <a href="${pageContext.request.contextPath}/transfers/list"
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-redo"></i>
+                                </a>
+                            </div>
+
+                        </div>
+
+                        <!-- Error -->
+                        <div id="dateError" class="text-danger small mt-2" style="display:none;">
+                            Ngày đến phải lớn hơn hoặc bằng ngày bắt đầu.
+                        </div>
+
                         </form>
-                    </div>
-                </div>
+             </div>
 
                 <!-- TRANSFER TABLE -->
                 <div class="card shadow mb-4">
@@ -127,7 +192,23 @@
                                     <c:otherwise>
                                         <c:forEach var="t" items="${transfers}">
                                         <tr>
-                                    <td><strong>${t.transferCode}</strong></td>
+                               <td class="view-btn"
+                                    style="cursor:pointer"
+                                    data-toggle="tooltip"
+                                    data-placement="top"
+                                    title="Xem chi tiết phiếu ${t.transferCode}"
+
+                                    data-id="${t.transferId}"
+                                    data-code="${t.transferCode}"
+                                    data-from="${t.fromRoomName}"
+                                    data-to="${t.toRoomName}"
+                                    data-user="${t.requestedByName}"
+                                    data-reason="${t.reason}"
+                                    data-status="${t.status}"
+                                    data-date="<fmt:formatDate value='${t.createdAt}' pattern='dd/MM/yyyy HH:mm' />"
+                                    data-assets="${not empty t.assetNames ? t.assetNames : ''}">
+                                    <strong class="text-primary">${t.transferCode}</strong>
+                                </td>
                                     <td><i class="fas fa-door-open text-primary"></i> ${t.fromRoomName}</td>
                                     <td><i class="fas fa-door-open text-success"></i> ${t.toRoomName}</td>
                                     <td>${t.requestedByName}</td>
@@ -217,10 +298,11 @@
                 <p><strong>Trạng thái:</strong> <span id="mStatus"></span></p>
                 <p><strong>Ngày tạo:</strong> <span id="mDate"></span></p>
                 <div>
-                    <strong>Tài sản:</strong>
+                <strong>Tài sản:</strong>
                     <div id="mAssets" class="mt-1"></div>
                 </div>
-            </div>
+                <div id="assetHistory" class="mt-3"></div>
+                </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
             </div>
@@ -401,8 +483,63 @@
 <script src="${pageContext.request.contextPath}/assets/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
 <script>
-$(document).ready(function () {
+//    $(document).on("click", ".asset-item", function () {
+//
+//    let assetName = $(this).data("name");
+//
+//    $("#assetHistory").html(
+//        "<div class='text-muted'>Đang tải lịch sử...</div>"
+//    );
+//
+//    $.get("asset-history", { name: assetName }, function (data) {
+//
+//        if (data.length === 0) {
+//            $("#assetHistory").html("<em class='text-muted'>Không có lịch sử</em>");
+//            return;
+//        }
+//
+//        let html = "<ul class='list-group mt-2'>";
+//
+//        data.forEach(h => {
+//            html +=
+//                "<li class='list-group-item'>" +
+//                "<b>" + h.room + "</b>" +
+//                "<br><small>" + h.date + "</small>" +
+//                "</li>";
+//        });
+//
+//        html += "</ul>";
+//
+//        $("#assetHistory").html(html);
+//
+//    });
+//
+//});
+ document.querySelector("form").addEventListener("submit", function (e) {
 
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+    const error = document.getElementById("dateError");
+
+    error.style.display = "none";
+
+    if (fromDate && toDate) {
+        const from = new Date(fromDate);
+        const to = new Date(toDate);
+
+        if (to < from) {
+            error.style.display = "block";
+            e.preventDefault();
+        }
+    }
+});
+    $(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});
+$(document).ready(function () {
+$('body').tooltip({
+    selector: '[data-toggle="tooltip"]'
+});
     // === DataTable ===
     $('#dataTable').DataTable({
         "pageLength": 10,
@@ -438,7 +575,9 @@ $(document).ready(function () {
         let html = assetList
             .filter(a => a.trim() !== "")
             .map(a =>
-                "<span class='badge badge-light border mr-1 mb-1'>" +
+                "<span class='badge badge-light border mr-1 mb-1 asset-item' " +
+                "data-name='" + a.trim() + "' " +
+                "style='cursor:pointer'>" +
                 "<i class='fas fa-box text-warning'></i> " + a.trim() +
                 "</span>"
             ).join("");

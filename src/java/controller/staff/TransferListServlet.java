@@ -27,14 +27,19 @@ public class TransferListServlet extends HttpServlet {
 @Override
 protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-
-    String keyword = request.getParameter("keyword");
-    String status = request.getParameter("status");
-
+    
+        String keyword = request.getParameter("keyword");
+        String status = request.getParameter("status");
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
+        String fromRoomId = request.getParameter("fromRoomId");
+        String toRoomId = request.getParameter("toRoomId");
+    
     try {
       
         TransferDAO transferDAO = new TransferDAO();
-        List<Transfer> transfers = transferDAO.getTransfers(keyword, status);
+        List<Transfer> transfers = transferDAO.getTransfers(
+        keyword, status, fromDate, toDate, fromRoomId, toRoomId);
         request.setAttribute("transfers", transfers);
 
         dao.RoomDAO roomDAO = new dao.RoomDAO(); 
@@ -47,7 +52,10 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
         
         request.setAttribute("keyword", keyword);
         request.setAttribute("selectedStatus", status);
-
+        request.setAttribute("fromDate", fromDate);
+        request.setAttribute("toDate", toDate);
+        request.setAttribute("fromRoomId", fromRoomId);
+        request.setAttribute("toRoomId", toRoomId);
     } catch (SQLException e) {
         throw new ServletException(e);
     }
