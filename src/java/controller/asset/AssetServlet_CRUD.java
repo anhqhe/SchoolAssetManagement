@@ -110,31 +110,64 @@ public class AssetServlet_CRUD extends HttpServlet {
             } else if ("inactive".equals(activeState)) {
                 isActiveFilter = Boolean.FALSE;
             }
-            List<Asset> assets;
+            // ------------------ PHÂN TRANG ------------------
+            int page = 1;
+            int pageSize = 10; // số bản ghi / trang
+            String pageParam = request.getParameter("page");
+            if (pageParam != null && !pageParam.trim().isEmpty()) {
+                try {
+                    page = Integer.parseInt(pageParam.trim());
+                    if (page < 1) {
+                        page = 1;
+                    }
+                } catch (NumberFormatException e) {
+                    page = 1;
+                }
+            }
             boolean hasFilter = ((keyword != null && !keyword.trim().isEmpty())
                     || (status != null && !status.trim().isEmpty())
                     || (categoryIdStr != null && !categoryIdStr.trim().isEmpty())
                     || (activeState != null && !activeState.trim().isEmpty()));
-
-            if (hasFilter) {
-                Long categoryId = null;
-                if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
-                    try {
-                        categoryId = Long.parseLong(categoryIdStr);
-                    } catch (NumberFormatException e) {
-                        //ignore
-                    }
+            Long categoryId = null;
+            if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
+                try {
+                    categoryId = Long.parseLong(categoryIdStr.trim());
+                } catch (NumberFormatException e) {
+                    // ignore
                 }
-                assets = assetDao.searchAssets(keyword, status, categoryId, isActiveFilter);
-            } else {
-                assets = assetDao.findAll();
             }
-
+            // 1. Đếm tổng bản ghi theo filter
+            int totalRecords;
+            if (hasFilter) {
+                totalRecords = assetDao.countSearchAssets(keyword, status, categoryId, isActiveFilter);
+            } else {
+                totalRecords = assetDao.countAllAssets();
+            }
+            int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+            if (totalPages == 0) {
+                totalPages = 1;
+            }
+            if (page > totalPages) {
+                page = totalPages;
+            }
+            int offset = (page - 1) * pageSize;
+            // 2. Lấy danh sách theo trang
+            List<Asset> assets;
+            if (hasFilter) {
+                assets = assetDao.searchAssetsByPage(keyword, status, categoryId, isActiveFilter, offset, pageSize);
+            } else {
+                assets = assetDao.findAllByPage(offset, pageSize);
+            }
+            // 3. Truyền sang JSP
             request.setAttribute("assets", assets);
             request.setAttribute("keyword", keyword);
             request.setAttribute("status", status);
             request.setAttribute("categoryId", categoryIdStr);
             request.setAttribute("activeState", activeState);
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalRecords", totalRecords);
+            request.setAttribute("pageSize", pageSize);
             request.setAttribute("rooms", roomDao.findAllActive());
             request.setAttribute("teachers", userDao.findAllTeachers());
             request.getRequestDispatcher("/views/asset/asset-list.jsp").forward(request, response);
@@ -470,7 +503,13 @@ public class AssetServlet_CRUD extends HttpServlet {
         String holderIdStr = request.getParameter("currentHolderId");
         String pDateStr = request.getParameter("purchaseDate");
         String rDateStr = request.getParameter("receivedDate");
-        
+        String serial = request.getParameter("serialNumber");
+
+        // Giới hạn số seri tối đa 10 ký tự
+        if (serial != null && serial.trim().length() > 10) {
+            return "Số seri tối đa 10 ký tự.";
+        }
+
         if (assetName == null || assetName.trim().isEmpty()) {
             return "Tên tài sản là bắt buộc.";
         }
@@ -534,6 +573,11 @@ public class AssetServlet_CRUD extends HttpServlet {
         String holderIdStr = request.getParameter("currentHolderId");
         String pDateStr = request.getParameter("purchaseDate");
         String rDateStr = request.getParameter("receivedDate");
+        String serial = request.getParameter("serialNumber");
+        // Giới hạn số seri tối đa 10 ký tự
+        if (serial != null && serial.trim().length() > 10) {
+            return "Số seri tối đa 10 ký tự.";
+        }
 
         if (assetName == null || assetName.trim().isEmpty()) {
             return "Tên tài sản là bắt buộc.";

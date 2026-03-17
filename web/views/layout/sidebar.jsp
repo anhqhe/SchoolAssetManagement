@@ -32,7 +32,7 @@
 
     <!-- ADMIN ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/assets?action=list">
             <i class="fas fa-fw fa-boxes"></i>
@@ -46,143 +46,122 @@
             <span>Quản lý phòng</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/user">
             <i class="fas fa-fw fa-users"></i>
             <span>Quản lý người dùng</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
             <i class="fas fa-fw fa-cogs"></i>
             <span>Cài đặt</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
             <i class="fas fa-fw fa-chart-line"></i>
             <span>Báo cáo</span>
         </a>
     </li>
-      <li class="nav-item">
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
     <% } %>
-    
+
     <!-- ASSET_STAFF ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ASSET_STAFF") && !sidebarRoles.contains("ADMIN")) { %>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/assets">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/categories">
             <i class="fas fa-fw fa-tags"></i>
             <span>Quản lý danh mục</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/staff/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/staff/allocation-history">
-            <i class="fas fa-history"></i>
-            <span>Lịch sử cấp phát</span>
-        </a>
-    </li>
-     
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-       
+
     <% } %>
-       
+
     <!-- TEACHER ONLY -->
-<% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
-    
+    <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
             <i class="fas fa-fw fa-comments"></i>
             <span>Danh sách đánh giá</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/allocation-history">
-            <i class="fas fa-history"></i>
-            <span>Lịch sử cấp phát</span>
-        </a>
-    </li>
-    
+
     <% } %>
-       
+
     <!-- BOARD ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("BOARD") && !sidebarRoles.contains("ADMIN")) { %>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/approvals">
             <i class="fas fa-fw fa-check-square"></i>
             <span>Phê duyệt yêu cầu</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/board/allocation-history">
-            <i class="fas fa-history"></i>
-            <span>Lịch sử cấp phát</span>
-        </a>
-    </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/reports">
             <i class="fas fa-fw fa-chart-bar"></i>
             <span>Báo cáo</span>
         </a>
     </li>
-      <li class="nav-item">
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-    
+
     <% } %>
 
     <!-- ALL USERS -->
     <hr class="sidebar-divider">
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/change-password">
             <i class="fas fa-key"></i>
@@ -196,4 +175,20 @@
         <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>
 
+    <!-- Staff + Board -->
+    <% if (sidebarRoles != null && (sidebarRoles.contains("BOARD") || sidebarRoles.contains("ASSET_STAFF")) && !sidebarRoles.contains("ADMIN")) { %>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
+        </a>
+    </li>
+    <% } %>
 </ul>
