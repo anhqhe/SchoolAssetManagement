@@ -61,12 +61,20 @@
         </a>
     </li>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
-            <i class="fas fa-fw fa-chart-line"></i>
-            <span>Báo cáo</span>
+     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
         </a>
     </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
+        </a>
+    </li>
+    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
@@ -98,11 +106,32 @@
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
-
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/staff/allocation-history">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử cấp phát</span>
+        </a>
+    </li>
+     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
+        </a>
+    </li>
+
+     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
         </a>
     </li>
 
@@ -124,7 +153,15 @@
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
-
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/allocation-history">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử cấp phát</span>
+        </a>
+    </li>
+    
+    
     <% } %>
 
     <!-- BOARD ONLY -->
@@ -145,6 +182,13 @@
     </li>
 
     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/board/allocation-history">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử cấp phát</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/reports">
             <i class="fas fa-fw fa-chart-bar"></i>
             <span>Báo cáo</span>
@@ -154,6 +198,20 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
+        </a>
+    </li>
+
+     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
         </a>
     </li>
 

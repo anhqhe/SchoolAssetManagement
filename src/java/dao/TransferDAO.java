@@ -8,23 +8,37 @@ import util.DBUtil;
 public class TransferDAO {
 
 
-public List<Transfer> getTransfers(String keyword, String status) throws SQLException {
-    String sql = " SELECT \n" +
-"            t.TransferId, t.TransferCode,\n" +
-"            t.RequestedById, t.FromRoomId, t.ToRoomId,\n" +
-"            t.Status, t.Reason,\n" +
-"            t.CreatedAt,\n" +
-"            u.FullName AS RequestedByName,\n" +
-"            fr.RoomName AS FromRoomName,\n" +
-"            tr2.RoomName AS ToRoomName,\n" +
-"            STRING_AGG(a.AssetName, ', ') AS AssetNames\n" +
-"        FROM AssetTransfers t\n" +
-"        LEFT JOIN Users u ON t.RequestedById = u.UserId\n" +
-"        LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId\n" +
-"        LEFT JOIN Rooms tr2 ON t.ToRoomId = tr2.RoomId\n" +
-"        LEFT JOIN AssetTransferItems ti ON t.TransferId = ti.TransferId\n" +
-"        LEFT JOIN Assets a ON ti.AssetId = a.AssetId\n" +
-"        WHERE 1=1";
+public List<Transfer> getTransfers(
+        String keyword,
+        String status,
+        String fromDate,
+        String toDate,
+        String fromRoomId,
+        String toRoomId) throws SQLException {
+String sql = " SELECT " +
+    " t.TransferId, t.TransferCode," +
+    " t.RequestedById, t.FromRoomId, t.ToRoomId," +
+    " t.Status, t.Reason," +
+    " t.CreatedAt," +
+    " u.FullName AS RequestedByName," +
+    " fr.RoomName AS FromRoomName," +
+    " tr2.RoomName AS ToRoomName," +
+    " STRING_AGG(" +
+    " a.AssetName +" +
+    " CASE " +
+    " WHEN ti.Note IS NOT NULL AND LTRIM(RTRIM(ti.Note)) <> '' " +
+    " THEN ' (' + ti.Note + ')' " +
+    " ELSE '' " +
+    " END," +
+    " ', '" +
+    " ) AS AssetNames" +
+    " FROM AssetTransfers t" +
+    " LEFT JOIN Users u ON t.RequestedById = u.UserId" +
+    " LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId" +
+    " LEFT JOIN Rooms tr2 ON t.ToRoomId = tr2.RoomId" +
+    " LEFT JOIN AssetTransferItems ti ON t.TransferId = ti.TransferId" +
+    " LEFT JOIN Assets a ON ti.AssetId = a.AssetId" +
+    " WHERE 1=1";
 
     StringBuilder sb = new StringBuilder(sql);
     List<Object> params = new ArrayList<>();
@@ -34,11 +48,31 @@ public List<Transfer> getTransfers(String keyword, String status) throws SQLExce
         params.add("%" + keyword + "%");
         params.add("%" + keyword + "%");
     }
+
     if (status != null && !status.trim().isEmpty()) {
         sb.append(" AND t.Status = ?");
         params.add(status);
     }
 
+    if (fromDate != null && !fromDate.isEmpty()) {
+        sb.append(" AND CAST(t.CreatedAt AS DATE) >= ?");
+        params.add(fromDate);
+    }
+
+    if (toDate != null && !toDate.isEmpty()) {
+        sb.append(" AND CAST(t.CreatedAt AS DATE) <= ?");
+        params.add(toDate);
+    }
+    
+    if (fromRoomId != null && !fromRoomId.isEmpty()) {
+    sb.append(" AND t.FromRoomId = ?");
+    params.add(fromRoomId);
+    }
+
+    if (toRoomId != null && !toRoomId.isEmpty()) {
+        sb.append(" AND t.ToRoomId = ?");
+        params.add(toRoomId);
+    }
     sb.append(" GROUP BY t.TransferId, t.TransferCode, t.RequestedById, t.FromRoomId, t.ToRoomId, " +
               "t.Status, t.Reason, t.CreatedAt, u.FullName, fr.RoomName, tr2.RoomName");
     sb.append(" ORDER BY t.CreatedAt DESC");
@@ -265,6 +299,38 @@ public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNot
             }
         }
     }
+public List<String> getAssetHistory(String assetName) throws SQLException {
 
+    String sql =
+        "SELECT " +
+        " r.RoomName, " +
+        " t.CreatedAt " +
+        "FROM AssetTransferItems ti " +
+        "JOIN Assets a ON ti.AssetId = a.AssetId " +
+        "JOIN AssetTransfers t ON ti.TransferId = t.TransferId " +
+        "JOIN Rooms r ON t.ToRoomId = r.RoomId " +
+        "WHERE a.AssetName = ? " +
+        "ORDER BY t.CreatedAt DESC";
+
+    List<String> history = new ArrayList<>();
+
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, assetName);
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+
+            Timestamp date = rs.getTimestamp("CreatedAt");
+            String room = rs.getString("RoomName");
+
+            history.add(date + " → " + room);
+        }
+    }
+
+    return history;
+}
 
 }

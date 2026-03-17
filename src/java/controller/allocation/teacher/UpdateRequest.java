@@ -102,7 +102,7 @@ public class UpdateRequest extends HttpServlet {
 
             request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
-            request.setAttribute("rooms", roomDAO.getAllActiveRooms());
+            request.setAttribute("rooms", roomDAO.getActiveRoomsByTeacherId(currentUser.getUserId()));
             request.setAttribute("categories", categoryDAO.getAllActiveCategories());
 
             request.getRequestDispatcher("/views/allocation/teacher/request-form.jsp")
@@ -151,6 +151,10 @@ public class UpdateRequest extends HttpServlet {
             String[] categoryIds = request.getParameterValues("categoryIds");
             String[] quantities = request.getParameterValues("quantities");
             String[] notes = request.getParameterValues("notes");
+
+            if (!roomDAO.isTeacherAssignedToRoom(currentUser.getUserId(), roomId)) {
+                throw new IllegalArgumentException("Phòng yêu cầu không thuộc quyền sử dụng.");
+            }
 
             if (purpose == null || purpose.isBlank()) {
                 throw new IllegalArgumentException("Mục đích sử dụng không được để trống.");
