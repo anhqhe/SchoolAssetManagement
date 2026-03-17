@@ -32,6 +32,7 @@ public class UserListServlet extends HttpServlet {
         // Lấy giá trị filter từ query string
         String status = req.getParameter("status"); // null / "" / "active" / "banned"
         String role = req.getParameter("role");     // null / "" / mã role
+        String q = req.getParameter("q");          // search theo username/fullName
 
         try {
             // Lấy toàn bộ user rồi filter bằng Java cho dễ hiểu
@@ -39,6 +40,16 @@ public class UserListServlet extends HttpServlet {
             List<User> filtered = new ArrayList<>();
 
             for (User u : allUsers) {
+                // Search theo username hoặc fullName
+                if (q != null && !q.trim().isEmpty()) {
+                    String needle = q.trim().toLowerCase();
+                    String username = u.getUsername() != null ? u.getUsername().toLowerCase() : "";                   
+                    String fullName = u.getFullName() != null ? u.getFullName().toLowerCase() : "";                      
+                    if (!username.contains(needle) && !fullName.contains(needle)) {
+                        continue;
+                    }
+                }
+
                 // Lọc theo trạng thái
                 if ("active".equalsIgnoreCase(status) && !u.isActive()) {
                     continue;
@@ -64,6 +75,7 @@ public class UserListServlet extends HttpServlet {
             req.setAttribute("allRoles", allRoles);
             req.setAttribute("statusFilter", status);
             req.setAttribute("roleFilter", role);
+            req.setAttribute("q", q);
 
         } catch (SQLException e) {
             e.printStackTrace();

@@ -17,6 +17,10 @@ import model.User;
 public class UserCreateServlet extends HttpServlet {
 
     private final UserDAO userDAO = new UserDAO();
+    private static final int USERNAME_MIN_LEN = 3;
+    private static final int USERNAME_MAX_LEN = 30;
+    private static final int FULLNAME_MIN_LEN = 2;
+    private static final int FULLNAME_MAX_LEN = 100;
 
     private boolean isAdmin(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
@@ -42,6 +46,9 @@ public class UserCreateServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
+
         if (!isAdmin(req)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
@@ -66,8 +73,19 @@ public class UserCreateServlet extends HttpServlet {
                     username, fullName, email, phone, active, selectedRoles);
             return;
         }
+        if (username.length() < USERNAME_MIN_LEN || username.length() > USERNAME_MAX_LEN) {
+            forwardError(req, resp,
+                    "Username phải từ " + USERNAME_MIN_LEN + " đến " + USERNAME_MAX_LEN + " ký tự.",
+                    username, fullName, email, phone, active, selectedRoles);
+            return;
+        }
         if (password.isEmpty()) {
             forwardError(req, resp, "Mật khẩu không được để trống.",
+                    username, fullName, email, phone, active, selectedRoles);
+            return;
+        }
+        if (!isValidPassword(password)) {
+            forwardError(req, resp, "Mật khẩu phải có ít nhất 6 ký tự, chứa ít nhất 1 chữ hoa và 1 số.",
                     username, fullName, email, phone, active, selectedRoles);
             return;
         }
@@ -76,8 +94,20 @@ public class UserCreateServlet extends HttpServlet {
                     username, fullName, email, phone, active, selectedRoles);
             return;
         }
+        if (fullName.length() < FULLNAME_MIN_LEN || fullName.length() > FULLNAME_MAX_LEN) {
+            forwardError(req, resp,
+                    "Họ tên phải từ " + FULLNAME_MIN_LEN + " đến " + FULLNAME_MAX_LEN + " ký tự.",
+                    username, fullName, email, phone, active, selectedRoles);
+            return;
+        }
         if (email.isEmpty()) {
             forwardError(req, resp, "Email không được để trống.",
+                    username, fullName, email, phone, active, selectedRoles);
+            return;
+        }
+        String normalizedPhone = normalizePhone(phone);
+        if (!phone.isEmpty() && normalizedPhone == null) {
+            forwardError(req, resp, "Số điện thoại không hợp lệ. Ví dụ: 0912345678 hoặc +84 912345678.",
                     username, fullName, email, phone, active, selectedRoles);
             return;
         }
@@ -98,7 +128,7 @@ public class UserCreateServlet extends HttpServlet {
                         username, fullName, email, phone, active, selectedRoles);
                 return;
             }
-            if (!phone.isEmpty() && userDAO.isPhoneTaken(phone, -1)) {
+            if (normalizedPhone != null && userDAO.isPhoneTaken(normalizedPhone, -1)) {
                 forwardError(req, resp, "Số điện thoại đã tồn tại.",
                         username, fullName, email, phone, active, selectedRoles);
                 return;
@@ -106,7 +136,7 @@ public class UserCreateServlet extends HttpServlet {
 
             long newId = userDAO.createUser(username, password, fullName,
                     email,
-                    phone.isEmpty() ? null : phone,
+                    normalizedPhone == null ? null : normalizedPhone,
                     active, selectedRoles);
             resp.sendRedirect(req.getContextPath() + "/admin/user?success=created");
 
@@ -130,5 +160,46 @@ public class UserCreateServlet extends HttpServlet {
         req.setAttribute("f_active", active);
         req.setAttribute("selectedRoles", selectedRoles);
         req.getRequestDispatcher("/views/admin/user-form.jsp").forward(req, resp);
+    }
+
+    private boolean isValidPassword(String password) {
+        if (password == null) {
+            return false;
+        }
+        if (password.length() < 6) {
+            return false;
+        }
+
+        boolean hasUppercase = password.matches(".*[A-Z].*");
+        boolean hasDigit = password.matches(".*\\d.*");
+
+        return hasUppercase && hasDigit;
+    }
+
+    /**
+     * Chuẩn hoá số điện thoại về dạng 0XXXXXXXXX (10 số).
+     * - Cho phép nhập có space/dash/dot.
+     * - Cho phép +84XXXXXXXXX hoặc 84XXXXXXXXX (sẽ đổi thành 0XXXXXXXXX).
+     * @return số đã chuẩn hoá, hoặc null nếu không hợp lệ
+     */
+    private String normalizePhone(String raw) {
+        if (raw == null) return null;
+        String s = raw.trim();
+        if (s.isEmpty()) return null;
+
+        // giữ lại số và dấu +
+        s = s.replaceAll("[^0-9+]", "");
+
+        if (s.startsWith("+84")) {
+            s = "0" + s.substring(3);
+        } else if (s.startsWith("84")) {
+            s = "0" + s.substring(2);
+        }
+
+        // VN mobile: 10 digits starting with 0
+        if (!s.matches("^0\\d{9}$")) {
+            return null;
+        }
+        return s;
     }
 }

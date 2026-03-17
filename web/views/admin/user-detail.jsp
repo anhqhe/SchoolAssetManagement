@@ -1,9 +1,17 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="model.User" %>
 
 <%
     User u = (User) request.getAttribute("viewUser");
     String error = (String) request.getAttribute("error");
+    User currentUser = (User) session.getAttribute("currentUser");
+    String successParam = request.getParameter("success");
+    String errorParam = request.getParameter("error");
+
+    String phoneVal = "";
+    if (u != null && u.getPhone() != null) {
+        phoneVal = u.getPhone().trim().replaceAll("[^0-9+]", "");
+    }
 %>
 
 <!DOCTYPE html>
@@ -44,6 +52,33 @@
                 </div>
                 <% } %>
 
+                <% if ("updated".equals(successParam)) { %>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check-circle"></i> Cập nhật thông tin thành công.
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
+                <% } else if ("username_empty".equals(errorParam)) { %>
+                <div class="alert alert-danger">Username không được để trống.</div>
+                <% } else if ("username_len".equals(errorParam)) { %>
+                <div class="alert alert-danger">Username phải từ 3 đến 30 ký tự.</div>
+                <% } else if ("fullname_empty".equals(errorParam)) { %>
+                <div class="alert alert-danger">Họ tên không được để trống.</div>
+                <% } else if ("fullname_len".equals(errorParam)) { %>
+                <div class="alert alert-danger">Họ tên phải từ 2 đến 100 ký tự.</div>
+                <% } else if ("email_empty".equals(errorParam)) { %>
+                <div class="alert alert-danger">Email không được để trống.</div>
+                <% } else if ("phone_invalid".equals(errorParam)) { %>
+                <div class="alert alert-danger">Số điện thoại không hợp lệ.</div>
+                <% } else if ("username_taken".equals(errorParam)) { %>
+                <div class="alert alert-danger">Username đã tồn tại.</div>
+                <% } else if ("email_taken".equals(errorParam)) { %>
+                <div class="alert alert-danger">Email đã tồn tại.</div>
+                <% } else if ("phone_taken".equals(errorParam)) { %>
+                <div class="alert alert-danger">Số điện thoại đã tồn tại.</div>
+                <% } else if ("update_failed".equals(errorParam)) { %>
+                <div class="alert alert-danger">Không thể cập nhật thông tin. Vui lòng thử lại.</div>
+                <% } %>
+
                 <% if (u == null) { %>
                 <div class="alert alert-warning">Không tìm thấy người dùng.</div>
                 <% } else { %>
@@ -62,26 +97,45 @@
                                 <% } %>
                             </div>
                             <div class="card-body">
-                                <table class="table table-borderless mb-0">
+                                <form method="post" action="${pageContext.request.contextPath}/admin/user/update" autocomplete="off">
+                                    <input type="hidden" name="id" value="<%= u.getUserId() %>">
+                                    <table class="table table-borderless mb-0">
                                     <tr>
                                         <th style="width:150px" class="text-gray-600">ID người dùng</th>
                                         <td><%= u.getUserId() %></td>
                                     </tr>
                                     <tr>
                                         <th class="text-gray-600">Tài khoản</th>
-                                        <td><%= u.getUsername() %></td>
+                                        <td>
+                                            <input type="text" name="username" class="form-control form-control-sm"
+                                                   value="<%= u.getUsername() != null ? u.getUsername() : "" %>"
+                                                   minlength="3" maxlength="30" required>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th class="text-gray-600">Họ tên</th>
-                                        <td><%= u.getFullName() != null ? u.getFullName() : "-" %></td>
+                                        <td>
+                                            <input type="text" name="fullName" class="form-control form-control-sm"
+                                                   value="<%= u.getFullName() != null ? u.getFullName() : "" %>"
+                                                   minlength="2" maxlength="100" required>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th class="text-gray-600">Email</th>
-                                        <td><%= u.getEmail() != null ? u.getEmail() : "-" %></td>
+                                        <td>
+                                            <input type="email" name="email" class="form-control form-control-sm"
+                                                   value="<%= u.getEmail() != null ? u.getEmail() : "" %>"
+                                                   required>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th class="text-gray-600">Số điện thoại</th>
-                                        <td><%= u.getPhone() != null ? u.getPhone() : "-" %></td>
+                                        <td>
+                                            <input type="text" name="phone" class="form-control form-control-sm"
+                                                   value="<%= phoneVal %>"
+                                                   inputmode="tel"
+                                                   placeholder="0912345678 hoặc +84 912345678">
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th class="text-gray-600">Vai trò</th>
@@ -105,6 +159,12 @@
                                         </td>
                                     </tr>
                                 </table>
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-save"></i> Lưu thay đổi
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -117,17 +177,26 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <% if (u.isActive()) { %>
+                                <%
+                                    boolean isSelf = (u != null && currentUser != null && u.getUserId() == currentUser.getUserId());
+                                    if (!isSelf) {
+                                        if (u.isActive()) {
+                                %>
                                 <button type="button" class="btn btn-danger btn-block mb-2"
                                         onclick="showToggleModal(<%= u.getUserId() %>, '<%= u.getUsername() %>', false)">
                                     <i class="fas fa-user-slash"></i> Ban tài khoản
                                 </button>
-                                <% } else { %>
+                                <%
+                                        } else {
+                                %>
                                 <button type="button" class="btn btn-success btn-block mb-2"
                                         onclick="showToggleModal(<%= u.getUserId() %>, '<%= u.getUsername() %>', true)">
                                     <i class="fas fa-user-check"></i> Mở ban tài khoản
                                 </button>
-                                <% } %>
+                                <%
+                                        }
+                                    }
+                                %>
 
                                 <a href="${pageContext.request.contextPath}/admin/user" class="btn btn-secondary btn-block">
                                     <i class="fas fa-arrow-left"></i> Quay lại
