@@ -112,6 +112,12 @@
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
+        </a>
+    </li>
        
     <% } %>
        
