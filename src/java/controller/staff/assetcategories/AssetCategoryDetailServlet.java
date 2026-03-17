@@ -1,6 +1,9 @@
-package controller;
+package controller.staff.assetcategories;
 
 import dao.AssetCategoryDAO;
+import dao.AssetDAO;
+import model.Asset;
+import model.AssetCategory;
 import model.User;
 
 import jakarta.servlet.ServletException;
@@ -14,13 +17,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "CategoryDeleteServlet", urlPatterns = {"/admin/categories/delete"})
-public class CategoryDeleteServlet extends HttpServlet {
+@WebServlet(name = "AssetCategoryDetailServlet", urlPatterns = {"/admin/categories/detail"})
+public class AssetCategoryDetailServlet extends HttpServlet {
 
     private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
+    private final AssetDAO assetDAO = new AssetDAO();
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -41,28 +45,22 @@ public class CategoryDeleteServlet extends HttpServlet {
         }
 
         try {
-            long id = Long.parseLong(idParam);
-            boolean deleted = categoryDAO.deleteCategory(id);
-            if (deleted) {
-                req.setAttribute("success", "Đã xóa danh mục tài sản.");
+            long categoryId = Long.parseLong(idParam.trim());
+            AssetCategory category = categoryDAO.getCategoryById(categoryId);
+
+            if (category == null) {
+                req.setAttribute("error", "Không tìm thấy danh mục tài sản.");
             } else {
-                req.setAttribute("error", "Không thể xóa danh mục tài sản.");
+                req.setAttribute("category", category);
+                req.setAttribute("assets", assetDAO.getAssetsByCategoryId(categoryId));
             }
         } catch (NumberFormatException e) {
-            resp.sendRedirect(req.getContextPath() + "/admin/categories");
-            return;
+            req.setAttribute("error", "ID danh mục không hợp lệ.");
         } catch (SQLException e) {
             e.printStackTrace();
-            req.setAttribute("error", "Có lỗi xảy ra khi xóa danh mục. Có thể đang được sử dụng ở tài sản khác.");
+            req.setAttribute("error", "Không thể tải chi tiết danh mục tài sản. Vui lòng thử lại sau.");
         }
 
-        try {
-            req.setAttribute("categories", categoryDAO.getAllCategories());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/allocation/staff/assetcategory-detail.jsp").forward(req, resp);
     }
 }
-

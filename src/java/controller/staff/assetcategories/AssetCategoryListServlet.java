@@ -1,7 +1,7 @@
-package controller;
+package controller.staff.assetcategories;
 
-import dao.RoomDAO;
-import model.Room;
+import dao.AssetCategoryDAO;
+import model.AssetCategory;
 import model.User;
 
 import jakarta.servlet.ServletException;
@@ -15,14 +15,13 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "RoomListServlet", urlPatterns = {"/rooms"})
-public class RoomListServlet extends HttpServlet {
+@WebServlet(name = "AssetCategoryListServlet", urlPatterns = {"/admin/categories"})
+public class AssetCategoryListServlet extends HttpServlet {
 
-    private final RoomDAO roomDAO = new RoomDAO();
+    private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Chỉ cho phép ADMIN truy cập
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -31,20 +30,19 @@ public class RoomListServlet extends HttpServlet {
 
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
-        if (roles == null || !roles.contains("ADMIN")) {
+        if (roles == null || !(roles.contains("ASSET_STAFF") || roles.contains("ADMIN"))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         try {
-            List<Room> rooms = roomDAO.getAllRooms();
-            req.setAttribute("rooms", rooms);
+            List<AssetCategory> categories = categoryDAO.getAllCategories();
+            req.setAttribute("categories", categories);
         } catch (SQLException e) {
             e.printStackTrace();
-            req.setAttribute("error", "Không thể tải danh sách phòng. Vui lòng thử lại sau.");
+            req.setAttribute("error", "Không thể tải danh sách danh mục tài sản. Vui lòng thử lại sau.");
         }
 
-        req.getRequestDispatcher("/views/admin/room-list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/allocation/staff/assetcategory-list.jsp").forward(req, resp);
     }
 }
-

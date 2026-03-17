@@ -105,6 +105,94 @@ public class AssetDAO {
         
         return null;
     }
+
+    public List<Asset> getAssetsByRoomId(long roomId) throws SQLException {
+        List<Asset> assets = new ArrayList<>();
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, " +
+                    "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, " +
+                    "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, " +
+                    "a.ConditionNote, a.IsActive, a.CreatedAt " +
+                    "FROM Assets a " +
+                    "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId " +
+                    "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId " +
+                    "WHERE a.CurrentRoomId = ? AND a.IsActive = 1 " +
+                    "ORDER BY a.AssetName ASC, a.AssetCode ASC";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, roomId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Asset asset = new Asset();
+                    asset.setAssetId(rs.getLong("AssetId"));
+                    asset.setAssetCode(rs.getString("AssetCode"));
+                    asset.setAssetName(rs.getString("AssetName"));
+                    asset.setCategoryId(rs.getLong("CategoryId"));
+                    asset.setCategoryName(rs.getString("CategoryName"));
+                    asset.setSerialNumber(rs.getString("SerialNumber"));
+                    asset.setModel(rs.getString("Model"));
+                    asset.setBrand(rs.getString("Brand"));
+                    asset.setStatus(rs.getString("Status"));
+                    asset.setCurrentRoomId(rs.getLong("CurrentRoomId"));
+                    asset.setRoomName(rs.getString("RoomName"));
+                    asset.setPurchaseDate(rs.getDate("PurchaseDate"));
+                    asset.setReceivedDate(rs.getDate("ReceivedDate"));
+                    asset.setConditionNote(rs.getString("ConditionNote"));
+                    asset.setActive(rs.getBoolean("IsActive"));
+                    asset.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    assets.add(asset);
+                }
+            }
+        }
+
+        return assets;
+    }
+
+    public List<Asset> getAssetsByCategoryId(long categoryId) throws SQLException {
+        List<Asset> assets = new ArrayList<>();
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, "
+                + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
+                + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
+                + "a.ConditionNote, a.IsActive, a.CreatedAt "
+                + "FROM Assets a "
+                + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
+                + "WHERE a.CategoryId = ? "
+                + "ORDER BY a.AssetName ASC, a.AssetCode ASC";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, categoryId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Asset asset = new Asset();
+                    asset.setAssetId(rs.getLong("AssetId"));
+                    asset.setAssetCode(rs.getString("AssetCode"));
+                    asset.setAssetName(rs.getString("AssetName"));
+                    asset.setCategoryId(rs.getLong("CategoryId"));
+                    asset.setCategoryName(rs.getString("CategoryName"));
+                    asset.setSerialNumber(rs.getString("SerialNumber"));
+                    asset.setModel(rs.getString("Model"));
+                    asset.setBrand(rs.getString("Brand"));
+                    asset.setStatus(rs.getString("Status"));
+                    asset.setCurrentRoomId(rs.getLong("CurrentRoomId"));
+                    asset.setRoomName(rs.getString("RoomName"));
+                    asset.setPurchaseDate(rs.getDate("PurchaseDate"));
+                    asset.setReceivedDate(rs.getDate("ReceivedDate"));
+                    asset.setConditionNote(rs.getString("ConditionNote"));
+                    asset.setActive(rs.getBoolean("IsActive"));
+                    asset.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    assets.add(asset);
+                }
+            }
+        }
+
+        return assets;
+    }
     
     /**
      * Search assets
