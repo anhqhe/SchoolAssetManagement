@@ -35,6 +35,10 @@ public class UserToggleActiveServlet extends HttpServlet {
 
         try {
             long id = Long.parseLong(idParam);
+            if (id == current.getUserId()) {
+                resp.sendRedirect(req.getContextPath() + "/admin/user?error=self_toggle");
+                return;
+            }
             boolean newActive = "true".equals(req.getParameter("active"));
             userDAO.setUserActive(id, newActive);
             String msg = newActive ? "unbanned" : "banned";

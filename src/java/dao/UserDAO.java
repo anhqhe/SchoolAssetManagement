@@ -292,7 +292,7 @@ public class UserDAO {
 
     public List<User> getAllUsers() throws SQLException {
         List<User> list = new ArrayList<>();
-        String sql = "SELECT UserId, Username, FullName, Email, Phone, IsActive FROM Users ORDER BY UserId DESC";
+        String sql = "SELECT UserId, Username, FullName, Email, Phone, IsActive FROM Users ORDER BY UserId ASC";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -337,11 +337,35 @@ public class UserDAO {
         }
     }
 
+    public boolean isUsernameTaken(String username, long excludeUserId) throws SQLException {
+        String sql = "SELECT 1 FROM Users WHERE Username = ? AND UserId <> ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setLong(2, excludeUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public boolean isEmailTaken(String email) throws SQLException {
         String sql = "SELECT 1 FROM Users WHERE Email = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean isEmailTaken(String email, long excludeUserId) throws SQLException {
+        String sql = "SELECT 1 FROM Users WHERE Email = ? AND UserId <> ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setLong(2, excludeUserId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
@@ -401,6 +425,19 @@ public class UserDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBoolean(1, active);
             ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updateUserAdmin(long userId, String username, String fullName, String email, String phone) throws SQLException {
+        String sql = "UPDATE Users SET Username = ?, FullName = ?, Email = ?, Phone = ? WHERE UserId = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, fullName);
+            ps.setString(3, email);
+            ps.setString(4, phone);
+            ps.setLong(5, userId);
             return ps.executeUpdate() > 0;
         }
     }

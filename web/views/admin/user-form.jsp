@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
 
 <%
@@ -75,19 +75,24 @@
                             <div class="form-group">
                                 <label for="username">Tài khoản <span class="text-danger">*</span></label>
                                 <input type="text" id="username" name="username" class="form-control"
-                                       value="<%= fUsername %>" required autocomplete="off">
+                                       value="<%= fUsername %>" required autocomplete="off"
+                                       minlength="3" maxlength="30">
+                                <small class="form-text text-muted">3–30 ký tự.</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="password">Mật khẩu <span class="text-danger">*</span></label>
                                 <input type="password" id="password" name="password" class="form-control"
                                        required autocomplete="new-password">
+                                <small class="form-text text-muted">Ít nhất 6 ký tự, có 1 chữ hoa và 1 số.</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="fullName">Họ tên <span class="text-danger">*</span></label>
                                 <input type="text" id="fullName" name="fullName" class="form-control"
-                                       value="<%= fFullName %>" required>
+                                       value="<%= fFullName %>" required
+                                       minlength="2" maxlength="100">
+                                <small class="form-text text-muted">2–100 ký tự.</small>
                             </div>
 
                             <div class="form-row">
@@ -99,7 +104,11 @@
                                 <div class="form-group col-md-6">
                                     <label for="phone">Số điện thoại</label>
                                     <input type="text" id="phone" name="phone" class="form-control"
-                                           value="<%= fPhone %>">
+                                           value="<%= fPhone %>"
+                                           inputmode="tel"
+                                           placeholder="0912345678 hoặc +84 912345678"
+                                           pattern="^(\\+84\\s?\\d{9}|84\\d{9}|0\\d{9})$">
+                                    <small class="form-text text-muted">Cho phép `0xxxxxxxxx`, `84xxxxxxxxx`, hoặc `+84xxxxxxxxx`.</small>
                                 </div>
                             </div>
 
