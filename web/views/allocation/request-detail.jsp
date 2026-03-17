@@ -321,100 +321,6 @@
                             </div>
                         </c:if>
 
-                        <!-- TEACHER & STAFF: Feedback của giáo viên cho staff -->
-                        <c:set var="feedback" value="${teacherFeedback}" />
-                        <c:if test="${(isTeacher || isStaff) && (req.status == 'COMPLETED' || req.status == 'OUT_OF_STOCK' || req.status == 'INCOMPLETE')}">
-                            <div class="card shadow-sm mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-comment-dots"></i> Feedback từ giáo viên
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <c:choose>
-                                        <c:when test="${not empty feedback}">
-                                            <c:choose>
-                                                <c:when test="${isStaff}">
-                                                    <button type="button" class="btn btn-outline-info"
-                                                            data-toggle="modal" data-target="#teacherFeedbackModal">
-                                                        <i class="fas fa-eye"></i> Xem feedback
-                                                    </button>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <!-- Teacher: cho phép chỉnh sửa feedback đã gửi -->
-                                                    <form method="post" action="${pageContext.request.contextPath}/teacher/request-detail">
-                                                        <input type="hidden" name="requestId" value="${req.requestId}" />
-                                                        <div class="form-group mb-2">
-                                                            <label class="mb-1">Nội dung feedback gửi cho staff</label>
-                                                            <textarea name="comment" class="form-control" rows="4"><c:out value="${feedback.comment}" /></textarea>
-                                                        </div>
-                                                        <c:if test="${feedback.createdAt != null}">
-                                                            <div class="text-muted small mb-2">
-                                                                Đã gửi lúc: ${feedback.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
-                                                            </div>
-                                                        </c:if>
-                                                        <button type="submit" class="btn btn-primary">
-                                                            <i class="fas fa-save"></i> Cập nhật feedback
-                                                        </button>
-                                                    </form>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <c:if test="${isTeacher}">
-                                                <form method="post" action="${pageContext.request.contextPath}/teacher/request-detail">
-                                                    <input type="hidden" name="requestId" value="${req.requestId}" />
-                                                    <div class="form-group">
-                                                        <label>Nội dung feedback gửi cho staff</label>
-                                                        <textarea name="comment" class="form-control" rows="4"
-                                                                  placeholder="Ví dụ: thời gian xử lý, bàn giao, chất lượng tài sản, hỗ trợ của nhân viên..."></textarea>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-paper-plane"></i> Gửi feedback
-                                                    </button>
-                                                </form>
-                                            </c:if>
-                                            <c:if test="${isStaff}">
-                                                <div class="text-muted">Giáo viên chưa gửi feedback.</div>
-                                            </c:if>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-                            </div>
-                        </c:if>
-
-                        <!-- STAFF ONLY: Popup xem feedback -->
-                        <c:if test="${isStaff && not empty feedback}">
-                            <div class="modal fade" id="teacherFeedbackModal" tabindex="-1" role="dialog" aria-hidden="true">
-                                <div class="modal-dialog modal-lg" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">
-                                                Feedback của giáo viên • ${req.requestCode}
-                                            </h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p class="mb-2"><strong>Giáo viên:</strong> ${req.teacherName}</p>
-                                            <c:if test="${feedback.createdAt != null}">
-                                                <p class="text-muted small mb-3">
-                                                    Gửi lúc: ${feedback.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
-                                                </p>
-                                            </c:if>
-                                            <div class="border rounded p-3 bg-light">
-                                                <c:out value="${feedback.comment}" />
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:if>
-
                         <!-- TEACHER ONLY: Update Request Buttons -->
                         <c:if test="${isTeacher && req.status == 'WAITING_BOARD'}">
                             <div class="card-body">
@@ -426,7 +332,10 @@
 
                         <!-- BOARD ONLY: Approve/Reject Buttons -->
                         <c:if test="${isBoard && req.status == 'WAITING_BOARD'}">
-                            <button type="button" class="btn btn-primary" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
+                            <button type="button" class="btn btn-primary"
+                                    data-req-id="${req.requestId}"
+                                    data-req-code="${req.requestCode}"
+                                    onclick="openApproveFromBtn(this)">
                                 <i class="fas fa-check"></i> Phê duyệt/ Từ chối
                             </button>
                         </c:if>
@@ -491,6 +400,12 @@
 
 
         <script>
+                                function openApproveFromBtn(btn) {
+                                    if (!btn) return;
+                                    const id = btn.getAttribute('data-req-id') || '';
+                                    const code = btn.getAttribute('data-req-code') || '';
+                                    openApproveModal(id, code);
+                                }
                                 function openApproveModal(id, code) {
                                     document.getElementById('modalReqId').value = id;
                                     document.getElementById('modalReqCode').innerText = code;

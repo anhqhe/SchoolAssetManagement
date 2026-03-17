@@ -7,7 +7,6 @@ package controller.allocation.staff;
 import dao.allocation.AllocationDAO;
 import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
-import dao.allocation.AssetRequestFeedbackDAO;
 import dao.allocation.AssetRequestItemDAO;
 import dto.ApprovalDTO;
 import dto.AssetDTO;
@@ -25,7 +24,6 @@ import java.sql.SQLException;
 import java.util.List;
 import model.User;
 import model.allocation.AssetAllocation;
-import model.allocation.AssetRequestFeedback;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +38,6 @@ public class RequestDetailStaff extends HttpServlet {
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
-    private AssetRequestFeedbackDAO feedbackDAO = new AssetRequestFeedbackDAO();
 
     private static final Logger LOGGER
             = Logger.getLogger(RequestDetailStaff.class.getName());
@@ -92,20 +89,11 @@ public class RequestDetailStaff extends HttpServlet {
             //Get allocations
             List<AssetAllocation> allocations = allocationDAO.getAllocationsByRequestId(requestId);
 
-            AssetRequestFeedback feedback = null;
-            try {
-                feedback = feedbackDAO.findByRequestId(requestId);
-            } catch (SQLException ex) {
-                // Nếu DB chưa tạo bảng feedback hoặc lỗi truy vấn feedback thì vẫn cho xem chi tiết yêu cầu
-                LOGGER.log(Level.WARNING, "Cannot load feedback for requestId=" + requestId, ex);
-            }
-
             request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
             request.setAttribute("allocations", allocations);
-            request.setAttribute("teacherFeedback", feedback);
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
         } catch (SQLException e) {
