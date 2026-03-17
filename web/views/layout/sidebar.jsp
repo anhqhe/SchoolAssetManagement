@@ -99,13 +99,20 @@
         </a>
     </li>
     
-     <li class="nav-item">
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/staff/allocation-history">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử cấp phát</span>
+        </a>
+    </li>
+     
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-    
+       
     <% } %>
        
     <!-- TEACHER ONLY -->
@@ -125,6 +132,13 @@
         </a>
     </li>
     
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/allocation-history">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử cấp phát</span>
+        </a>
+    </li>
+    
     <% } %>
        
     <!-- BOARD ONLY -->
@@ -141,6 +155,13 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/board/allocation-history">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử cấp phát</span>
         </a>
     </li>
     

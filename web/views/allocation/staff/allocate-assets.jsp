@@ -67,11 +67,11 @@
                             </div>
 
                             <c:forEach var="item" items="${neededItems}" varStatus="st">
-                                <div class="category-group" data-group="${st.index}" data-category="${item.categoryId}" data-limit="${item.quantity}">
+                                <div class="category-group" data-group="${st.index}" data-category="${item.categoryId}" data-required="${item.quantity}" data-allocated="${item.allocatedQuantity}" data-remaining="${item.remainingQuantity}">
                                     <div class="card shadow mb-4">
                                         <div class="card-header py-3">
                                             <h6 class="m-0 font-weight-bold text-primary category-title"
-                                                data-title="Loại tài sản: ${item.categoryName} (Số lượng cần: ${item.quantity})">
+                                                data-name="${item.categoryName}">
                                                 Loại tài sản: ${item.categoryName} 
                                                 (Số lượng cần: ${item.quantity} | Đã cấp: ${item.allocatedQuantity} | Còn thiếu: ${item.remainingQuantity})
                                             </h6>
@@ -203,6 +203,8 @@
 
                                                 let selectedAssets = {}; // group -> assets
 
+                                                let submitAction = null;
+
                                                 $(document).ready(function () {
 
                                                     // init groups
@@ -210,6 +212,7 @@
                                                         let group = $(this).data('group');
                                                         selectedAssets[group] = [];
                                                     });
+                                                    updateCounter();
 
                                                     // open modal
                                                     $('.btn-select-assets').click(function () {
@@ -319,8 +322,22 @@
 
                                                     });
 
+                                                    // track which submit button was clicked
+                                                    $('button[type="submit"]').on('click', function () {
+                                                        submitAction = $(this).val();
+                                                    });
+
                                                     // submit
                                                     $('form').submit(function (e) {
+
+                                                        if (!submitAction) {
+                                                            submitAction = 'allocate';
+                                                        }
+
+                                                        // Only require asset selection for allocate action
+                                                        if (submitAction !== 'allocate') {
+                                                            return;
+                                                        }
 
                                                         let allAssets = [];
 
@@ -400,16 +417,22 @@
 
                                                 function updateCounter() {
 
-                                                    $('.category-group').each(function () {
+                                                    $(".category-group").each(function () {
 
-                                                        let group = $(this).data('group');
-                                                        let limit = $(this).data('limit');
+                                                        let group = $(this).data("group");
+                                                        let required = $(this).data("required");
+                                                        let allocated = $(this).data("allocated");
+                                                        let remaining = $(this).data("remaining");
                                                         let count = selectedAssets[group].length;
 
-                                                        let title = $(this).find('.category-title').data('title');
+                                                        let name = $(this).find(".category-title").data("name");
 
-                                                        $(this).find('.category-title')
-                                                                .text(title + " - Đã chọn: " + count + "/" + limit);
+                                                        $(this).find(".category-title")
+                                                                .text("Loại tài sản: " + name
+                                                                        + " (Số lượng cần: " + required
+                                                                        + " | Đã cấp: " + allocated
+                                                                        + " | Còn thiếu: " + remaining
+                                                                        + " | Đã chọn: " + count + "/" + remaining + ")");
 
                                                     });
 
@@ -454,5 +477,8 @@
 
     </body>
 </html>
+
+
+
 
 
