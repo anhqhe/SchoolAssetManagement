@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ include file="/views/layout/system-ui-config.jspf" %>
 
 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
 
@@ -51,3 +52,19 @@
         </li>
     </ul>
 </nav>
+
+<%
+    Object enabledObj = request.getAttribute("uiBannerEnabled");
+    boolean bannerEnabled = (enabledObj instanceof Boolean) ? (Boolean) enabledObj : false;
+    String bannerText = String.valueOf(request.getAttribute("uiBannerText") == null ? "" : request.getAttribute("uiBannerText"));
+    if (bannerEnabled && bannerText != null && !bannerText.trim().isEmpty()) {
+%>
+<div class="container-fluid">
+    <div class="alert alert-warning shadow-sm mb-4" role="alert" style="border-left: .25rem solid var(--ui-primary);">
+        <i class="fas fa-bullhorn mr-1"></i>
+        <%= bannerText %>
+    </div>
+</div>
+<%
+    }
+%>

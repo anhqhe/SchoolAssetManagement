@@ -22,7 +22,9 @@ public class RoomListServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Chỉ cho phép ADMIN truy cập
+        /*
+         * Trang danh sách phòng (ADMIN).
+         */
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -37,10 +39,12 @@ public class RoomListServlet extends HttpServlet {
         }
 
         try {
+            // Lấy toàn bộ phòng để hiển thị bảng (DataTables đang làm sort/search phía client)
             List<Room> rooms = roomDAO.getAllRooms();
             req.setAttribute("rooms", rooms);
         } catch (SQLException e) {
             e.printStackTrace();
+            // Không leak thông tin lỗi SQL ra UI; chỉ trả thông báo chung
             req.setAttribute("error", "Không thể tải danh sách phòng. Vui lòng thử lại sau.");
         }
 

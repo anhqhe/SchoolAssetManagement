@@ -23,9 +23,14 @@ public class RoomDAO {
     
     public List<Room> getAllRooms() throws SQLException {
     List<Room> list = new ArrayList<>();
-    // Ưu tiên lấy trưởng phòng qua TeacherRoomAssignments (IsPrimary=1).
-    // Nếu DB chưa có bảng này (hoặc khác schema), fallback về query chỉ lấy Rooms
-    // để trang /rooms vẫn hiển thị được danh sách phòng.
+    /*
+     * Lấy danh sách phòng để hiển thị cho trang quản trị.
+     * Ưu tiên join để lấy tên "trưởng phòng" (TeacherRoomAssignments.IsPrimary=1) nếu hệ DB có bảng này.
+     *
+     * Lưu ý về thiết kế:
+     * - Đoạn fallback hiện dựa vào SQLException, nên có thể che mất lỗi DB thật (timeout/permission/syntax).
+     * - Nếu cần "fallback khi thiếu bảng", nên bắt theo lỗi cụ thể của SQL Server thay vì bắt mọi SQLException.
+     */
     String sqlWithHead = "SELECT r.RoomId, r.RoomName, r.Location, u.FullName AS HeadTeacherName "
             + "FROM Rooms r "
             + "LEFT JOIN TeacherRoomAssignments tra ON tra.RoomId = r.RoomId AND tra.IsPrimary = 1 "
@@ -47,7 +52,7 @@ public class RoomDAO {
                 list.add(r);
             }
         } catch (SQLException ex) {
-            // fallback: không join trưởng phòng
+            // Fallback: không join trưởng phòng (chỉ lấy bảng Rooms)
             try (PreparedStatement ps = conn.prepareStatement(sqlRoomsOnly);
                  ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -65,6 +70,7 @@ public class RoomDAO {
 }
 
     public Room getRoomById(long roomId) throws SQLException {
+        // Lấy thông tin cơ bản của phòng theo ID (dùng PreparedStatement để tránh SQL injection)
         String sql = "SELECT RoomId, RoomName, Location FROM Rooms WHERE RoomId = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -81,6 +87,7 @@ public class RoomDAO {
     }
 
     public User getPrimaryTeacherByRoomId(long roomId) throws SQLException {
+        // Lấy giáo viên được gán làm trưởng phòng (IsPrimary=1). TOP 1 để phòng trường hợp dữ liệu bị trùng.
         String sql = "SELECT TOP 1 u.UserId, u.Username, u.FullName, u.Email, u.Phone, u.IsActive "
                 + "FROM TeacherRoomAssignments tra "
                 + "JOIN Users u ON tra.TeacherId = u.UserId "
@@ -104,6 +111,7 @@ public class RoomDAO {
     }
 
     public boolean updateRoomBasic(long roomId, String roomName, String location) throws SQLException {
+        // Cập nhật tên + vị trí. Validate business (độ dài, ký tự...) nên được làm ở tầng servlet/service.
         String sql = "UPDATE Rooms SET RoomName = ?, Location = ? WHERE RoomId = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -115,8 +123,13 @@ public class RoomDAO {
     }
 
     public void setPrimaryTeacherForRoom(long roomId, Long teacherId) throws SQLException {
-        // Nếu teacherId null: bỏ gán trưởng phòng (set hết IsPrimary = 0)
-        // Nếu teacherId != null: đảm bảo chỉ có 1 bản ghi IsPrimary=1 cho room này
+        /*
+         * Gán (hoặc huỷ gán) trưởng phòng:
+         * - teacherId == null: huỷ gán -> set IsPrimary=0 cho tất cả assignment của phòng
+         * - teacherId != null: đảm bảo chỉ có 1 bản ghi IsPrimary=1 cho phòng này
+         *
+         * Dùng transaction để tránh trạng thái dở dang nếu có lỗi giữa chừng.
+         */
         try (Connection conn = DBUtil.getConnection()) {
             conn.setAutoCommit(false);
             try {

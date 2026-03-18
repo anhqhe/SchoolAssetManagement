@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ include file="/views/layout/system-ui-config.jspf" %>
 
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
@@ -51,13 +52,6 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/user">
             <i class="fas fa-fw fa-users"></i>
             <span>Quản lý người dùng</span>
-        </a>
-    </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
-            <i class="fas fa-fw fa-cogs"></i>
-            <span>Cài đặt</span>
         </a>
     </li>
     
@@ -182,6 +176,13 @@
 
     <!-- ALL USERS -->
     <hr class="sidebar-divider">
+
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/settings">
+            <i class="fas fa-fw fa-cogs"></i>
+            <span>Cài đặt</span>
+        </a>
+    </li>
     
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/change-password">

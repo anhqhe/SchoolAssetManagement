@@ -22,6 +22,13 @@ public class RoomConfigServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        /*
+         * Trang cấu hình phòng (ADMIN):
+         * - GET: hiển thị form với dữ liệu phòng hiện tại
+         * - POST: cập nhật RoomName/Location
+         *
+         * Quyền truy cập phải được kiểm soát ở servlet (không chỉ ẩn nút ở UI).
+         */
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -37,16 +44,22 @@ public class RoomConfigServlet extends HttpServlet {
 
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
+            // Thiếu id -> quay về list để tránh form rỗng
             resp.sendRedirect(req.getContextPath() + "/rooms");
             return;
         }
 
+        // Load dữ liệu phòng để fill vào form
         loadDataForForm(req, idParam);
         req.getRequestDispatcher("/views/admin/room-config.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        /*
+         * Cập nhật thông tin cơ bản của phòng.
+         * Lưu ý: hiện chưa có CSRF token cho form này; nếu triển khai production nên bổ sung.
+         */
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -73,6 +86,7 @@ public class RoomConfigServlet extends HttpServlet {
         try {
             roomId = Long.parseLong(roomIdParam.trim());
         } catch (NumberFormatException e) {
+            // roomId bị sửa trên client hoặc sai định dạng
             req.setAttribute("error", "Room ID không hợp lệ.");
             loadDataForForm(req, roomIdParam);
             req.getRequestDispatcher("/views/admin/room-config.jsp").forward(req, resp);
@@ -80,12 +94,14 @@ public class RoomConfigServlet extends HttpServlet {
         }
 
         if (roomName == null || roomName.trim().isEmpty()) {
+            // Validate tối thiểu: không cho tên phòng rỗng
             req.setAttribute("error", "Tên phòng không được để trống.");
             loadDataForForm(req, String.valueOf(roomId));
             req.getRequestDispatcher("/views/admin/room-config.jsp").forward(req, resp);
             return;
         }
 
+        // Chuẩn hoá input: trim, và cho phép location null
         String cleanName = roomName.trim();
         String cleanLocation = (location != null) ? location.trim() : null;
 
@@ -101,6 +117,7 @@ public class RoomConfigServlet extends HttpServlet {
             req.setAttribute("error", "Có lỗi xảy ra khi cập nhật phòng. Vui lòng thử lại sau.");
         }
 
+        // Reload lại dữ liệu sau khi update để form hiển thị dữ liệu mới nhất
         loadDataForForm(req, String.valueOf(roomId));
         req.getRequestDispatcher("/views/admin/room-config.jsp").forward(req, resp);
     }
@@ -111,6 +128,7 @@ public class RoomConfigServlet extends HttpServlet {
             Room room = roomDAO.getRoomById(roomId);
             req.setAttribute("room", room);
         } catch (Exception e) {
+            // Fail-soft cho form: nếu id lỗi thì để room=null và báo error chung
             req.setAttribute("room", null);
             if (req.getAttribute("error") == null) {
                 req.setAttribute("error", "ID phòng không hợp lệ.");

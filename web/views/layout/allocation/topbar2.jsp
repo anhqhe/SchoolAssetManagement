@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="dao.allocation.NotificationDAO, model.allocation.Notification, java.util.List" %>
+<%@ include file="/views/layout/system-ui-config.jspf" %>
 
 <!-- Set role flags -->
 <c:set var="isTeacher" value="false"/>
@@ -124,6 +125,22 @@
         </li>
     </ul>
 </nav>
+
+<%
+    Object enabledObj2 = request.getAttribute("uiBannerEnabled");
+    boolean bannerEnabled2 = (enabledObj2 instanceof Boolean) ? (Boolean) enabledObj2 : false;
+    String bannerText2 = String.valueOf(request.getAttribute("uiBannerText") == null ? "" : request.getAttribute("uiBannerText"));
+    if (bannerEnabled2 && bannerText2 != null && !bannerText2.trim().isEmpty()) {
+%>
+<div class="container-fluid">
+    <div class="alert alert-warning shadow-sm mb-4" role="alert" style="border-left: .25rem solid var(--ui-primary);">
+        <i class="fas fa-bullhorn mr-1"></i>
+        <%= bannerText2 %>
+    </div>
+</div>
+<%
+    }
+%>
 
 <script>
     const userId = "${sessionScope.currentUser.userId}";

@@ -25,6 +25,12 @@ public class RoomDetailServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        /*
+         * Trang chi tiết phòng (ADMIN):
+         * - Nhận roomId từ query param `id`
+         * - Load thông tin phòng + danh sách tài sản đang gán vào phòng
+         * - Forward sang JSP để render
+         */
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -40,6 +46,7 @@ public class RoomDetailServlet extends HttpServlet {
 
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
+            // Thiếu tham số -> quay về danh sách để tránh trang "trống"
             resp.sendRedirect(req.getContextPath() + "/rooms");
             return;
         }
@@ -51,13 +58,16 @@ public class RoomDetailServlet extends HttpServlet {
                 req.setAttribute("error", "Không tìm thấy phòng.");
             } else {
                 req.setAttribute("room", room);
+                // Danh sách tài sản phục vụ bảng hiển thị ở trang chi tiết
                 List<Asset> assetsInRoom = assetDAO.getAssetsByRoomId(roomId);
                 req.setAttribute("assetsInRoom", assetsInRoom);
             }
         } catch (NumberFormatException e) {
+            // id không phải số -> báo lỗi nhẹ nhàng ở UI
             req.setAttribute("error", "ID phòng không hợp lệ.");
         } catch (SQLException e) {
             e.printStackTrace();
+            // Không hiển thị chi tiết lỗi DB ra UI
             req.setAttribute("error", "Không thể tải thông tin phòng. Vui lòng thử lại sau.");
         }
 
