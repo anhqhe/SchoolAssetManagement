@@ -95,6 +95,7 @@ public class AssetReportServlet extends HttpServlet {
         }
         long roomId = Long.parseLong(roomIdStr.trim());
         long categoryId = Long.parseLong(categoryIdStr.trim());
+        
 
         List<UsageDetailRow> data = reportDao.getUsageDetailByRoomAndCategory(roomId, categoryId);
         request.setAttribute("detailData", data);

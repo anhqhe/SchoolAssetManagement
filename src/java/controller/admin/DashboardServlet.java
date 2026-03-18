@@ -122,7 +122,7 @@ public class DashboardServlet extends HttpServlet {
             request.setAttribute("recentRequests", recentRequests);
 
             // ---------- Thống kê điều chuyển tài sản ----------
-            List<Transfer> transfers = transferDAO.getTransfers(null, null);
+            List<Transfer> transfers = transferDAO.getTransfers(null, null,null, null,null,null);
 
             int totalTransfers = transfers.size();
             int pendingTransfers = 0;

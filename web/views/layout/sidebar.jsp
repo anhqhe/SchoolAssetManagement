@@ -187,13 +187,6 @@
             <span>Lịch sử cấp phát</span>
         </a>
     </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/board/reports">
-            <i class="fas fa-fw fa-chart-bar"></i>
-            <span>Báo cáo</span>
-        </a>
-    </li>
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
@@ -232,21 +225,4 @@
     <div class="text-center d-none d-md-inline">
         <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>
-
-    <!-- Staff + Board -->
-    <% if (sidebarRoles != null && (sidebarRoles.contains("BOARD") || sidebarRoles.contains("ASSET_STAFF")) && !sidebarRoles.contains("ADMIN")) { %>
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
-            <i class="fas fa-file-alt"></i>
-            <span>Báo cáo tài sản</span>
-        </a>
-    </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
-            <i class="fas fa-file-alt"></i>
-            <span>Báo cáo sử dụng TS</span>
-        </a>
-    </li>
-    <% } %>
 </ul>
