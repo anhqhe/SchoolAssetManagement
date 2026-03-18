@@ -1,6 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="dao.allocation.NotificationDAO, model.allocation.Notification, java.util.List" %>
-<%@ include file="/views/layout/system-ui-config.jspf" %>
 
 <!-- Set role flags -->
 <c:set var="isTeacher" value="false"/>
