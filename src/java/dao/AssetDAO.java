@@ -6,6 +6,7 @@ import util.DBUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import model.Transfer;
 
 public class AssetDAO {
     
@@ -284,5 +285,120 @@ public class AssetDAO {
     }
     return list;
 }
+public List<Transfer> getAssetTransferHistoryPaging(
+        String keyword, String fromDate, String toDate,
+        int offset, int pageSize) throws SQLException {
+
+    String sql = "SELECT " +
+            " a.AssetId, a.AssetName, a.AssetCode, " +
+            " t.TransferCode, " +
+            " fr.RoomName AS FromRoomName, " +
+            " tr.RoomName AS ToRoomName, " +
+            " t.CreatedAt " +
+            "FROM AssetTransferItems ti " +
+            "JOIN Assets a ON ti.AssetId = a.AssetId " +
+            "JOIN AssetTransfers t ON ti.TransferId = t.TransferId " +
+            "LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId " +
+            "LEFT JOIN Rooms tr ON t.ToRoomId = tr.RoomId " +
+            "WHERE 1=1 ";
+
+ StringBuilder sb = new StringBuilder(sql);
+    List<Object> params = new ArrayList<>();
+
+    if (keyword != null && !keyword.isEmpty()) {
+        sb.append(" AND (a.AssetName LIKE ? OR t.TransferCode LIKE ?)");
+        params.add("%" + keyword + "%");
+        params.add("%" + keyword + "%");
+    }
+
+    if (fromDate != null && !fromDate.isEmpty()) {
+        sb.append(" AND CAST(t.CreatedAt AS DATE) >= ?");
+        params.add(fromDate);
+    }
+
+    if (toDate != null && !toDate.isEmpty()) {
+        sb.append(" AND CAST(t.CreatedAt AS DATE) <= ?");
+        params.add(toDate);
+    }
+
+    sb.append(" ORDER BY t.CreatedAt DESC");
+    sb.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+    params.add(offset);
+    params.add(pageSize);
+
+    List<Transfer> list = new ArrayList<>();
+
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            Transfer t = new Transfer();
+
+            t.setAssetNames(rs.getString("AssetName")); // reuse field
+            t.setTransferCode(rs.getString("TransferCode"));
+            t.setFromRoomName(rs.getString("FromRoomName"));
+            t.setToRoomName(rs.getString("ToRoomName"));
+            t.setCreatedAt(rs.getTimestamp("CreatedAt"));
+
+            list.add(t);
+        }
+    }
+
+    return list;
+}
+public int countAssetTransferHistory(
+        String keyword, String fromDate, String toDate) throws SQLException {
+
+    String sql = "SELECT COUNT(DISTINCT t.TransferId) " +
+                 "FROM AssetTransfers t " +
+                 "LEFT JOIN AssetTransferItems ti ON t.TransferId = ti.TransferId " +
+                 "LEFT JOIN Assets a ON ti.AssetId = a.AssetId " +
+                 "WHERE 1=1";
+
+    StringBuilder sb = new StringBuilder(sql);
+    List<Object> params = new ArrayList<>();
+
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        sb.append(" AND (a.AssetName LIKE ? OR t.TransferCode LIKE ?)");
+        params.add("%" + keyword.trim() + "%");
+        params.add("%" + keyword.trim() + "%");
+    }
+
+    if (fromDate != null && !fromDate.isEmpty()) {
+        sb.append(" AND CAST(t.CreatedAt AS DATE) >= ?");
+        params.add(fromDate);
+    }
+
+    if (toDate != null && !toDate.isEmpty()) {
+        sb.append(" AND CAST(t.CreatedAt AS DATE) <= ?");
+        params.add(toDate);
+    }
+
+ 
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+
+
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1); 
+            }
+        }
+    }
+
+    return 0; 
+}
+
 }
 
