@@ -234,7 +234,6 @@ public class AssetServlet_CRUD extends HttpServlet {
                 assetDao.insert(a);
                 inserted++;
             }
-
             response.sendRedirect(request.getContextPath() + "/assets?action=list&created=" + inserted);
         } catch (SQLException e) {
             Asset assetForForm = buildAssetFromRequestSafe(request);
