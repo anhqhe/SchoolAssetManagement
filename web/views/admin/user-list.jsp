@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.User" %>
 
@@ -13,6 +13,8 @@
     List<String> allRoles = (List<String>) request.getAttribute("allRoles");
     String statusFilter = (String) request.getAttribute("statusFilter");
     String roleFilter = (String) request.getAttribute("roleFilter");
+    User currentUser = (User) session.getAttribute("currentUser");
+    String q = (String) request.getAttribute("q");
 %>
 
 <!DOCTYPE html>
@@ -70,6 +72,11 @@
                     <i class="fas fa-check-circle"></i> Đã mở ban tài khoản thành công.
                     <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
                 </div>
+                <% } else if ("self_toggle".equals(errorParam)) { %>
+                <div class="alert alert-warning alert-dismissible fade show">
+                    <i class="fas fa-exclamation-triangle"></i> Không thể ban/mở ban chính tài khoản của bạn.
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
                 <% } %>
 
                 <div class="card shadow mb-4">
@@ -80,6 +87,12 @@
                         </h6>
 
                         <form class="form-inline" method="get" action="${pageContext.request.contextPath}/admin/user">
+                            <div class="form-group mr-2 mb-2">
+                                <label for="q" class="mr-1">Tìm</label>
+                                <input id="q" name="q" class="form-control form-control-sm"
+                                       placeholder="Tài khoản / Họ tên"
+                                       value="<%= (q != null) ? q : "" %>">
+                            </div>
                             <div class="form-group mr-2 mb-2">
                                 <label for="statusFilter" class="mr-1">Trạng thái</label>
                                 <select id="statusFilter" name="status" class="form-control form-control-sm">
@@ -181,17 +194,26 @@
                                             <i class="fas fa-eye"></i>
                                         </a>
 
-                                        <% if (u.isActive()) { %>
+                                        <%
+                                            boolean isSelf = currentUser != null && u.getUserId() == currentUser.getUserId();
+                                            if (!isSelf) {
+                                                if (u.isActive()) {
+                                        %>
                                         <button type="button" class="btn btn-sm btn-danger" title="Ban"
                                                 onclick="showToggleModal(<%= u.getUserId() %>, '<%= u.getUsername() %>', false)">
                                             <i class="fas fa-user-slash"></i>
                                         </button>
-                                        <% } else { %>
+                                        <%
+                                                } else {
+                                        %>
                                         <button type="button" class="btn btn-sm btn-success" title="Mở ban"
                                                 onclick="showToggleModal(<%= u.getUserId() %>, '<%= u.getUsername() %>', true)">
                                             <i class="fas fa-user-check"></i>
                                         </button>
-                                        <% } %>
+                                        <%
+                                                }
+                                            }
+                                        %>
                                     </td>
                                 </tr>
                                 <%
@@ -252,7 +274,6 @@
                 "info": "Trang _PAGE_ / _PAGES_",
                 "infoEmpty": "Không có dữ liệu",
                 "infoFiltered": "(lọc từ _MAX_ người dùng)",
-                "search": "Tìm kiếm:",
                 "paginate": {
                     "first": "Đầu",
                     "last": "Cuối",
@@ -261,7 +282,8 @@
                 }
             },
             "pageLength": 10,
-            "order": [[0, "desc"]]
+            "ordering": false,
+            "searching": false
         });
     });
 

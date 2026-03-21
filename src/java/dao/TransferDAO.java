@@ -333,4 +333,110 @@ public List<String> getAssetHistory(String assetName) throws SQLException {
     return history;
 }
 
+public boolean updateTransferWithItems(Transfer t, Map<Integer, String> assetNoteMap) throws SQLException {
+
+    String sqlUpdateTransfer =
+            "UPDATE AssetTransfers SET FromRoomId=?, ToRoomId=?, Reason=?, UpdatedAt=GETDATE() " +
+            "WHERE TransferId=? AND Status='PENDING'";
+
+    String sqlDeleteItems =
+            "DELETE FROM AssetTransferItems WHERE TransferId=?";
+
+    String sqlInsertItem =
+            "INSERT INTO AssetTransferItems (TransferId, AssetId, Note) VALUES (?, ?, ?)";
+
+    Connection conn = null;
+
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false);
+
+        // 1. Update transfer
+        try (PreparedStatement ps = conn.prepareStatement(sqlUpdateTransfer)) {
+            ps.setInt(1, t.getFromRoomId());
+            ps.setInt(2, t.getToRoomId());
+            ps.setString(3, t.getReason());
+            ps.setInt(4, t.getTransferId());
+
+            if (ps.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        // 2. Delete old items
+        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteItems)) {
+            ps.setInt(1, t.getTransferId());
+            ps.executeUpdate();
+        }
+
+        // 3. Insert new items
+        try (PreparedStatement ps = conn.prepareStatement(sqlInsertItem)) {
+            for (Map.Entry<Integer, String> entry : assetNoteMap.entrySet()) {
+                ps.setInt(1, t.getTransferId());
+                ps.setInt(2, entry.getKey());
+                ps.setString(3, entry.getValue());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException e) {
+        if (conn != null) conn.rollback();
+        throw e;
+    } finally {
+        if (conn != null) {
+            conn.setAutoCommit(true);
+            conn.close();
+        }
+    }
+}
+
+public boolean deleteTransfer(int transferId) throws SQLException {
+
+    String sqlDeleteItems =
+            "DELETE FROM AssetTransferItems WHERE TransferId=?";
+
+    String sqlDeleteTransfer =
+            "DELETE FROM AssetTransfers WHERE TransferId=? AND Status='PENDING'";
+
+    Connection conn = null;
+
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false);
+
+        // 1. delete items
+        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteItems)) {
+            ps.setInt(1, transferId);
+            ps.executeUpdate();
+        }
+
+        // 2. delete transfer
+        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteTransfer)) {
+            ps.setInt(1, transferId);
+
+            if (ps.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException e) {
+        if (conn != null) conn.rollback();
+        throw e;
+    } finally {
+        if (conn != null) {
+            conn.setAutoCommit(true);
+            conn.close();
+        }
+    }
+}
+
 }

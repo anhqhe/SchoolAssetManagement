@@ -254,8 +254,16 @@
                                 data-assets="${not empty t.assetNames ? t.assetNames : ''}">
                             <i class="fas fa-eye"></i>
                             </button>
-
-                                                <c:if test="${isAssetStaff}">
+                                <button class="btn btn-sm btn-info edit-btn"
+                                        data-id="${t.transferId}"
+                                        data-code="${t.transferCode}"
+                                        data-from="${t.fromRoomId}"
+                                        data-to="${t.toRoomId}"
+                                        data-reason="${t.reason}"
+                                        ${t.status != 'PENDING' ? 'disabled' : ''}>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                    <c:if test="${isAssetStaff}">
                    <button class="btn btn-sm btn-success approve-open-btn"
                            data-id="${t.transferId}"
                            data-code="${t.transferCode}"
@@ -475,6 +483,68 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="editTransferModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i> Chỉnh sửa điều chuyển
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+
+            <form method="post"
+                  action="${pageContext.request.contextPath}/transfers/update">
+
+                <input type="hidden" name="transferId" id="eId">
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+                        <label>Phòng đi</label>
+                        <select name="fromRoomId" id="eFrom" class="form-control">
+                            <c:forEach var="room" items="${rooms}">
+                                <option value="${room.roomId}">${room.roomName}</option>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phòng đến</label>
+                        <select name="toRoomId" id="eTo" class="form-control">
+                            <c:forEach var="room" items="${rooms}">
+                                <option value="${room.roomId}">${room.roomName}</option>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lý do</label>
+                        <textarea name="reason" id="eReason"
+                                  class="form-control"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+
+                    <button type="button" id="deleteTransferBtn"
+                            class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
+
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">Hủy</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- SCRIPTS -->
 <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
@@ -483,38 +553,32 @@
 <script src="${pageContext.request.contextPath}/assets/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
 <script>
-//    $(document).on("click", ".asset-item", function () {
-//
-//    let assetName = $(this).data("name");
-//
-//    $("#assetHistory").html(
-//        "<div class='text-muted'>Đang tải lịch sử...</div>"
-//    );
-//
-//    $.get("asset-history", { name: assetName }, function (data) {
-//
-//        if (data.length === 0) {
-//            $("#assetHistory").html("<em class='text-muted'>Không có lịch sử</em>");
-//            return;
-//        }
-//
-//        let html = "<ul class='list-group mt-2'>";
-//
-//        data.forEach(h => {
-//            html +=
-//                "<li class='list-group-item'>" +
-//                "<b>" + h.room + "</b>" +
-//                "<br><small>" + h.date + "</small>" +
-//                "</li>";
-//        });
-//
-//        html += "</ul>";
-//
-//        $("#assetHistory").html(html);
-//
-//    });
-//
-//});
+let editId = null;
+
+$(document).on("click", ".edit-btn", function () {
+
+    editId = $(this).data("id");
+
+    $("#eId").val(editId);
+    $("#eFrom").val($(this).data("from"));
+    $("#eTo").val($(this).data("to"));
+    $("#eReason").val($(this).data("reason"));
+
+    $("#editTransferModal").modal("show");
+});
+$("#deleteTransferBtn").click(function () {
+
+    if (!editId) return;
+
+    if (!confirm("Bạn có chắc muốn xóa phiếu này?")) return;
+
+    $.post("${pageContext.request.contextPath}/transfers/delete", {
+        id: editId
+    }, function () {
+        location.reload();
+    });
+});
+
  document.querySelector("form").addEventListener("submit", function (e) {
 
     const fromDate = document.getElementById("fromDate").value;
