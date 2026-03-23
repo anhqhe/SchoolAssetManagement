@@ -31,14 +31,25 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
         return;
     }
     
+         response.setContentType("application/json");
+
         try {
             int id = Integer.parseInt(request.getParameter("id"));
 
             TransferDAO dao = new TransferDAO();
+            Transfer t = dao.getTransferById(id);
+            if (!"PENDING".equals(t.getStatus())) {
+                response.setStatus(400);
+                response.getWriter().write("{\"message\":\"Chỉ được xóa phiếu PENDING\"}");
+                return;
+            }
             dao.deleteTransfer(id);
 
+            response.getWriter().write("{\"success\": true}");
+
         } catch (Exception e) {
-            e.printStackTrace();
+            response.setStatus(500);
+            response.getWriter().write("{\"success\": false}");
         }
 }
 
