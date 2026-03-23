@@ -27,6 +27,9 @@ public class Transfer {
     private int fromRoomId;    
     private int toRoomId;       
     private int requestedById;  
+    private int version;
+    public int getVersion() { return version; }
+    
     public int getAssetId() { return assetId; }
     public void setAssetId(int assetId) { this.assetId = assetId; }
     public int getFromRoomId() { return fromRoomId; }
@@ -68,4 +71,6 @@ public class Transfer {
     public void setStatusBadgeClass(String statusBadgeClass) { this.statusBadgeClass = statusBadgeClass; }
     public String getAssetNames() { return assetNames; }
     public void setAssetNames(String assetNames) { this.assetNames = assetNames; }
+
+    public void setVersion(int version) { this.version = version; }
 }

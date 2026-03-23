@@ -66,19 +66,24 @@
             <i class="fas fa-file-alt"></i>
             <span>Báo cáo tài sản</span>
         </a>
-    </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
-            <i class="fas fa-file-alt"></i>
-            <span>Báo cáo sử dụng TS</span>
-        </a>
-    </li>
-    
+    </li>    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
+        </a>
+    </li>
+       <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
+        </a>
+    </li>
+        
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
         </a>
     </li>
     <% } %>
@@ -113,18 +118,11 @@
             <span>Lịch sử cấp phát</span>
         </a>
     </li>
-     
+    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
-        </a>
-    </li>
-
-     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
-            <i class="fas fa-file-alt"></i>
-            <span>Báo cáo tài sản</span>
         </a>
     </li>
     <li class="nav-item">
@@ -133,7 +131,12 @@
             <span>Lịch sử điều chuyển tài sản</span>
         </a>
     </li>
-       
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
+        </a>
+    </li>
     <% } %>
        
     <!-- TEACHER ONLY -->
@@ -204,14 +207,12 @@
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-
-     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
-            <i class="fas fa-file-alt"></i>
-            <span>Báo cáo tài sản</span>
+       <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
         </a>
     </li>
-    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
             <i class="fas fa-file-alt"></i>
