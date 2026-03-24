@@ -1,12 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.User" %>
 <%@ page import="model.Room" %>
+<%@ page import="model.Asset" %>
+<%@ page import="java.util.List" %>
 
 <%
     User currentUser = (User) session.getAttribute("currentUser");
     Room room = (Room) request.getAttribute("room");
     String error = (String) request.getAttribute("error");
-    User roomHead = (User) request.getAttribute("roomHead");
+    @SuppressWarnings("unchecked")
+    List<Asset> assetsInRoom = (List<Asset>) request.getAttribute("assetsInRoom");
 %>
 
 <!DOCTYPE html>
@@ -65,22 +68,6 @@
                                 <dt class="col-sm-3">Location</dt>
                                 <dd class="col-sm-9"><%= room.getLocation() != null ? room.getLocation() : "-" %></dd>
 
-                                <dt class="col-sm-3">Trưởng phòng</dt>
-                                <dd class="col-sm-9">
-                                    <%
-                                        if (roomHead != null && roomHead.getFullName() != null) {
-                                    %>
-                                        <i class="fas fa-chalkboard-teacher text-primary"></i>
-                                        <strong><%= roomHead.getFullName() %></strong>
-                                        <span class="text-muted">(<%= roomHead.getUsername() %>)</span>
-                                    <%
-                                        } else {
-                                    %>
-                                        <span class="text-muted">Chưa có trưởng phòng được gán.</span>
-                                    <%
-                                        }
-                                    %>
-                                </dd>
                             </dl>
 
                             <hr>
@@ -89,6 +76,68 @@
                                class="btn btn-warning">
                                 <i class="fas fa-cog"></i> Config Room
                             </a>
+                        </div>
+                    </div>
+
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-boxes"></i> Tài sản đang sử dụng trong phòng
+                                <span class="badge badge-primary">
+                                    <%= (assetsInRoom != null) ? assetsInRoom.size() : 0 %>
+                                </span>
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Mã tài sản</th>
+                                            <th>Tên tài sản</th>
+                                            <th>Danh mục</th>
+                                            <th>Serial</th>
+                                            <th>Trạng thái</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <%
+                                            if (assetsInRoom == null || assetsInRoom.isEmpty()) {
+                                        %>
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">
+                                                    Chưa có tài sản nào trong phòng này.
+                                                </td>
+                                            </tr>
+                                        <%
+                                            } else {
+                                                for (Asset asset : assetsInRoom) {
+                                        %>
+                                            <tr>
+                                                <td><code><%= asset.getAssetCode() %></code></td>
+                                                <td><strong><%= asset.getAssetName() %></strong></td>
+                                                <td><%= asset.getCategoryName() != null ? asset.getCategoryName() : "-" %></td>
+                                                <td><%= asset.getSerialNumber() != null ? asset.getSerialNumber() : "-" %></td>
+                                                <td>
+                                                    <span class="badge <%= asset.getStatusBadgeClass() %>">
+                                                        <%= asset.getStatusText() %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="${pageContext.request.contextPath}/assets/detail?id=<%= asset.getAssetId() %>"
+                                                       class="btn btn-sm btn-info" title="Xem chi tiết tài sản">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <%
+                                                }
+                                            }
+                                        %>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 <% } %>

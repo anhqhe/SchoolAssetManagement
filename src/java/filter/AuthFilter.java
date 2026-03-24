@@ -22,12 +22,16 @@ import model.User;
             "/teacher/*",
             "/board/*",
             "/transfers/*",
+            "/settings",
             "/change-password",
+            "/assets",
+            "/asset-report",
             "/profile",
             "/profile/*"
         }
 )
 public class AuthFilter implements Filter {
+
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -58,13 +62,16 @@ public class AuthFilter implements Filter {
 
         // Chỉ ADMIN được vào một số trang quản trị sâu
         if (path.startsWith("/admin/user")
-                || path.startsWith("/admin/settings")
                 || path.startsWith("/admin/reports")) {
             allowed = roles.contains("ADMIN");
         }
 
         // Nhóm ASSET_STAFF (và BOARD +  ADMIN) cho các URL quản lý tài sản
         else if ( path.startsWith("/staff/")
+
+                || path.startsWith("/transfers/")
+                || path.startsWith("/assets")
+                || path.startsWith("/asset-report")
                 || path.startsWith("/transfers/")) {
             allowed = roles.contains("ASSET_STAFF") || roles.contains("ADMIN") || roles.contains("BOARD");
         }
@@ -75,7 +82,8 @@ public class AuthFilter implements Filter {
         }
 
         // Nhóm BOARD
-        else if (path.startsWith("/board/")) {
+        else if (path.startsWith("/board/")
+                || path.startsWith("/asset-report")) {
             allowed = roles.contains("BOARD") || roles.contains("ADMIN");
         }
 

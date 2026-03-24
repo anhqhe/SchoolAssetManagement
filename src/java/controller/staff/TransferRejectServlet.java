@@ -1,24 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controller.staff;
 import dao.TransferDAO;
-import model.Transfer;
 import model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 @WebServlet("/transfers/reject")
 public class TransferRejectServlet extends HttpServlet {
@@ -32,46 +20,57 @@ public class TransferRejectServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
+        // Kiểm tra đăng nhập
         User currentUser = (User) request.getSession().getAttribute("currentUser");
-
         if (currentUser == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"success\":false,\"message\":\"Chưa đăng nhập\"}");
             return;
         }
 
+        // Kiểm tra quyền
         boolean isAuthorized = currentUser.getRoles() != null &&
                 (currentUser.getRoles().contains("ADMIN") ||
                  currentUser.getRoles().contains("BOARD"));
-
         if (!isAuthorized) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write("{\"success\":false,\"message\":\"Không có quyền từ chối\"}");
             return;
         }
+        String idParam      = request.getParameter("id");
+        String versionParam = request.getParameter("version");
 
-        String idParam = request.getParameter("id");
-        if (idParam == null || idParam.trim().isEmpty()) {
+        if (idParam == null || idParam.trim().isEmpty() ||
+            versionParam == null || versionParam.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("{\"success\":false,\"message\":\"Thiếu ID phiếu\"}");
+            response.getWriter().write("{\"success\":false,\"message\":\"Thiếu tham số id hoặc version\"}");
             return;
         }
 
         try {
             int transferId = Integer.parseInt(idParam.trim());
+            int version    = Integer.parseInt(versionParam.trim());
 
-            boolean updated = transferDAO.rejectTransfer(transferId);
+            boolean updated = transferDAO.rejectTransfer(transferId, version); 
 
             if (updated) {
                 response.getWriter().write("{\"success\":true,\"message\":\"Từ chối thành công\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_CONFLICT);
-                response.getWriter().write("{\"success\":false,\"message\":\"Phiếu không tồn tại hoặc đã được xử lý\"}");
+                response.setStatus(HttpServletResponse.SC_CONFLICT); 
+                response.getWriter().write("{\"success\":false,\"message\":\"Phiếu không tồn tại hoặc đã được xử lý bởi người khác\"}");
             }
 
+        } catch (NumberFormatException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"success\":false,\"message\":\"ID hoặc version không hợp lệ\"}");
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server\"}");
+            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server: " + escapeJson(e.getMessage()) + "\"}");
         }
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

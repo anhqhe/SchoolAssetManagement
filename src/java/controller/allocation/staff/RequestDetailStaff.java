@@ -8,10 +8,12 @@ import dao.allocation.AllocationDAO;
 import dao.allocation.ApprovalDAO;
 import dao.allocation.AssetRequestDAO;
 import dao.allocation.AssetRequestItemDAO;
+import dao.allocation.FeedbackDAO;
 import dto.ApprovalDTO;
 import dto.AssetDTO;
 import dto.AssetRequestDTO;
 import dto.AssetRequestItemDTO;
+import dto.FeedbackDTO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -38,6 +40,7 @@ public class RequestDetailStaff extends HttpServlet {
     private AssetRequestItemDAO reqItemDAO = new AssetRequestItemDAO();
     private AllocationDAO allocationDAO = new AllocationDAO();
     private ApprovalDAO approvalDAO = new ApprovalDAO();
+    private FeedbackDAO feedbackDAO = new FeedbackDAO();
 
     private static final Logger LOGGER
             = Logger.getLogger(RequestDetailStaff.class.getName());
@@ -89,11 +92,16 @@ public class RequestDetailStaff extends HttpServlet {
             //Get allocations
             List<AssetAllocation> allocations = allocationDAO.getAllocationsByRequestId(requestId);
 
+            FeedbackDTO teacherFeedback = feedbackDAO.findByCreatorAndTarget(
+                    req.getTeacherId(), "ASSET_REQUEST", requestId);
+            
             request.setAttribute("req", req);
             request.setAttribute("itemList", itemList);
             request.setAttribute("approval", approval);
             request.setAttribute("allocatedAssets", allocatedAssets);
             request.setAttribute("allocations", allocations);
+            request.setAttribute("teacherFeedback", teacherFeedback);
+            request.setAttribute("teacherFeedbackExists", teacherFeedback != null);
             request.getRequestDispatcher("/views/allocation/request-detail.jsp").forward(request, response);
 
         } catch (SQLException e) {

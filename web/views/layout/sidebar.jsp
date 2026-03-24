@@ -1,5 +1,57 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 
+<%
+    String uiPrimaryColor = (String) request.getAttribute("uiPrimaryColor");
+    if (uiPrimaryColor == null || !uiPrimaryColor.matches("^#[0-9a-fA-F]{6}$")) {
+        uiPrimaryColor = "#4e73df";
+    }
+%>
+
+<style>
+    :root {
+        --primary: <%= uiPrimaryColor %>;
+        --blue: <%= uiPrimaryColor %>;
+        --ui-primary: <%= uiPrimaryColor %>;
+    }
+
+    /* sb-admin-2.min.css hard-codes màu #4e73df.
+       Override bằng !important để theme đổi ngay lập tức. */
+    .bg-gradient-primary {
+        background-color: var(--primary) !important;
+        background-image: linear-gradient(180deg, var(--primary) 10%, #224abe 100%) !important;
+        background-size: cover !important;
+    }
+    .text-primary {
+        color: var(--primary) !important;
+    }
+    .bg-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+    .btn-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus,
+    .btn-primary.focus,
+    .btn-primary:not(:disabled):not(.disabled):active,
+    .btn-primary:not(:disabled):not(.disabled).active {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .border-left-primary {
+        border-left-color: var(--primary) !important;
+    }
+    .sidebar .nav-item .collapse .collapse-inner .collapse-item.active,
+    .sidebar .nav-item .collapsing .collapse-inner .collapse-item.active {
+        color: var(--primary) !important;
+        font-weight: 700 !important;
+    }
+</style>
+
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Brand -->
@@ -32,7 +84,7 @@
 
     <!-- ADMIN ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/assets?action=list">
             <i class="fas fa-fw fa-boxes"></i>
@@ -46,52 +98,65 @@
             <span>Quản lý phòng</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/user">
             <i class="fas fa-fw fa-users"></i>
             <span>Quản lý người dùng</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
+        <a class="nav-link" href="${pageContext.request.contextPath}/settings">
             <i class="fas fa-fw fa-cogs"></i>
             <span>Cài đặt</span>
         </a>
     </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/reports">
-            <i class="fas fa-fw fa-chart-line"></i>
-            <span>Báo cáo</span>
+
+     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
         </a>
-    </li>
-      <li class="nav-item">
+    </li>    
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
+       <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
+        </a>
+    </li>
+        
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
+        </a>
+    </li>
     <% } %>
-    
+
     <!-- ASSET_STAFF ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ASSET_STAFF") && !sidebarRoles.contains("ADMIN")) { %>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/assets">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Quản lý tài sản</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/categories">
             <i class="fas fa-fw fa-tags"></i>
             <span>Quản lý danh mục</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/staff/request-list">
             <i class="fas fa-list"></i>
@@ -105,26 +170,49 @@
             <span>Lịch sử cấp phát</span>
         </a>
     </li>
-     
+    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-       
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo tài sản</span>
+        </a>
+    </li>
     <% } %>
        
     <!-- TEACHER ONLY -->
 <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
     
     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
+        </a>
+    </li>
+
+    <% } %>
+
+    <!-- TEACHER ONLY -->
+    <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
+
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
             <i class="fas fa-fw fa-comments"></i>
             <span>Danh sách đánh giá</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
             <i class="fas fa-list"></i>
@@ -139,50 +227,56 @@
         </a>
     </li>
     
+    
     <% } %>
-       
+
     <!-- BOARD ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("BOARD") && !sidebarRoles.contains("ADMIN")) { %>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/approvals">
             <i class="fas fa-fw fa-check-square"></i>
             <span>Phê duyệt yêu cầu</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
         </a>
     </li>
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/allocation-history">
             <i class="fas fa-history"></i>
             <span>Lịch sử cấp phát</span>
         </a>
     </li>
-    
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/board/reports">
-            <i class="fas fa-fw fa-chart-bar"></i>
-            <span>Báo cáo</span>
-        </a>
-    </li>
-      <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-    
+       <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
+        </a>
+    </li>
+
     <% } %>
 
     <!-- ALL USERS -->
     <hr class="sidebar-divider">
-    
+
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/change-password">
             <i class="fas fa-key"></i>
@@ -195,5 +289,4 @@
     <div class="text-center d-none d-md-inline">
         <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>
-
 </ul>

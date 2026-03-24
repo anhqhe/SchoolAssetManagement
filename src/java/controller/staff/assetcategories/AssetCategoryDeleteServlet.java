@@ -1,4 +1,4 @@
-package controller;
+package controller.staff.assetcategories;
 
 import dao.AssetCategoryDAO;
 import model.User;
@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "CategoryDeleteServlet", urlPatterns = {"/admin/categories/delete"})
-public class CategoryDeleteServlet extends HttpServlet {
+@WebServlet(name = "AssetCategoryDeleteServlet", urlPatterns = {"/admin/categories/delete"})
+public class AssetCategoryDeleteServlet extends HttpServlet {
 
     private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
 
@@ -62,7 +62,6 @@ public class CategoryDeleteServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-list.jsp").forward(req, resp);
     }
 }
-

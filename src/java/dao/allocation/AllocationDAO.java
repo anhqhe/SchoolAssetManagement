@@ -57,7 +57,7 @@ public class AllocationDAO {
 
     public List<AssetDTO> getAllocatedAssetsByRequestId(long requestId) throws SQLException {
         List<AssetDTO> assets = new ArrayList<>();
-        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, c.CategoryName, a.Status, a.CurrentHolderId "
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.CategoryId, c.CategoryName, a.Status, a.CurrentHolderId "
                 + "FROM AssetAllocations aa "
                 + "JOIN AssetAllocationItems aai ON aa.AllocationId = aai.AllocationId "
                 + "JOIN Assets a ON aai.AssetId = a.AssetId "
@@ -72,6 +72,7 @@ public class AllocationDAO {
                     asset.setAssetId(rs.getLong("AssetId"));
                     asset.setAssetCode(rs.getString("AssetCode"));
                     asset.setAssetName(rs.getString("AssetName"));
+                    asset.setCategoryId(rs.getLong("CategoryId"));
                     asset.setCategoryName(rs.getString("CategoryName"));
                     asset.setStatus(rs.getString("Status"));
                     asset.setCurrentHolderId(rs.getLong("CurrentHolderId"));

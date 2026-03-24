@@ -102,67 +102,99 @@ String sql = " SELECT " +
     }
     return list;
 }
- public Transfer getTransferById(int id) throws SQLException {
-        String sql = "SELECT t.TransferId, t.TransferCode, t.Reason, t.Status, t.CreatedAt, " +
-                     "fr.RoomName AS FromRoomName, " +
-                     "tr.RoomName AS ToRoomName, " +
-                     "u.FullName AS RequestedByName " +
-                     "FROM AssetTransfers t " +
-                     "LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId " +
-                     "LEFT JOIN Rooms tr ON t.ToRoomId = tr.RoomId " +
-                     "LEFT JOIN Users u ON t.RequestedById = u.UserId " +
-                     "WHERE t.TransferId = ?";
+public Transfer getTransferById(int id) throws SQLException {
+    String sql = "SELECT t.TransferId, t.TransferCode," +
+                 " t.RequestedById, t.FromRoomId, t.ToRoomId," +
+                 " t.Status, t.Reason, t.Version," +
+                 " t.CreatedAt," +
+                 " u.FullName AS RequestedByName," +
+                 " fr.RoomName AS FromRoomName," +
+                 " tr2.RoomName AS ToRoomName," +
+                 " STRING_AGG(" +
+                 "   a.AssetName +" +
+                 "   CASE" +
+                 "     WHEN ti.Note IS NOT NULL AND LTRIM(RTRIM(ti.Note)) <> ''" +
+                 "     THEN ' (' + ti.Note + ')'" +
+                 "     ELSE ''" +
+                 "   END," +
+                 "   ', '" +
+                 " ) AS AssetNames" +
+                 " FROM AssetTransfers t" +
+                 " LEFT JOIN Users u ON t.RequestedById = u.UserId" +
+                 " LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId" +
+                 " LEFT JOIN Rooms tr2 ON t.ToRoomId = tr2.RoomId" +
+                 " LEFT JOIN AssetTransferItems ti ON t.TransferId = ti.TransferId" +
+                 " LEFT JOIN Assets a ON ti.AssetId = a.AssetId" +
+                 " WHERE t.TransferId = ?" +
+                 " GROUP BY t.TransferId, t.TransferCode," +
+                 "  t.RequestedById, t.FromRoomId, t.ToRoomId," +
+                 "  t.Status, t.Reason, t.CreatedAt,t.Version," +
+                 "  u.FullName, fr.RoomName, tr2.RoomName";
 
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToTransfer(rs);
-                }
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, id);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return mapResultSetToTransfer(rs);
             }
         }
-        return null;
     }
+    return null;
+}
 
-    private Transfer mapResultSetToTransfer(ResultSet rs) throws SQLException {
-        Transfer t = new Transfer();
-        t.setTransferId(rs.getInt("TransferId"));
-        t.setTransferCode(rs.getString("TransferCode"));
-        t.setFromRoomName(rs.getString("FromRoomName"));
-        t.setToRoomName(rs.getString("ToRoomName"));
-        t.setRequestedByName(rs.getString("RequestedByName"));
-        t.setReason(rs.getString("Reason"));
-        t.setStatus(rs.getString("Status"));
-        t.setCreatedAt(rs.getTimestamp("CreatedAt"));
+private Transfer mapResultSetToTransfer(ResultSet rs) throws SQLException {
+    Transfer t = new Transfer();
+    t.setTransferId(rs.getInt("TransferId"));
+    t.setTransferCode(rs.getString("TransferCode"));
+    t.setFromRoomId(rs.getInt("FromRoomId"));   
+    t.setToRoomId(rs.getInt("ToRoomId"));     
+    t.setFromRoomName(rs.getString("FromRoomName"));
+    t.setToRoomName(rs.getString("ToRoomName"));
+    t.setRequestedByName(rs.getString("RequestedByName"));
+    t.setReason(rs.getString("Reason"));
+    t.setStatus(rs.getString("Status"));
+    t.setCreatedAt(rs.getTimestamp("CreatedAt"));
+    t.setAssetNames(rs.getString("AssetNames"));
+    t.setVersion(rs.getInt("Version")); 
 
-
-        if (t.getStatus() != null) {
-            switch (t.getStatus().toUpperCase()) {
-                case "PENDING":
-                    t.setStatusText("Chờ duyệt");
-                    t.setStatusBadgeClass("badge badge-warning");
-                    break;
-                case "APPROVED":
-                    t.setStatusText("Đã duyệt");
-                    t.setStatusBadgeClass("badge badge-success");
-                    break;
-                case "REJECTED":
-                    t.setStatusText("Từ chối");
-                    t.setStatusBadgeClass("badge badge-danger");
-                    break;
-                case "COMPLETED":
-                    t.setStatusText("Hoàn tất");
-                    t.setStatusBadgeClass("badge badge-primary");
-                    break;
-                default:
-                    t.setStatusText(t.getStatus());
-                    t.setStatusBadgeClass("badge badge-secondary");
-            }
+    if (t.getStatus() != null) {
+        switch (t.getStatus().toUpperCase()) {
+            case "PENDING":
+                t.setStatusText("Chờ duyệt");
+                t.setStatusBadgeClass("badge badge-warning");
+                break;
+            case "APPROVED":
+                t.setStatusText("Đã duyệt");
+                t.setStatusBadgeClass("badge badge-success");
+                break;
+            case "REJECTED":
+                t.setStatusText("Từ chối");
+                t.setStatusBadgeClass("badge badge-danger");
+                break;
+            case "COMPLETED":
+                t.setStatusText("Hoàn tất");
+                t.setStatusBadgeClass("badge badge-primary");
+                break;
+            default:
+                t.setStatusText(t.getStatus());
+                t.setStatusBadgeClass("badge badge-secondary");
         }
-        return t;
     }
-
+    return t;
+}
+public List<Integer> getAssetIdsByTransferId(int transferId) throws SQLException {
+    List<Integer> ids = new ArrayList<>();
+    String sql = "SELECT AssetId FROM AssetTransferItems WHERE TransferId = ?";
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, transferId);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) ids.add(rs.getInt("AssetId"));
+        }
+    }
+    return ids;
+}
 public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNoteMap) throws SQLException {
     String sqlTransfer = "INSERT INTO AssetTransfers (TransferCode, RequestedById, FromRoomId, ToRoomId, " +
                          "Status, Reason, CreatedAt) " +
@@ -218,87 +250,97 @@ public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNot
 }
 
 
-    public boolean approveTransfer(int transferId) throws SQLException {
-        String sql = "UPDATE AssetTransfers " +
-                     "SET Status = 'APPROVED', UpdatedAt = GETDATE() " +
-                     "WHERE TransferId = ? AND Status = 'PENDING'";
-
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, transferId);
-            return ps.executeUpdate() > 0;
-        }
+public boolean approveTransfer(int transferId, int version) throws SQLException {
+    String sql = "UPDATE AssetTransfers " +
+                 "SET Status = 'APPROVED', UpdatedAt = GETDATE(), Version = Version + 1 " +
+                 "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, transferId);
+        ps.setInt(2, version);
+        return ps.executeUpdate() > 0;
     }
+}
 
-    public boolean rejectTransfer(int transferId) throws SQLException {
-        String sql = "UPDATE AssetTransfers " +
-                     "SET Status = 'REJECTED', UpdatedAt = GETDATE() " +
-                     "WHERE TransferId = ? AND Status = 'PENDING'";
-
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, transferId);
-            return ps.executeUpdate() > 0;
-        }
+public boolean rejectTransfer(int transferId, int version) throws SQLException {
+    String sql = "UPDATE AssetTransfers " +
+                 "SET Status = 'REJECTED', UpdatedAt = GETDATE(), Version = Version + 1 " +
+                 "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, transferId);
+        ps.setInt(2, version);
+        return ps.executeUpdate() > 0;
     }
+}
 
 
-    public boolean completeTransfer(int transferId) throws SQLException {
-        Connection conn = null;
-        try {
-            conn = DBUtil.getConnection();
-            conn.setAutoCommit(false);
+public boolean completeTransfer(int transferId, int version) throws SQLException {
+    Connection conn = null;
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false);
 
-            int toRoomId = -1;
-            String getSql = "SELECT ToRoomId FROM AssetTransfers " +
-                            "WHERE TransferId = ? AND Status = 'APPROVED'";
-            try (PreparedStatement ps = conn.prepareStatement(getSql)) {
-                ps.setInt(1, transferId);
-                ResultSet rs = ps.executeQuery();
+        // Bước 1: Lấy ToRoomId, kiểm tra Status + Version
+        int toRoomId = -1;
+        String getSql = "SELECT ToRoomId FROM AssetTransfers " +
+                        "WHERE TransferId = ? AND Status = 'APPROVED' AND Version = ?";
+        try (PreparedStatement ps = conn.prepareStatement(getSql)) {
+            ps.setInt(1, transferId);
+            ps.setInt(2, version);
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     toRoomId = rs.getInt("ToRoomId");
                 } else {
-              
                     conn.rollback();
-                    return false;
+                    return false; // version lỗi thời hoặc status không hợp lệ
                 }
             }
+        }
 
-         
-            String updateAssetSql =
-                "UPDATE a " +
-                "SET a.RoomId = ?, a.UpdatedAt = GETDATE() " +
-                "FROM Assets a " +
-                "INNER JOIN AssetTransferItems ati ON a.AssetId = ati.AssetId " +
-                "WHERE ati.TransferId = ?";
-            try (PreparedStatement ps = conn.prepareStatement(updateAssetSql)) {
-                ps.setInt(1, toRoomId);
-                ps.setInt(2, transferId);
-                ps.executeUpdate();
-            }
-
-      
-            String completeSql = "UPDATE AssetTransfers " +
-                                 "SET Status = 'COMPLETED', UpdatedAt = GETDATE() " +
-                                 "WHERE TransferId = ? AND Status = 'APPROVED'";
-            try (PreparedStatement ps = conn.prepareStatement(completeSql)) {
-                ps.setInt(1, transferId);
-                ps.executeUpdate();
-            }
-
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            if (conn != null) conn.rollback();
-            throw e;
-        } finally {
-            if (conn != null) {
-                conn.setAutoCommit(true);
-                conn.close();
+        // Bước 2: Cập nhật RoomId cho các tài sản trong phiếu
+        String updateAssetSql =
+            "UPDATE a " +
+            "SET a.RoomId = ?, a.UpdatedAt = GETDATE() " +
+            "FROM Assets a " +
+            "INNER JOIN AssetTransferItems ati ON a.AssetId = ati.AssetId " +
+            "WHERE ati.TransferId = ?";
+        try (PreparedStatement ps = conn.prepareStatement(updateAssetSql)) {
+            ps.setInt(1, toRoomId);
+            ps.setInt(2, transferId);
+            if (ps.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
             }
         }
+
+        // Bước 3: Đánh dấu COMPLETED + tăng version
+        String completeSql = "UPDATE AssetTransfers " +
+                             "SET Status = 'COMPLETED', UpdatedAt = GETDATE(), Version = Version + 1 " +
+                             "WHERE TransferId = ? AND Status = 'APPROVED' AND Version = ?";
+        try (PreparedStatement ps = conn.prepareStatement(completeSql)) {
+            ps.setInt(1, transferId);
+            ps.setInt(2, version);
+            if (ps.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException e) {
+        if (conn != null) conn.rollback();
+        throw e;
+    } finally {
+        if (conn != null) {
+            conn.setAutoCommit(true);
+            conn.close();
+        }
     }
+}
+
 public List<String> getAssetHistory(String assetName) throws SQLException {
 
     String sql =
@@ -331,6 +373,112 @@ public List<String> getAssetHistory(String assetName) throws SQLException {
     }
 
     return history;
+}
+
+public boolean updateTransferWithItems(Transfer t, Map<Integer, String> assetNoteMap) throws SQLException {
+
+    String sqlUpdateTransfer =
+            "UPDATE AssetTransfers SET FromRoomId=?, ToRoomId=?, Reason=?, UpdatedAt=GETDATE() " +
+            "WHERE TransferId=? AND Status='PENDING'";
+
+    String sqlDeleteItems =
+            "DELETE FROM AssetTransferItems WHERE TransferId=?";
+
+    String sqlInsertItem =
+            "INSERT INTO AssetTransferItems (TransferId, AssetId, Note) VALUES (?, ?, ?)";
+
+    Connection conn = null;
+
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false);
+
+        // 1. Update transfer
+        try (PreparedStatement ps = conn.prepareStatement(sqlUpdateTransfer)) {
+            ps.setInt(1, t.getFromRoomId());
+            ps.setInt(2, t.getToRoomId());
+            ps.setString(3, t.getReason());
+            ps.setInt(4, t.getTransferId());
+
+            if (ps.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        // 2. Delete old items
+        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteItems)) {
+            ps.setInt(1, t.getTransferId());
+            ps.executeUpdate();
+        }
+
+        // 3. Insert new items
+        try (PreparedStatement ps = conn.prepareStatement(sqlInsertItem)) {
+            for (Map.Entry<Integer, String> entry : assetNoteMap.entrySet()) {
+                ps.setInt(1, t.getTransferId());
+                ps.setInt(2, entry.getKey());
+                ps.setString(3, entry.getValue());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException e) {
+        if (conn != null) conn.rollback();
+        throw e;
+    } finally {
+        if (conn != null) {
+            conn.setAutoCommit(true);
+            conn.close();
+        }
+    }
+}
+
+public boolean deleteTransfer(int transferId) throws SQLException {
+
+    String sqlDeleteItems =
+            "DELETE FROM AssetTransferItems WHERE TransferId=?";
+
+    String sqlDeleteTransfer =
+            "DELETE FROM AssetTransfers WHERE TransferId=? AND Status='PENDING'";
+
+    Connection conn = null;
+
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false);
+
+        // 1. delete items
+        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteItems)) {
+            ps.setInt(1, transferId);
+            ps.executeUpdate();
+        }
+
+        // 2. delete transfer
+        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteTransfer)) {
+            ps.setInt(1, transferId);
+
+            if (ps.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException e) {
+        if (conn != null) conn.rollback();
+        throw e;
+    } finally {
+        if (conn != null) {
+            conn.setAutoCommit(true);
+            conn.close();
+        }
+    }
 }
 
 }

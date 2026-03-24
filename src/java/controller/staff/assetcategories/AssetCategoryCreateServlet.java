@@ -1,4 +1,4 @@
-package controller;
+package controller.staff.assetcategories;
 
 import dao.AssetCategoryDAO;
 import model.AssetCategory;
@@ -15,8 +15,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "CategoryCreateServlet", urlPatterns = {"/admin/categories/create"})
-public class CategoryCreateServlet extends HttpServlet {
+@WebServlet(name = "AssetCategoryCreateServlet", urlPatterns = {"/admin/categories/create"})
+public class AssetCategoryCreateServlet extends HttpServlet {
 
     private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
 
@@ -35,15 +35,7 @@ public class CategoryCreateServlet extends HttpServlet {
             return;
         }
 
-        try {
-            List<AssetCategory> allCategories = categoryDAO.getAllCategories();
-            req.setAttribute("allCategories", allCategories);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            req.setAttribute("error", "Không thể tải danh sách danh mục cha.");
-        }
-
-        req.getRequestDispatcher("/views/admin/category-form.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
     }
 
     @Override
@@ -63,20 +55,13 @@ public class CategoryCreateServlet extends HttpServlet {
 
         String code = req.getParameter("categoryCode");
         String name = req.getParameter("categoryName");
-        String parentIdParam = req.getParameter("parentCategoryId");
         String activeParam = req.getParameter("active");
 
         AssetCategory category = new AssetCategory();
         category.setCategoryCode(code != null ? code.trim() : null);
         category.setCategoryName(name != null ? name.trim() : null);
 
-        if (parentIdParam != null && !parentIdParam.trim().isEmpty()) {
-            try {
-                category.setParentCategoryId(Long.parseLong(parentIdParam));
-            } catch (NumberFormatException e) {
-                category.setParentCategoryId(null);
-            }
-        }
+        category.setParentCategoryId(null);
 
         category.setActive("on".equalsIgnoreCase(activeParam) || "true".equalsIgnoreCase(activeParam));
 
@@ -99,18 +84,10 @@ public class CategoryCreateServlet extends HttpServlet {
             }
         }
 
-        try {
-            List<AssetCategory> allCategories = categoryDAO.getAllCategories();
-            req.setAttribute("allCategories", allCategories);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
         if (category != null) {
             req.setAttribute("category", category);
         }
 
-        req.getRequestDispatcher("/views/admin/category-form.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
     }
 }
-
