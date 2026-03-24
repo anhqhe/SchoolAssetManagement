@@ -43,6 +43,6 @@ public class AssetCategoryListServlet extends HttpServlet {
             req.setAttribute("error", "Không thể tải danh sách danh mục tài sản. Vui lòng thử lại sau.");
         }
 
-        req.getRequestDispatcher("/views/allocation/staff/assetcategory-list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-list.jsp").forward(req, resp);
     }
 }

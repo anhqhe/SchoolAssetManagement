@@ -62,6 +62,6 @@ public class AssetCategoryDeleteServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        req.getRequestDispatcher("/views/allocation/staff/assetcategory-list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-list.jsp").forward(req, resp);
     }
 }
