@@ -363,10 +363,7 @@
 
                         <!-- BOARD ONLY: Approve/Reject Buttons -->
                         <c:if test="${isBoard && req.status == 'WAITING_BOARD'}">
-                            <button type="button" class="btn btn-primary"
-                                    data-req-id="${req.requestId}"
-                                    data-req-code="${req.requestCode}"
-                                    onclick="openApproveFromBtn(this)">
+                            <button type="button" class="btn btn-primary" onclick="openApproveModal(${req.requestId}, '${req.requestCode}')">
                                 <i class="fas fa-check"></i> Phê duyệt/ Từ chối
                             </button>
                         </c:if>
@@ -463,12 +460,6 @@
 
 
         <script>
-                                function openApproveFromBtn(btn) {
-                                    if (!btn) return;
-                                    const id = btn.getAttribute('data-req-id') || '';
-                                    const code = btn.getAttribute('data-req-code') || '';
-                                    openApproveModal(id, code);
-                                }
                                 function openApproveModal(id, code) {
                                     document.getElementById('modalReqId').value = id;
                                     document.getElementById('modalReqCode').innerText = code;

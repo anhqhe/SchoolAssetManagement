@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import model.User;
 
-@WebServlet(name = "SettingsServlet", urlPatterns = {"/settings"})
+@WebServlet(name = "SettingsServlet", urlPatterns = {"/settings", "/admin/settings"})
 public class SettingsServlet extends HttpServlet {
 
     private final SystemConfigDAO systemConfigDAO = new SystemConfigDAO();

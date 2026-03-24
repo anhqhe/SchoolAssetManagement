@@ -107,7 +107,7 @@
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
+        <a class="nav-link" href="${pageContext.request.contextPath}/settings">
             <i class="fas fa-fw fa-cogs"></i>
             <span>Cài đặt</span>
         </a>
