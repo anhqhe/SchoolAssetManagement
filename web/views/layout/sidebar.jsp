@@ -1,5 +1,57 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 
+<%
+    String uiPrimaryColor = (String) request.getAttribute("uiPrimaryColor");
+    if (uiPrimaryColor == null || !uiPrimaryColor.matches("^#[0-9a-fA-F]{6}$")) {
+        uiPrimaryColor = "#4e73df";
+    }
+%>
+
+<style>
+    :root {
+        --primary: <%= uiPrimaryColor %>;
+        --blue: <%= uiPrimaryColor %>;
+        --ui-primary: <%= uiPrimaryColor %>;
+    }
+
+    /* sb-admin-2.min.css hard-codes màu #4e73df.
+       Override bằng !important để theme đổi ngay lập tức. */
+    .bg-gradient-primary {
+        background-color: var(--primary) !important;
+        background-image: linear-gradient(180deg, var(--primary) 10%, #224abe 100%) !important;
+        background-size: cover !important;
+    }
+    .text-primary {
+        color: var(--primary) !important;
+    }
+    .bg-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+    .btn-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus,
+    .btn-primary.focus,
+    .btn-primary:not(:disabled):not(.disabled):active,
+    .btn-primary:not(:disabled):not(.disabled).active {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .border-left-primary {
+        border-left-color: var(--primary) !important;
+    }
+    .sidebar .nav-item .collapse .collapse-inner .collapse-item.active,
+    .sidebar .nav-item .collapsing .collapse-inner .collapse-item.active {
+        color: var(--primary) !important;
+        font-weight: 700 !important;
+    }
+</style>
+
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Brand -->
@@ -55,7 +107,7 @@
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
+        <a class="nav-link" href="${pageContext.request.contextPath}/settings">
             <i class="fas fa-fw fa-cogs"></i>
             <span>Cài đặt</span>
         </a>
@@ -120,14 +172,13 @@
             <span>Lịch sử cấp phát</span>
         </a>
     </li>
-
+    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>Điều chuyển tài sản</span>
         </a>
     </li>
-  
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
             <i class="fas fa-history"></i>
@@ -217,13 +268,21 @@
         </a>
     </li>
 
+    </li>
+
+       <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-history-transfer/list">
+            <i class="fas fa-history"></i>
+            <span>Lịch sử điều chuyển tài sản</span>
+        </a>
+    </li>
+    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
             <i class="fas fa-file-alt"></i>
             <span>Báo cáo tài sản</span>
         </a>
-    </li>
-
+    
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
             <i class="fas fa-file-alt"></i>

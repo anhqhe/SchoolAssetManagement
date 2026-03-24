@@ -72,13 +72,12 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="categoryTable" width="100%" cellspacing="0">
+                            <table class="table table-bordered table-hover" id="assetcategoryTable" width="100%" cellspacing="0">
                                 <thead class="thead-light">
                                 <tr>
                                     <th>ID</th>
                                     <th>Mã danh mục</th>
                                     <th>Tên danh mục</th>
-                                    <th>Danh mục cha</th>
                                     <th>Trạng thái</th>
                                     <th>Thao tác</th>
                                 </tr>
@@ -88,7 +87,7 @@
                                     if (categories == null || categories.isEmpty()) {
                                 %>
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">
+                                    <td colspan="5" class="text-center text-muted">
                                         <i class="fas fa-inbox fa-3x mb-3 mt-3"></i>
                                         <p>Chưa có danh mục tài sản nào</p>
                                     </td>
@@ -101,7 +100,6 @@
                                     <td><%= c.getCategoryId() %></td>
                                     <td><code><%= c.getCategoryCode() %></code></td>
                                     <td><strong><%= c.getCategoryName() %></strong></td>
-                                    <td><%= (c.getParentCategoryName() != null ? c.getParentCategoryName() : "-") %></td>
                                     <td>
                                         <% if (c.isActive()) { %>
                                             <span class="badge badge-success">Đang sử dụng</span>
@@ -110,6 +108,10 @@
                                         <% } %>
                                     </td>
                                     <td class="text-center">
+                                        <a href="${pageContext.request.contextPath}/admin/categories/detail?id=<%= c.getCategoryId() %>"
+                                           class="btn btn-sm btn-info" title="Xem chi tiết danh mục">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                         <a href="${pageContext.request.contextPath}/admin/categories/edit?id=<%= c.getCategoryId() %>"
                                            class="btn btn-sm btn-warning" title="Cập nhật">
                                             <i class="fas fa-edit"></i>
@@ -152,7 +154,7 @@
 
 <script>
     $(document).ready(function () {
-        $('#categoryTable').DataTable({
+        $('#assetcategoryTable').DataTable({
             "language": {
                 "lengthMenu": "Hiển thị _MENU_ danh mục mỗi trang",
                 "zeroRecords": "Không tìm thấy danh mục nào",
@@ -174,4 +176,3 @@
 
 </body>
 </html>
-

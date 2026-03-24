@@ -6,7 +6,7 @@ package controller.asset;
 
 import dao.asset.AssetDao;
 import dao.asset.AssetCategoryDao;
-import dao.asset.RoomDao;
+import dao.room.RoomDao;
 import dao.asset.UserDao;
 import java.io.IOException;
 import java.io.PrintWriter;

@@ -28,7 +28,8 @@ import java.time.format.DateTimeFormatter;
 public class AssetDao {
 
     public List<Asset> findAll() throws SQLException {
-        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
+        // DB hiện tại không có cột [Unit] trong bảng Assets -> luôn trả NULL AS Unit để tránh lỗi
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, NULL AS Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, a.CurrentHolderId, "
@@ -143,7 +144,6 @@ public class AssetDao {
                 ps.setNull(13, Types.INTEGER);
             }
             ps.setBoolean(14, a.isIsActive());
-            ps.setString(15, a.getUnit());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -158,7 +158,7 @@ public class AssetDao {
         String sql = "UPDATE Assets SET "
                 + "AssetCode=?, AssetName=?, CategoryId=?, SerialNumber=?, Model=?, Brand=?, OriginNote=?, "
                 + "PurchaseDate=?, ReceivedDate=?, ConditionNote=?, Status=?, "
-                + "CurrentRoomId=?, CurrentHolderId=?, IsActive=?, Unit=?, UpdatedAt=SYSDATETIME() "
+                + "CurrentRoomId=?, CurrentHolderId=?, IsActive=?, UpdatedAt=SYSDATETIME() "
                 + "WHERE AssetId=?";
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, a.getAssetCode());
@@ -195,8 +195,7 @@ public class AssetDao {
                 ps.setNull(13, Types.INTEGER);
             }
             ps.setBoolean(14, a.isIsActive());
-            ps.setString(15, a.getUnit());
-            ps.setLong(16, a.getAssetId());
+            ps.setLong(15, a.getAssetId());
             ps.executeUpdate();
         }
     }
@@ -246,7 +245,7 @@ public class AssetDao {
     }
 
     public Asset findById(int id) throws SQLException {
-        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
+        String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, NULL AS Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, r.Location AS RoomLocation, "
@@ -325,7 +324,7 @@ public class AssetDao {
     public List<Asset> searchAssets(String keyword, String status, Long categoryId, Boolean isActive) throws SQLException {
         List<Asset> assets = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
+                "SELECT a.AssetId, a.AssetCode, a.AssetName, NULL AS Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
                 + "a.ConditionNote, a.IsActive, a.CreatedAt, "

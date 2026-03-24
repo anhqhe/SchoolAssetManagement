@@ -27,7 +27,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
@@ -101,10 +104,18 @@ public class AllocateAssets extends HttpServlet {
 
             //Get available assets
             List<AssetDTO> availableAssets = assetDAO.findAvailableAssets();
+            List<AssetDTO> allocatedAssets = allocationDAO.getAllocatedAssetsByRequestId(requestId);
+            Map<Long, List<AssetDTO>> allocatedAssetsByCategory = new LinkedHashMap<>();
+            for (AssetDTO asset : allocatedAssets) {
+                allocatedAssetsByCategory
+                        .computeIfAbsent(asset.getCategoryId(), k -> new ArrayList<>())
+                        .add(asset);
+            }
 
             request.setAttribute("req", req);
             request.setAttribute("neededItems", neededItems);
             request.setAttribute("availableAssets", availableAssets);
+            request.setAttribute("allocatedAssetsByCategory", allocatedAssetsByCategory);
 
             request.getRequestDispatcher("/views/allocation/staff/allocate-assets.jsp").forward(request, response);
 
@@ -264,16 +275,22 @@ public class AllocateAssets extends HttpServlet {
 
         return req;
     }
-
-    
     private void validateSelectedAssets(long requestId, List<Long> assetIds)
             throws Exception {
 
         List<AssetRequestItemDTO> neededItems = reqItemDAO.findByRequestId(requestId);
+        if (neededItems == null || neededItems.isEmpty()) {
+            throw new IllegalArgumentException("Yêu cầu không có danh sách loại tài sản hợp lệ.");
+        }
 
         List<AssetDTO> selectedAssets = new ArrayList<>();
+        Set<Long> uniqueAssetIds = new HashSet<>();
 
         for (Long assetId : assetIds) {
+            if (!uniqueAssetIds.add(assetId)) {
+                throw new IllegalArgumentException("Danh sách tài sản có dữ liệu trùng lặp.");
+            }
+
             AssetDTO asset = assetDAO.findById(assetId);
 
             if (asset == null) {
@@ -286,10 +303,19 @@ public class AllocateAssets extends HttpServlet {
             selectedAssets.add(asset);
         }
 
-        // Gom required theo category
+        // Gom required, allocated, remaining theo category
         Map<Long, Integer> requiredByCategory = new HashMap<>();
+        Map<Long, Integer> allocatedByCategory = new HashMap<>();
+        Map<Long, Integer> remainingByCategory = new HashMap<>();
         for (AssetRequestItemDTO item : neededItems) {
             requiredByCategory.put(item.getCategoryId(), item.getQuantity());
+            int allocated = allocItemDAO.countAllocatedByCategory(requestId, item.getCategoryId());
+            allocatedByCategory.put(item.getCategoryId(), allocated);
+            int remaining = item.getQuantity() - allocated;
+            if (remaining < 0) {
+                remaining = 0;
+            }
+            remainingByCategory.put(item.getCategoryId(), remaining);
         }
 
         // Gom selected theo category
@@ -299,25 +325,35 @@ public class AllocateAssets extends HttpServlet {
                     selectedByCategory.getOrDefault(asset.getCategoryId(), 0) + 1);
         }
 
-        // Check thiếu / dư
-        for (Long categoryId : requiredByCategory.keySet()) {
-            int required = requiredByCategory.get(categoryId);
-            int selected = selectedByCategory.getOrDefault(categoryId, 0);
-
-            if (selected > required) {
-                throw new IllegalArgumentException(
-                        "Số lượng tài sản được chọn vượt quá yêu cầu.");
-            }
-        }
-
+        // Category selected khong co trong yeu cau
         for (Long categoryId : selectedByCategory.keySet()) {
             if (!requiredByCategory.containsKey(categoryId)) {
                 throw new IllegalArgumentException(
                         "Bạn đã chọn tài sản từ loại không được yêu cầu.");
             }
         }
-    }
 
+        // Khong duoc cap qua phan con thieu theo category
+        for (Long categoryId : selectedByCategory.keySet()) {
+            int selected = selectedByCategory.getOrDefault(categoryId, 0);
+            int remaining = remainingByCategory.getOrDefault(categoryId, 0);
+            if (selected > remaining) {
+                throw new IllegalArgumentException(
+                        "Số lượng tài sản được chọn vượt quá số lượng còn thiếu.");
+            }
+        }
+
+        // Bao ve bo sung: allocated + selected khong vuot required
+        for (Long categoryId : requiredByCategory.keySet()) {
+            int required = requiredByCategory.getOrDefault(categoryId, 0);
+            int allocated = allocatedByCategory.getOrDefault(categoryId, 0);
+            int selected = selectedByCategory.getOrDefault(categoryId, 0);
+            if (allocated + selected > required) {
+                throw new IllegalArgumentException(
+                       "Tổng số lượng tài sản được cấp vượt quá số lượng yêu cầu.");
+            }
+        }
+    }
     // Save data to database
     public boolean processAllocation(long requestId, long staffId, String note, List<Long> assetIds) {
         Connection conn = null;

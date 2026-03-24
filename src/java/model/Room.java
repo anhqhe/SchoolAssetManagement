@@ -4,7 +4,10 @@ package model;
 public class Room {
     private int roomId;          
     private String roomName;     
-    private String description;  
+    private String description;
+    private String location;
+    private String headTeacherName;
+
     public Room() {
     }
 
@@ -36,6 +39,22 @@ public class Room {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getHeadTeacherName() {
+        return headTeacherName;
+    }
+
+    public void setHeadTeacherName(String headTeacherName) {
+        this.headTeacherName = headTeacherName;
     }
 
     @Override

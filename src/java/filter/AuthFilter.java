@@ -22,6 +22,7 @@ import model.User;
             "/teacher/*",
             "/board/*",
             "/transfers/*",
+            "/settings",
             "/change-password",
             "/assets",
             "/asset-report",
@@ -30,6 +31,7 @@ import model.User;
         }
 )
 public class AuthFilter implements Filter {
+
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -60,7 +62,6 @@ public class AuthFilter implements Filter {
 
         // Chỉ ADMIN được vào một số trang quản trị sâu
         if (path.startsWith("/admin/user")
-                || path.startsWith("/admin/settings")
                 || path.startsWith("/admin/reports")) {
             allowed = roles.contains("ADMIN");
         }

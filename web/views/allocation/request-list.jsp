@@ -105,7 +105,7 @@
                                                             <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                                             <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>                                          
                                                             <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết tài sản</option>
-                                                            <option value="OUT_OF_STOCK" ${param.status == 'INCOMPLETE' ? 'selected' : ''}>Chưa Hoàn Thành</option>
+                                                            <option value="INCOMPLETE" ${param.status == 'INCOMPLETE' ? 'selected' : ''}>Chưa Hoàn Thành</option>
                                                         </c:when>
 
                                                         <c:when test="${isStaff}">
@@ -253,6 +253,14 @@
                                                                                            class="btn btn-sm btn-info" title="Xem chi tiết">
                                                                                             <i class="fas fa-eye"></i>
                                                                                         </a>
+                                                                                        <c:if test="${req.status == 'COMPLETED' && req.feedbackId == null}">
+                                                                                            <button type="button"
+                                                                                                    class="btn btn-sm btn-success"
+                                                                                                    title="Gửi đánh giá"
+                                                                                                    onclick="openFeedbackModal('${req.requestId}', '${req.requestCode}', false)">
+                                                                                                <i class="fas fa-comment-dots"></i>
+                                                                                            </button>
+                                                                                        </c:if>
                                                                                         <c:if test="${req.status == 'WAITING_BOARD'}">
                                                                                             <a href="${pageContext.request.contextPath}/teacher/update-request?id=${req.requestId}" 
                                                                                                class="btn btn-sm btn-warning" title="Cập nhật">
@@ -339,6 +347,38 @@
                                             </div>
                                         </c:if>
 
+                                        <!-- Feedback Modal (TEACHER ONLY) -->
+                                        <c:if test="${isTeacher}">
+                                            <div class="modal fade" id="feedbackModal" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <form action="${pageContext.request.contextPath}/teacher/request-list" method="post" class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Đánh giá yêu cầu: <span id="feedbackReqCode"></span></h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="action" value="feedback">
+                                                            <input type="hidden" name="requestId" id="feedbackReqId">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Nội dung đánh giá</label>
+                                                                <textarea name="content" id="feedbackContent" class="form-control" rows="4" maxlength="1000" required placeholder="Nhập feedback cho yêu cầu này..."></textarea>
+                                                                <small class="text-muted">Tối đa 1000 ký tự.</small>
+                                                            </div>
+                                                            <div id="feedbackExistsHint" class="alert alert-info d-none mb-0">
+                                                                Bạn đã gửi đánh giá cho yêu cầu này trước đó.
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                                                            <button type="submit" class="btn btn-primary" id="feedbackSubmitBtn">Gửi đánh giá</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </c:if>
+
                                         <!-- Scripts -->
                                         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
                                         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -377,6 +417,28 @@
                                                 document.getElementById('modalReqId').value = id;
                                                 document.getElementById('modalReqCode').innerText = code;
                                                 $('#approveModal').modal('show');
+                                            }
+                                        </script>
+                                        <script>
+                                            function openFeedbackModal(id, code, exists) {
+                                                document.getElementById('feedbackReqId').value = id;
+                                                document.getElementById('feedbackReqCode').innerText = code;
+
+                                                var hint = document.getElementById('feedbackExistsHint');
+                                                var textarea = document.getElementById('feedbackContent');
+                                                var submitBtn = document.getElementById('feedbackSubmitBtn');
+
+                                                textarea.value = '';
+                                                textarea.disabled = exists;
+                                                submitBtn.disabled = exists;
+
+                                                if (exists) {
+                                                    hint.classList.remove('d-none');
+                                                } else {
+                                                    hint.classList.add('d-none');
+                                                }
+
+                                                $('#feedbackModal').modal('show');
                                             }
                                         </script>
                                         </body>

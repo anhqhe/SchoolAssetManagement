@@ -74,7 +74,6 @@
                                     <th>ID</th>
                                     <th>Tên phòng</th>
                                     <th>Vị trí</th>
-                                    <th>Trưởng phòng</th>
                                     <th>Thao tác</th>
                                 </tr>
                                 </thead>
@@ -83,7 +82,7 @@
                                     if (roomList == null || roomList.isEmpty()) {
                                 %>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">
+                                        <td colspan="4" class="text-center text-muted">
                                             <i class="fas fa-inbox fa-3x mb-3 mt-3"></i>
                                             <p>Chưa có phòng nào</p>
                                         </td>
@@ -96,21 +95,6 @@
                                         <td><%= room.getRoomId() %></td>
                                         <td><strong><%= room.getRoomName() %></strong></td>
                                         <td><%= (room.getLocation() != null ? room.getLocation() : "-") %></td>
-                                        <td>
-                                            <%
-                                                String headName = room.getHeadTeacherName();
-                                                if (headName != null && !headName.trim().isEmpty()) {
-                                            %>
-                                                <i class="fas fa-chalkboard-teacher text-primary"></i>
-                                                <%= headName %>
-                                            <%
-                                                } else {
-                                            %>
-                                                <span class="text-muted">Chưa gán</span>
-                                            <%
-                                                }
-                                            %>
-                                        </td>
                                         <td class="text-center">
                                             <!-- View Detail room -->
                                             <a href="<%= request.getContextPath() %>/rooms/detail?id=<%= room.getRoomId() %>"
