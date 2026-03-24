@@ -189,6 +189,12 @@
             <span>Báo cáo tài sản</span>
         </a>
     </li>
+        <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=usage">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo cáo sử dụng TS</span>
+        </a>
+    </li>
     <% } %>
        
     <!-- TEACHER ONLY -->
