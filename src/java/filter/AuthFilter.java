@@ -9,12 +9,9 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import dao.SystemConfigDAO;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import model.User;
 
 @WebFilter(
@@ -34,7 +31,7 @@ import model.User;
         }
 )
 public class AuthFilter implements Filter {
-    private final SystemConfigDAO systemConfigDAO = new SystemConfigDAO();
+
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -97,29 +94,6 @@ public class AuthFilter implements Filter {
             req.setAttribute("errorMessage", "Bạn không có quyền truy cập trang này.");
             req.getRequestDispatcher("/views/common/403.jsp").forward(req, res);
             return;
-        }
-
-        // Load UI config (theme/banner) để layout/JSP có thể áp dụng ngay.
-        // Mặc định dùng theo sb-admin-2 nếu config không tồn tại hoặc không hợp lệ.
-        try {
-            Map<String, String> configs = systemConfigDAO.getAll();
-
-            String primary = configs.get(SystemConfigDAO.KEY_UI_PRIMARY_COLOR);
-            if (primary == null || !primary.matches("^#[0-9a-fA-F]{6}$")) {
-                primary = "#4e73df";
-            }
-            req.setAttribute("uiPrimaryColor", primary);
-
-            String bannerEnabledRaw = configs.get(SystemConfigDAO.KEY_UI_GLOBAL_BANNER_ENABLED);
-            boolean bannerEnabled = "true".equalsIgnoreCase(bannerEnabledRaw) || "1".equals(bannerEnabledRaw);
-            req.setAttribute("uiBannerEnabled", bannerEnabled);
-
-            String bannerText = configs.get(SystemConfigDAO.KEY_UI_GLOBAL_BANNER_TEXT);
-            req.setAttribute("uiBannerText", bannerText != null ? bannerText : "");
-        } catch (SQLException ignored) {
-            req.setAttribute("uiPrimaryColor", "#4e73df");
-            req.setAttribute("uiBannerEnabled", false);
-            req.setAttribute("uiBannerText", "");
         }
 
         chain.doFilter(request, response);
