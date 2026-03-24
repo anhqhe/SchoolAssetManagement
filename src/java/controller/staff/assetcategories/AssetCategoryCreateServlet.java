@@ -35,7 +35,7 @@ public class AssetCategoryCreateServlet extends HttpServlet {
             return;
         }
 
-        req.getRequestDispatcher("/views/allocation/staff/assetcategory-form.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
     }
 
     @Override
@@ -88,6 +88,6 @@ public class AssetCategoryCreateServlet extends HttpServlet {
             req.setAttribute("category", category);
         }
 
-        req.getRequestDispatcher("/views/allocation/staff/assetcategory-form.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
     }
 }

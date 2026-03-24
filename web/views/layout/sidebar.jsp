@@ -1,5 +1,57 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 
+<%
+    String uiPrimaryColor = (String) request.getAttribute("uiPrimaryColor");
+    if (uiPrimaryColor == null || !uiPrimaryColor.matches("^#[0-9a-fA-F]{6}$")) {
+        uiPrimaryColor = "#4e73df";
+    }
+%>
+
+<style>
+    :root {
+        --primary: <%= uiPrimaryColor %>;
+        --blue: <%= uiPrimaryColor %>;
+        --ui-primary: <%= uiPrimaryColor %>;
+    }
+
+    /* sb-admin-2.min.css hard-codes màu #4e73df.
+       Override bằng !important để theme đổi ngay lập tức. */
+    .bg-gradient-primary {
+        background-color: var(--primary) !important;
+        background-image: linear-gradient(180deg, var(--primary) 10%, #224abe 100%) !important;
+        background-size: cover !important;
+    }
+    .text-primary {
+        color: var(--primary) !important;
+    }
+    .bg-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+    .btn-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus,
+    .btn-primary.focus,
+    .btn-primary:not(:disabled):not(.disabled):active,
+    .btn-primary:not(:disabled):not(.disabled).active {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .border-left-primary {
+        border-left-color: var(--primary) !important;
+    }
+    .sidebar .nav-item .collapse .collapse-inner .collapse-item.active,
+    .sidebar .nav-item .collapsing .collapse-inner .collapse-item.active {
+        color: var(--primary) !important;
+        font-weight: 700 !important;
+    }
+</style>
+
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Brand -->

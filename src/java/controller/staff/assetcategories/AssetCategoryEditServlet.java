@@ -60,7 +60,7 @@ public class AssetCategoryEditServlet extends HttpServlet {
             req.setAttribute("category", category);
 
             // Dùng lại JSP form chung cho create/edit
-            req.getRequestDispatcher("/views/allocation/staff/assetcategory-form.jsp").forward(req, resp);
+            req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
 
         } catch (NumberFormatException e) {
             resp.sendRedirect(req.getContextPath() + "/admin/categories");
@@ -68,7 +68,7 @@ public class AssetCategoryEditServlet extends HttpServlet {
             e.printStackTrace();
             // Không hiển thị chi tiết lỗi SQL ra UI
             req.setAttribute("error", "Không thể tải thông tin danh mục tài sản.");
-            req.getRequestDispatcher("/views/allocation/staff/assetcategory-list.jsp").forward(req, resp);
+            req.getRequestDispatcher("/views/assetcategory/assetcategory-list.jsp").forward(req, resp);
         }
     }
 
@@ -144,6 +144,6 @@ public class AssetCategoryEditServlet extends HttpServlet {
         }
 
         req.setAttribute("category", category);
-        req.getRequestDispatcher("/views/allocation/staff/assetcategory-form.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
     }
 }
