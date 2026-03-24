@@ -18,19 +18,26 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Servlet hiển thị chi tiết một danh mục tài sản, kèm danh sách các tài sản thuộc danh mục đó.
+ * Servlet hiển thị chi tiết một danh mục tài sản, kèm danh sách các tài sản
+ * thuộc danh mục đó.
  *
- * <p>URL: GET /admin/categories/detail?id={categoryId}</p>
+ * <p>
+ * URL: GET /admin/categories/detail?id={categoryId}
+ * </p>
  *
- * <p>Request attributes được thiết lập khi thành công:</p>
+ * <p>
+ * Request attributes được thiết lập khi thành công:
+ * </p>
  * <ul>
- *   <li>{@code category} – đối tượng {@link AssetCategory}</li>
- *   <li>{@code assets}   – danh sách {@link Asset} thuộc danh mục này</li>
+ * <li>{@code category} – đối tượng {@link AssetCategory}</li>
+ * <li>{@code assets} – danh sách {@link Asset} thuộc danh mục này</li>
  * </ul>
  *
- * <p>Quyền truy cập: ASSET_STAFF hoặc ADMIN.</p>
+ * <p>
+ * Quyền truy cập: ASSET_STAFF hoặc ADMIN.
+ * </p>
  */
-@WebServlet(name = "AssetCategoryDetailServlet", urlPatterns = {"/admin/categories/detail"})
+@WebServlet(name = "AssetCategoryDetailServlet", urlPatterns = { "/admin/categories/detail" })
 public class AssetCategoryDetailServlet extends HttpServlet {
 
     /** DAO thao tác với bảng AssetCategory. */
@@ -42,10 +49,11 @@ public class AssetCategoryDetailServlet extends HttpServlet {
     /**
      * Xử lý GET /admin/categories/detail?id={categoryId}.
      * <ol>
-     *   <li>Kiểm tra session và quyền (ASSET_STAFF hoặc ADMIN).</li>
-     *   <li>Đọc và validate tham số {@code id} – redirect về danh sách nếu thiếu.</li>
-     *   <li>Tải thông tin danh mục và danh sách tài sản của danh mục đó.</li>
-     *   <li>Forward sang {@code assetcategory-detail.jsp}.</li>
+     * <li>Kiểm tra session và quyền (ASSET_STAFF).</li>
+     * <li>Đọc và validate tham số {@code id} – redirect về danh sách nếu
+     * thiếu.</li>
+     * <li>Tải thông tin danh mục và danh sách tài sản của danh mục đó.</li>
+     * <li>Forward sang {@code assetcategory-detail.jsp}.</li>
      * </ol>
      */
     @Override

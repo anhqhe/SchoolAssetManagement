@@ -18,18 +18,25 @@ import java.util.List;
 /**
  * Servlet xử lý chỉnh sửa danh mục tài sản.
  *
- * <p>URL:</p>
+ * <p>
+ * URL:
+ * </p>
  * <ul>
- *   <li>GET  /admin/categories/edit?id={id} – Load dữ liệu danh mục vào form dùng chung.</li>
- *   <li>POST /admin/categories/edit         – Lưu thông tin đã sửa vào DB.</li>
+ * <li>GET /admin/categories/edit?id={id} – Load dữ liệu danh mục vào form dùng
+ * chung.</li>
+ * <li>POST /admin/categories/edit – Lưu thông tin đã sửa vào DB.</li>
  * </ul>
  *
- * <p>Form JSP dùng chung với Create ({@code assetcategory-form.jsp}).
- * Khi có attribute {@code "category"} → JSP hiểu là edit mode.</p>
+ * <p>
+ * Form JSP dùng chung với Create ({@code assetcategory-form.jsp}).
+ * Khi có attribute {@code "category"} → JSP hiểu là edit mode.
+ * </p>
  *
- * <p>Quyền truy cập: ASSET_STAFF hoặc ADMIN.</p>
+ * <p>
+ * Quyền truy cập: ASSET_STAFF hoặc ADMIN.
+ * </p>
  */
-@WebServlet(name = "AssetCategoryEditServlet", urlPatterns = {"/admin/categories/edit"})
+@WebServlet(name = "AssetCategoryEditServlet", urlPatterns = { "/admin/categories/edit" })
 public class AssetCategoryEditServlet extends HttpServlet {
 
     /** DAO thao tác với bảng AssetCategory. */
@@ -40,7 +47,7 @@ public class AssetCategoryEditServlet extends HttpServlet {
      * <p>
      * Màn hình sửa danh mục tài sản:
      * Load dữ liệu danh mục theo {@code id} và forward sang form dùng chung.
-     * Quyền: ASSET_STAFF hoặc ADMIN.
+     * Quyền: ASSET_STAFF.
      * </p>
      */
     @Override
@@ -117,9 +124,9 @@ public class AssetCategoryEditServlet extends HttpServlet {
         }
 
         // --- Đọc tham số từ form ---
-        String idParam     = req.getParameter("id");
-        String code        = req.getParameter("categoryCode");
-        String name        = req.getParameter("categoryName");
+        String idParam = req.getParameter("id");
+        String code = req.getParameter("categoryCode");
+        String name = req.getParameter("categoryName");
         String activeParam = req.getParameter("active");
 
         if (idParam == null || idParam.trim().isEmpty()) {
@@ -139,7 +146,8 @@ public class AssetCategoryEditServlet extends HttpServlet {
         // --- Xây dựng object từ dữ liệu form ---
         AssetCategory category = new AssetCategory();
         category.setCategoryId(id);
-        // Trim để tránh lỗi "trông giống nhau nhưng có khoảng trắng" và đồng nhất dữ liệu lưu DB
+        // Trim để tránh lỗi "trông giống nhau nhưng có khoảng trắng" và đồng nhất dữ
+        // liệu lưu DB
         category.setCategoryCode(code != null ? code.trim() : null);
         category.setCategoryName(name != null ? name.trim() : null);
 
@@ -162,7 +170,8 @@ public class AssetCategoryEditServlet extends HttpServlet {
             } catch (SQLException e) {
                 e.printStackTrace();
                 // Trường hợp phổ biến: categoryCode bị unique constraint
-                req.setAttribute("error", "Có lỗi xảy ra khi cập nhật danh mục. Kiểm tra lại mã danh mục có bị trùng không.");
+                req.setAttribute("error",
+                        "Có lỗi xảy ra khi cập nhật danh mục. Kiểm tra lại mã danh mục có bị trùng không.");
             }
         }
 
