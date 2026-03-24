@@ -226,12 +226,37 @@ public class AssetServlet_CRUD extends HttpServlet {
             Asset template = buildAssetFromRequestForCreate(request);
             int quantity = Integer.parseInt(request.getParameter("quantity").trim());
 
+            // --- Lấy thông tin cho phiếu ghi tăng ---
+            HttpSession session = request.getSession(false);
+            User currentUser = session != null ? (User) session.getAttribute("currentUser") : null;
+            long userId = (currentUser != null) ? currentUser.getUserId() : 0;
+
+            String sourceType = request.getParameter("sourceType");
+            if (sourceType == null || sourceType.trim().isEmpty()) {
+                sourceType = "Mua mới";
+            }
+
+            // Tạo phiếu ghi tăng
+            String increaseCode = assetDao.generateIncreaseCode();
+            java.time.LocalDate receivedDate = null;
+            if (template.getReceivedDate() != null) {
+                receivedDate = template.getReceivedDate().toLocalDate();
+            } else {
+                receivedDate = java.time.LocalDate.now();
+            }
+            long increaseId = assetDao.insertIncreaseRecord(
+                    increaseCode, sourceType.trim(), null, receivedDate, userId, null);
+
             List<String> codes = assetDao.generateAssetCodes(template.getCategoryId(), quantity);
             int inserted = 0;
             for (String code : codes) {
                 Asset a = cloneAsset(template);
                 a.setAssetCode(code);
-                assetDao.insert(a);
+                long assetId = assetDao.insert(a);
+                // Ghi chi tiết vào phiếu ghi tăng
+                if (increaseId > 0 && assetId > 0) {
+                    assetDao.insertIncreaseItem(increaseId, assetId, null);
+                }
                 inserted++;
             }
             response.sendRedirect(request.getContextPath() + "/assets?action=list&created=" + inserted);

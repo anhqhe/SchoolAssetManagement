@@ -7,10 +7,13 @@ package dao.asset;
 import java.util.ArrayList;
 import java.util.List;
 import model.asset.Asset;
+import model.asset.AssetIncreaseRecord;
+import model.asset.AssetIncreaseItem;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -98,13 +101,14 @@ public class AssetDao {
         return list;
     }
 
-    public void insert(Asset a) throws SQLException {
+    public long insert(Asset a) throws SQLException {
         String sql = "INSERT INTO Assets ("
                 + "AssetCode, AssetName, CategoryId, SerialNumber, Model, Brand, OriginNote, "
                 + "PurchaseDate, ReceivedDate, ConditionNote, Status, "
                 + "CurrentRoomId, CurrentHolderId, IsActive, Unit"
                 + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
             ps.setLong(3, a.getCategoryId());
@@ -141,7 +145,13 @@ public class AssetDao {
             ps.setBoolean(14, a.isIsActive());
             ps.setString(15, a.getUnit());
             ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
         }
+        return -1;
     }
 
     public void update(Asset a) throws SQLException {
@@ -670,5 +680,231 @@ public class AssetDao {
         }
 
         return assets;
+    }
+
+    // ============================================================
+    // ===== ASSET INCREASE METHODS
+    // ============================================================
+
+    /** Sinh mã phiếu ghi tăng: TG-yyyyMMdd-XXXX */
+    public String generateIncreaseCode() throws SQLException {
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String prefix = "TG-" + datePart + "-";
+        String sql = "SELECT TOP 1 IncreaseCode FROM AssetIncreaseRecords "
+                + "WHERE IncreaseCode LIKE ? ORDER BY IncreaseCode DESC";
+        int nextSeq = 1;
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, prefix + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String code = rs.getString("IncreaseCode");
+                    if (code != null && code.length() > prefix.length()) {
+                        try {
+                            nextSeq = Integer.parseInt(code.substring(prefix.length())) + 1;
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
+            }
+        }
+        return prefix + String.format("%04d", nextSeq);
+    }
+
+    /** Insert phiếu ghi tăng, trả về IncreaseId */
+    public long insertIncreaseRecord(String increaseCode, String sourceType,
+            String sourceDetail, LocalDate receivedDate,
+            long createdByUserId, String note) throws SQLException {
+        String sql = "INSERT INTO AssetIncreaseRecords "
+                + "(IncreaseCode, SourceType, SourceDetail, ReceivedDate, CreatedByUserId, Note) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, increaseCode);
+            ps.setString(2, sourceType);
+            ps.setString(3, sourceDetail);
+            if (receivedDate != null) {
+                ps.setDate(4, Date.valueOf(receivedDate));
+            } else {
+                ps.setDate(4, Date.valueOf(LocalDate.now()));
+            }
+            ps.setLong(5, createdByUserId);
+            ps.setString(6, note);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** Insert chi tiết tài sản vào phiếu ghi tăng */
+    public void insertIncreaseItem(long increaseId, long assetId, String note) throws SQLException {
+        String sql = "INSERT INTO AssetIncreaseItems (IncreaseId, AssetId, Note) VALUES (?, ?, ?)";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, increaseId);
+            ps.setLong(2, assetId);
+            ps.setString(3, note);
+            ps.executeUpdate();
+        }
+    }
+
+    /** Lấy danh sách phiếu ghi tăng (có search, filter ngày, phân trang) */
+    public List<AssetIncreaseRecord> getIncreaseRecords(
+            String keyword, String fromDate, String toDate,
+            int offset, int limit) throws SQLException {
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT r.IncreaseId, r.IncreaseCode, r.SourceType, r.SourceDetail, ");
+        sql.append("r.ReceivedDate, r.CreatedByUserId, u.FullName AS CreatedByName, ");
+        sql.append("r.Note, r.CreatedAt, ");
+        sql.append("(SELECT COUNT(*) FROM AssetIncreaseItems i WHERE i.IncreaseId = r.IncreaseId) AS ItemCount ");
+        sql.append("FROM AssetIncreaseRecords r ");
+        sql.append("LEFT JOIN Users u ON r.CreatedByUserId = u.UserId ");
+        sql.append("WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (r.IncreaseCode LIKE ? OR r.SourceType LIKE ? OR r.Note LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append("AND CAST(r.ReceivedDate AS DATE) >= ? ");
+            params.add(fromDate.trim());
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append("AND CAST(r.ReceivedDate AS DATE) <= ? ");
+            params.add(toDate.trim());
+        }
+        sql.append("ORDER BY r.CreatedAt DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(limit);
+
+        List<AssetIncreaseRecord> list = new ArrayList<>();
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetIncreaseRecord rec = new AssetIncreaseRecord();
+                    rec.setIncreaseId(rs.getLong("IncreaseId"));
+                    rec.setIncreaseCode(rs.getString("IncreaseCode"));
+                    rec.setSourceType(rs.getString("SourceType"));
+                    rec.setSourceDetail(rs.getString("SourceDetail"));
+                    Date rd = rs.getDate("ReceivedDate");
+                    if (rd != null) rec.setReceivedDate(rd.toLocalDate());
+                    rec.setCreatedByUserId(rs.getLong("CreatedByUserId"));
+                    rec.setCreatedByName(rs.getString("CreatedByName"));
+                    rec.setNote(rs.getString("Note"));
+                    Timestamp ca = rs.getTimestamp("CreatedAt");
+                    if (ca != null) rec.setCreatedAt(ca.toLocalDateTime());
+                    rec.setItemCount(rs.getInt("ItemCount"));
+                    list.add(rec);
+                }
+            }
+        }
+        return list;
+    }
+
+    /** Đếm tổng phiếu ghi tăng (cho phân trang) */
+    public int countIncreaseRecords(String keyword, String fromDate, String toDate) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM AssetIncreaseRecords r WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (r.IncreaseCode LIKE ? OR r.SourceType LIKE ? OR r.Note LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append("AND CAST(r.ReceivedDate AS DATE) >= ? ");
+            params.add(fromDate.trim());
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append("AND CAST(r.ReceivedDate AS DATE) <= ? ");
+            params.add(toDate.trim());
+        }
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /** Lấy thông tin 1 phiếu ghi tăng theo ID */
+    public AssetIncreaseRecord getIncreaseRecordById(long increaseId) throws SQLException {
+        String sql = "SELECT r.IncreaseId, r.IncreaseCode, r.SourceType, r.SourceDetail, "
+                + "r.ReceivedDate, r.CreatedByUserId, u.FullName AS CreatedByName, "
+                + "r.Note, r.CreatedAt, "
+                + "(SELECT COUNT(*) FROM AssetIncreaseItems i WHERE i.IncreaseId = r.IncreaseId) AS ItemCount "
+                + "FROM AssetIncreaseRecords r "
+                + "LEFT JOIN Users u ON r.CreatedByUserId = u.UserId "
+                + "WHERE r.IncreaseId = ?";
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, increaseId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    AssetIncreaseRecord rec = new AssetIncreaseRecord();
+                    rec.setIncreaseId(rs.getLong("IncreaseId"));
+                    rec.setIncreaseCode(rs.getString("IncreaseCode"));
+                    rec.setSourceType(rs.getString("SourceType"));
+                    rec.setSourceDetail(rs.getString("SourceDetail"));
+                    Date rd = rs.getDate("ReceivedDate");
+                    if (rd != null) rec.setReceivedDate(rd.toLocalDate());
+                    rec.setCreatedByUserId(rs.getLong("CreatedByUserId"));
+                    rec.setCreatedByName(rs.getString("CreatedByName"));
+                    rec.setNote(rs.getString("Note"));
+                    Timestamp ca = rs.getTimestamp("CreatedAt");
+                    if (ca != null) rec.setCreatedAt(ca.toLocalDateTime());
+                    rec.setItemCount(rs.getInt("ItemCount"));
+                    return rec;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Lấy danh sách tài sản trong 1 phiếu ghi tăng */
+    public List<AssetIncreaseItem> getIncreaseItems(long increaseId) throws SQLException {
+        String sql = "SELECT i.IncreaseItemId, i.IncreaseId, i.AssetId, "
+                + "a.AssetCode, a.AssetName, i.Note "
+                + "FROM AssetIncreaseItems i "
+                + "LEFT JOIN Assets a ON i.AssetId = a.AssetId "
+                + "WHERE i.IncreaseId = ? "
+                + "ORDER BY a.AssetCode";
+        List<AssetIncreaseItem> list = new ArrayList<>();
+        try (Connection con = DBUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, increaseId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetIncreaseItem item = new AssetIncreaseItem();
+                    item.setIncreaseItemId(rs.getLong("IncreaseItemId"));
+                    item.setIncreaseId(rs.getLong("IncreaseId"));
+                    item.setAssetId(rs.getLong("AssetId"));
+                    item.setAssetCode(rs.getString("AssetCode"));
+                    item.setAssetName(rs.getString("AssetName"));
+                    item.setNote(rs.getString("Note"));
+                    list.add(item);
+                }
+            }
+        }
+        return list;
     }
 }
