@@ -20,17 +20,13 @@ import java.util.List;
 @WebServlet(name = "RoomDetailServlet", urlPatterns = {"/rooms/detail"})
 public class RoomDetailServlet extends HttpServlet {
 
+    private static final int PAGE_SIZE = 10;
+
     private final RoomDAO roomDAO = new RoomDAO();
     private final AssetDAO assetDAO = new AssetDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /*
-         * Trang chi tiết phòng (ADMIN):
-         * - Nhận roomId từ query param `id`
-         * - Load thông tin phòng + danh sách tài sản đang gán vào phòng
-         * - Forward sang JSP để render
-         */
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -46,7 +42,6 @@ public class RoomDetailServlet extends HttpServlet {
 
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            // Thiếu tham số -> quay về danh sách để tránh trang "trống"
             resp.sendRedirect(req.getContextPath() + "/rooms");
             return;
         }
@@ -58,20 +53,40 @@ public class RoomDetailServlet extends HttpServlet {
                 req.setAttribute("error", "Không tìm thấy phòng.");
             } else {
                 req.setAttribute("room", room);
-                // Danh sách tài sản phục vụ bảng hiển thị ở trang chi tiết
-                List<Asset> assetsInRoom = assetDAO.getAssetsByRoomId(roomId);
-                req.setAttribute("assetsInRoom", assetsInRoom);
+
+                // Lấy toàn bộ tài sản trong phòng
+                List<Asset> allAssets = assetDAO.getAssetsByRoomId(roomId);
+                int totalAssets = (allAssets != null) ? allAssets.size() : 0;
+                int totalPages  = (totalAssets == 0) ? 1 : (int) Math.ceil((double) totalAssets / PAGE_SIZE);
+
+                // Đọc tham số page (mặc định = 1)
+                int currentPage = 1;
+                String pageParam = req.getParameter("page");
+                if (pageParam != null && !pageParam.isEmpty()) {
+                    try {
+                        currentPage = Integer.parseInt(pageParam);
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (currentPage < 1) currentPage = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                // Cắt danh sách theo trang
+                int fromIndex = (currentPage - 1) * PAGE_SIZE;
+                int toIndex   = Math.min(fromIndex + PAGE_SIZE, totalAssets);
+                List<Asset> pagedAssets = (totalAssets > 0) ? allAssets.subList(fromIndex, toIndex) : allAssets;
+
+                req.setAttribute("assetsInRoom", pagedAssets);
+                req.setAttribute("totalAssets",  totalAssets);
+                req.setAttribute("totalPages",   totalPages);
+                req.setAttribute("currentPage",  currentPage);
             }
         } catch (NumberFormatException e) {
-            // id không phải số -> báo lỗi nhẹ nhàng ở UI
             req.setAttribute("error", "ID phòng không hợp lệ.");
         } catch (SQLException e) {
             e.printStackTrace();
-            // Không hiển thị chi tiết lỗi DB ra UI
             req.setAttribute("error", "Không thể tải thông tin phòng. Vui lòng thử lại sau.");
         }
 
         req.getRequestDispatcher("/views/admin/room-detail.jsp").forward(req, resp);
     }
 }
-
