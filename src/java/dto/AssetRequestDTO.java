@@ -22,6 +22,8 @@ public class AssetRequestDTO {
     
     private String teacherName;   // Users (FullName)
     private String roomName;      // Rooms (RoomName)
+    private Long feedbackId;
+    private String feedback;
     
     //getters    
 
@@ -63,6 +65,14 @@ public class AssetRequestDTO {
 
     public String getRoomName() {
         return roomName;
+    }
+
+    public Long getFeedbackId() {
+        return feedbackId;
+    }
+
+    public String getFeedback() {
+        return feedback;
     }
     
     
@@ -107,6 +117,13 @@ public class AssetRequestDTO {
     public void setRoomName(String roomName) {
         this.roomName = roomName;
     }
-    
-    
+
+    public void setFeedbackId(Long feedbackId) {
+        this.feedbackId = feedbackId;
+    }
+
+    public void setFeedback(String feedback) {
+        this.feedback = feedback;
+    }
+
 }

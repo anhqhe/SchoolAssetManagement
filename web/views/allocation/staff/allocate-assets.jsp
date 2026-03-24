@@ -19,6 +19,10 @@
                 background-color: #f8f9fa;
                 cursor: pointer;
             }
+            .already-allocated-box {
+                border: 1px solid #d1ecf1;
+                background-color: #f8fcff;
+            }
             /* Previously added scroll CSS for DataTables; removed to avoid structural issues */
 
         </style>
@@ -84,13 +88,38 @@
                                                     <span aria-hidden="true">&times;</span>
                                                 </button>
                                             </div>
-                                            <p class="small text-muted">Vui lòng chọn đủ ${item.remainingQuantity} tài sản từ kho bên dưới:</p>
+                                            <c:set var="allocatedList" value="${allocatedAssetsByCategory[item.categoryId]}" />
+                                            <div class="already-allocated-box rounded p-3 mb-3">
+                                                <div class="font-weight-bold text-info mb-2">
+                                                    Tài sản đã phân phối (${item.allocatedQuantity}/${item.quantity})
+                                                </div>
+                                                <c:choose>
+                                                    <c:when test="${not empty allocatedList}">
+                                                        <ul class="list-group list-group-flush">
+                                                            <c:forEach var="asset" items="${allocatedList}">
+                                                                <li class="list-group-item px-0 py-1 border-0 bg-transparent">
+                                                                    <strong>${asset.assetCode}</strong> - ${asset.assetName}
+                                                                </li>
+                                                            </c:forEach>
+                                                        </ul>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <div class="small text-muted">Chưa có tài sản nào được phân phối cho loại này.</div>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                            <c:if test="${item.remainingQuantity > 0}">
+                                                <p class="small text-muted">Vui lòng chọn đủ ${item.remainingQuantity} tài sản từ kho bên dưới:</p>
+                                            </c:if>
 
-                                            <button type="button" class="btn btn-primary btn-select-assets" 
+                                            <button type="button"
+                                                    class="btn ${item.remainingQuantity > 0 ? 'btn-primary' : 'btn-secondary'} btn-select-assets" 
                                                     data-category="${item.categoryId}" 
                                                     data-limit="${item.remainingQuantity}" 
-                                                    data-group="${st.index}">
-                                                <i class="fas fa-plus"></i> Chọn Tài Sản
+                                                    data-group="${st.index}"
+                                                    ${item.remainingQuantity <= 0 ? 'disabled="disabled"' : ''}>
+                                                <i class="fas ${item.remainingQuantity > 0 ? 'fa-plus' : 'fa-check'}"></i>
+                                                ${item.remainingQuantity > 0 ? 'Chọn Tài Sản' : 'Đã cấp đủ'}
                                             </button>
 
                                             <div class="selected-assets mt-3" data-group="${st.index}">
@@ -219,7 +248,13 @@
 
                                                         currentGroup = $(this).data('group');
                                                         currentCategory = $(this).data('category');
-                                                        currentLimit = $(this).data('limit');
+                                                        currentLimit = parseInt($(this).data('limit')) || 0;
+                                                        hideGroupWarning(currentGroup);
+
+                                                        if (currentLimit <= 0) {
+                                                            showGroupWarning(currentGroup, "Loai tai san nay da cap du, khong can chon them.");
+                                                            return;
+                                                        }
 
                                                         initSelectionTable();
 
@@ -283,6 +318,12 @@
 
                                                         if ($(this).is(':checked')) {
 
+                                                            if (currentLimit <= 0) {
+                                                                showGroupWarning(currentGroup, "Loai tai san nay da cap du, khong can chon them.");
+                                                                $(this).prop('checked', false);
+                                                                return;
+                                                            }
+
                                                             // check duplicate across groups
                                                             if (isAssetUsed(assetId)) {
 
@@ -293,8 +334,11 @@
                                                             }
 
                                                             if (selectedAssets[currentGroup].length >= currentLimit) {
-
-                                                                alert("Chỉ được chọn tối đa " + currentLimit + " tài sản.");
+                                                                if (currentLimit <= 0) {
+                                                                    showGroupWarning(currentGroup, "Loai tai san nay da cap du, khong can chon them.");
+                                                                } else {
+                                                                    alert("Chỉ được chọn tối đa " + currentLimit + " tài sản.");
+                                                                }
                                                                 $(this).prop('checked', false);
                                                                 return;
 
@@ -325,6 +369,11 @@
                                                     // track which submit button was clicked
                                                     $('button[type="submit"]').on('click', function () {
                                                         submitAction = $(this).val();
+                                                    });
+
+                                                    $(document).on('click', '.category-warning-close', function () {
+                                                        let group = $(this).data('group');
+                                                        hideGroupWarning(group);
                                                     });
 
                                                     // submit
@@ -440,6 +489,11 @@
 
                                                 function updateModalDisabledAssets() {
 
+                                                    if (currentLimit <= 0) {
+                                                        $('.modal-asset-check').prop('disabled', true);
+                                                        return;
+                                                    }
+
                                                     $('.modal-asset-check').each(function () {
 
                                                         let id = parseInt($(this).val());
@@ -457,6 +511,18 @@
 
                                                     });
 
+                                                }
+
+                                                function showGroupWarning(group, message) {
+                                                    let warningBox = $('.category-warning[data-group="' + group + '"]');
+                                                    warningBox.find('.category-warning-text').text(message);
+                                                    warningBox.removeClass('d-none');
+                                                }
+
+                                                function hideGroupWarning(group) {
+                                                    let warningBox = $('.category-warning[data-group="' + group + '"]');
+                                                    warningBox.addClass('d-none');
+                                                    warningBox.find('.category-warning-text').text('');
                                                 }
 
                                                 function initSelectionTable() {
@@ -477,8 +543,6 @@
 
     </body>
 </html>
-
-
 
 
 

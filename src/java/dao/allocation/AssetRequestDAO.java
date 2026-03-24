@@ -59,7 +59,7 @@ public class AssetRequestDAO {
                      WHERE RequestId = ?
                      """;
 
-        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setLong(2, requestId);
 
@@ -113,10 +113,14 @@ public class AssetRequestDAO {
     public AssetRequestDTO findById(long requestId) throws SQLException{
 
         String sql = """
-                    SELECT r.*, u.FullName as TeacherName, rm.RoomName 
+                    SELECT r.*, u.FullName as TeacherName, rm.RoomName,
+                           fb.FeedbackId, fb.Content AS Feedback
                     FROM AssetRequests r 
                     JOIN Users u ON r.TeacherId = u.UserId 
                     LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                    LEFT JOIN Feedbacks fb ON fb.TargetType = 'ASSET_REQUEST'
+                        AND fb.TargetId = r.RequestId
+                        AND fb.CreatedById = r.TeacherId
                     WHERE r.RequestId = ?
                     """;
 
@@ -135,10 +139,14 @@ public class AssetRequestDAO {
     public AssetRequestDTO findById(Connection conn, long requestId) throws SQLException{
 
         String sql = """
-                    SELECT r.*, u.FullName as TeacherName, rm.RoomName 
+                    SELECT r.*, u.FullName as TeacherName, rm.RoomName,
+                           fb.FeedbackId, fb.Content AS Feedback
                     FROM AssetRequests r 
                     JOIN Users u ON r.TeacherId = u.UserId 
                     LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                    LEFT JOIN Feedbacks fb ON fb.TargetType = 'ASSET_REQUEST'
+                        AND fb.TargetId = r.RequestId
+                        AND fb.CreatedById = r.TeacherId
                     WHERE r.RequestId = ?
                     """;
 
@@ -177,10 +185,14 @@ public class AssetRequestDAO {
         
         StringBuilder sql = new StringBuilder(
                 """
-                SELECT r.*, u.FullName AS TeacherName, rm.RoomName
+                SELECT r.*, u.FullName AS TeacherName, rm.RoomName,
+                       fb.FeedbackId, fb.Content AS Feedback
                 FROM AssetRequests r
                 JOIN Users u ON r.TeacherId = u.UserId
                 LEFT JOIN Rooms rm ON r.RequestedRoomId = rm.RoomId
+                LEFT JOIN Feedbacks fb ON fb.TargetType = 'ASSET_REQUEST'
+                    AND fb.TargetId = r.RequestId
+                    AND fb.CreatedById = r.TeacherId
                 WHERE TeacherId = ? 
                                                                  """);
 
@@ -450,7 +462,25 @@ public class AssetRequestDAO {
         req.setTeacherName(rs.getString("TeacherName"));
         req.setRoomName(rs.getString("RoomName"));
 
+        if (hasColumn(rs, "FeedbackId")) {
+            long feedbackId = rs.getLong("FeedbackId");
+            req.setFeedbackId(rs.wasNull() ? null : feedbackId);
+        }
+        if (hasColumn(rs, "Feedback")) {
+            req.setFeedback(rs.getNString("Feedback"));
+        }
+
         return req;
+    }
+
+    private boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+        int count = rs.getMetaData().getColumnCount();
+        for (int i = 1; i <= count; i++) {
+            if (columnName.equalsIgnoreCase(rs.getMetaData().getColumnLabel(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

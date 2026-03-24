@@ -321,7 +321,38 @@
                             </div>
                         </c:if>
 
-                        <!-- TEACHER ONLY: Update Request Buttons -->
+                        <!-- TEACHER ONLY: Feedback Button (COMPLETED) -->
+
+                        <c:if test="${not empty teacherFeedback}">
+                            <div class="card shadow-sm border-left-info mb-3">
+                                <div class="card-body py-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h6 class="font-weight-bold text-info mb-0">
+                                            <i class="fas fa-comment-dots mr-1"></i> 
+                                            Feedback của ${userDAO.getByUserId(teacherFeedback.createdById).fullName}
+                                        </h6>
+                                        <small class="text-muted">
+                                            ${teacherFeedback.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}
+                                        </small>
+                                    </div>
+                                    <hr class="my-2">
+                                    <p class="mb-0">${teacherFeedback.content}</p>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <c:if test="${isTeacher && req.status == 'COMPLETED' && !teacherFeedbackExists}">
+                            <div class="card-body">
+                                <button type="button"
+                                        class="btn btn-info mr-2"
+                                        onclick="openFeedbackModal('${req.requestId}', '${req.requestCode}', false)">
+                                    <i class="fas fa-comment-dots"></i>
+                                    Gửi Đánh Giá
+                                </button>
+                            </div>
+                        </c:if>
+
+                        <!-- TEACHER ONLY: Update Request Button (WAITING_BOARD) -->
                         <c:if test="${isTeacher && req.status == 'WAITING_BOARD'}">
                             <div class="card-body">
                                 <a href="${pageContext.request.contextPath}/teacher/update-request?id=${req.requestId}" class="btn btn-primary">
@@ -391,6 +422,38 @@
             </div>
         </div>
 
+        <!-- Feedback Modal (TEACHER ONLY) -->
+        <c:if test="${isTeacher && req.status == 'COMPLETED' && !teacherFeedbackExists}">
+            <div class="modal fade" id="feedbackModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <form action="${pageContext.request.contextPath}/teacher/request-detail" method="post" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Đánh Giá Yêu Cầu: <span id="feedbackReqCode"></span></h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="action" value="feedback">
+                            <input type="hidden" name="requestId" id="feedbackReqId" value="${req.requestId}">
+                            <div class="mb-3">
+                                <label class="form-label">Nội dung đánh giá</label>
+                                <textarea name="content" id="feedbackContent" class="form-control" rows="4" maxlength="1000" required placeholder="Nhập đánh giá cho yêu cầu này..."></textarea>
+                                <small class="text-muted">Tối đa 1000 ký tự.</small>
+                            </div>
+                            <div id="feedbackExistsHint" class="alert alert-info d-none mb-0">
+                                Bạn đã gửi đánh giá cho yêu cầu này trước đó.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary" id="feedbackSubmitBtn">Gửi Đánh Giá</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </c:if>
+
         <!-- Scripts -->
         <script src="${pageContext.request.contextPath}/assets/vendor/jquery/jquery.min.js"></script>
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -412,7 +475,28 @@
                                     $('#approveModal').modal('show');
                                 }
         </script>
+        <script>
+            function openFeedbackModal(id, code, exists) {
+                document.getElementById('feedbackReqId').value = id;
+                document.getElementById('feedbackReqCode').innerText = code;
+
+                var hint = document.getElementById('feedbackExistsHint');
+                var textarea = document.getElementById('feedbackContent');
+                var submitBtn = document.getElementById('feedbackSubmitBtn');
+
+                textarea.value = '';
+                textarea.disabled = exists;
+                submitBtn.disabled = exists;
+
+                if (exists) {
+                    hint.classList.remove('d-none');
+                } else {
+                    hint.classList.add('d-none');
+                }
+
+                $('#feedbackModal').modal('show');
+            }
+        </script>
     </body>
 </html>
-
 
