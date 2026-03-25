@@ -85,12 +85,6 @@
     <!-- ADMIN ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/assets?action=list">
-            <i class="fas fa-fw fa-boxes"></i>
-            <span>Quản lý tài sản</span>
-        </a>
-    </li>
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/rooms">
@@ -127,19 +121,6 @@
         </a>
     </li>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/transfers/list">
-            <i class="fas fa-fw fa-clipboard-list"></i>
-            <span>Điều chuyển tài sản</span>
-        </a>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-increase">
-            <i class="fas fa-fw fa-plus-circle"></i>
-            <span>Lịch sử ghi tăng TS</span>
-        </a>
-    </li>
     <% } %>
 
     <!-- ASSET_STAFF ONLY -->
@@ -214,12 +195,6 @@
     <!-- TEACHER ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
-            <i class="fas fa-fw fa-comments"></i>
-            <span>Danh sách đánh giá</span>
-        </a>
-    </li>
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
@@ -240,13 +215,6 @@
 
     <!-- BOARD ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("BOARD") && !sidebarRoles.contains("ADMIN")) { %>
-
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/board/approvals">
-            <i class="fas fa-fw fa-check-square"></i>
-            <span>Phê duyệt yêu cầu</span>
-        </a>
-    </li>
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
