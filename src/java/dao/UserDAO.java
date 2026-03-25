@@ -2,6 +2,7 @@ package dao;
 
 import model.User;
 import util.DBUtil;
+import util.HashUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class UserDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
-            ps.setString(2, password); // nếu dùng hash, truyền hash vào đây
+            ps.setString(2, HashUtil.hashPassword(password));
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -82,7 +83,7 @@ public class UserDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setLong(1, userId);
-            ps.setString(2, oldPassword);
+            ps.setString(2, HashUtil.hashPassword(oldPassword));
             ResultSet rs = ps.executeQuery();
             return rs.next();
 
@@ -97,7 +98,7 @@ public class UserDAO {
         try (Connection con = DBUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, newPassword);
+            ps.setString(1, HashUtil.hashPassword(newPassword));
             ps.setLong(2, userId);
             return ps.executeUpdate() > 0;
 
@@ -187,7 +188,7 @@ public class UserDAO {
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
-            ps.setString(1, newPassword);
+            ps.setString(1, HashUtil.hashPassword(newPassword));
             ps.setLong(2, userId);
             
             return ps.executeUpdate() > 0;
@@ -383,7 +384,7 @@ public class UserDAO {
                 long newId;
                 try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setString(1, username);
-                    ps.setString(2, password);
+                    ps.setString(2, HashUtil.hashPassword(password));
                     ps.setString(3, fullName);
                     ps.setString(4, email);
                     ps.setString(5, phone);
