@@ -58,10 +58,13 @@ public class AssetDAO {
     public List<AssetDTO> findAvailableAssets() {
         List<AssetDTO> list = new ArrayList<>();
 
-        String sql = "SELECT a.*, c.CategoryName "
-                + "FROM Assets a "
-                + "JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
-                + "WHERE a.Status = 'IN_STOCK'";
+        String sql = """
+                     SELECT a.*, c.CategoryName 
+                     FROM Assets a
+                     JOIN AssetCategories c ON a.CategoryId = c.CategoryId 
+                     WHERE a.Status = 'IN_STOCK'
+                     AND a.IsActive = 1
+                     """;
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
