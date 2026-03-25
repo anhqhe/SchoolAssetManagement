@@ -15,34 +15,61 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "AssetCategoryEditServlet", urlPatterns = {"/admin/categories/edit"})
+/**
+ * Servlet xử lý chỉnh sửa danh mục tài sản.
+ *
+ * <p>
+ * URL:
+ * </p>
+ * <ul>
+ * <li>GET /admin/categories/edit?id={id} – Load dữ liệu danh mục vào form dùng
+ * chung.</li>
+ * <li>POST /admin/categories/edit – Lưu thông tin đã sửa vào DB.</li>
+ * </ul>
+ *
+ * <p>
+ * Form JSP dùng chung với Create ({@code assetcategory-form.jsp}).
+ * Khi có attribute {@code "category"} → JSP hiểu là edit mode.
+ * </p>
+ *
+ * <p>
+ * Quyền truy cập: ASSET_STAFF hoặc ADMIN.
+ * </p>
+ */
+@WebServlet(name = "AssetCategoryEditServlet", urlPatterns = { "/admin/categories/edit" })
 public class AssetCategoryEditServlet extends HttpServlet {
 
+    /** DAO thao tác với bảng AssetCategory. */
     private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
 
+    /**
+     * Hiển thị form chỉnh sửa danh mục (GET).
+     * <p>
+     * Màn hình sửa danh mục tài sản:
+     * Load dữ liệu danh mục theo {@code id} và forward sang form dùng chung.
+     * Quyền: ASSET_STAFF.
+     * </p>
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /*
-         * Màn hình sửa danh mục tài sản:
-         * - GET: load dữ liệu danh mục theo `id` và forward sang form dùng chung
-         * - Quyền: ASSET_STAFF hoặc ADMIN
-         */
+        // --- Kiểm tra session ---
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
             return;
         }
 
+        // --- Kiểm tra quyền ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
-        if (roles == null || !(roles.contains("ASSET_STAFF") || roles.contains("ADMIN"))) {
+        if (roles == null || !roles.contains("ASSET_STAFF")) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            // Thiếu id -> quay về danh sách
+            // Thiếu id → quay về danh sách
             resp.sendRedirect(req.getContextPath() + "/admin/categories");
             return;
         }
@@ -52,13 +79,12 @@ public class AssetCategoryEditServlet extends HttpServlet {
             AssetCategory category = categoryDAO.getCategoryById(id);
 
             if (category == null) {
-                // Không tìm thấy -> quay về danh sách (tránh lộ thông tin)
+                // Không tìm thấy → quay về danh sách (tránh lộ thông tin)
                 resp.sendRedirect(req.getContextPath() + "/admin/categories");
                 return;
             }
 
             req.setAttribute("category", category);
-
             // Dùng lại JSP form chung cho create/edit
             req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
 
@@ -72,28 +98,32 @@ public class AssetCategoryEditServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Lưu chỉnh sửa danh mục tài sản (POST).
+     * <p>
+     * POST cập nhật danh mục tài sản:
+     * Validate tối thiểu (code/name không rỗng), active lấy từ checkbox.
+     * Lưu ý: nếu triển khai production nên bổ sung CSRF token.
+     * </p>
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /*
-         * POST cập nhật danh mục tài sản:
-         * - Validate tối thiểu (code/name không rỗng)
-         * - active lấy từ checkbox
-         *
-         * Lưu ý: nếu triển khai production nên bổ sung CSRF token cho các form thay đổi dữ liệu.
-         */
+        // --- Kiểm tra session ---
         HttpSession session = req.getSession(false);
         if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
             return;
         }
 
+        // --- Kiểm tra quyền ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
-        if (roles == null || !(roles.contains("ASSET_STAFF") || roles.contains("ADMIN"))) {
+        if (roles == null || !roles.contains("ASSET_STAFF")) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
+        // --- Đọc tham số từ form ---
         String idParam = req.getParameter("id");
         String code = req.getParameter("categoryCode");
         String name = req.getParameter("categoryName");
@@ -104,6 +134,7 @@ public class AssetCategoryEditServlet extends HttpServlet {
             return;
         }
 
+        // --- Parse id ---
         long id;
         try {
             id = Long.parseLong(idParam);
@@ -112,18 +143,18 @@ public class AssetCategoryEditServlet extends HttpServlet {
             return;
         }
 
+        // --- Xây dựng object từ dữ liệu form ---
         AssetCategory category = new AssetCategory();
         category.setCategoryId(id);
-        // Trim để tránh lỗi "trông giống nhau nhưng có khoảng trắng" và đồng nhất dữ liệu lưu DB
+        // Trim để tránh lỗi "trông giống nhau nhưng có khoảng trắng" và đồng nhất dữ
+        // liệu lưu DB
         category.setCategoryCode(code != null ? code.trim() : null);
         category.setCategoryName(name != null ? name.trim() : null);
 
-        // Edit màn hình này hiện không cho đổi danh mục cha
-        category.setParentCategoryId(null);
-
-        // Checkbox HTML: thường gửi "on" khi checked
+        // Checkbox HTML: thường gửi "on" khi checked, không gửi gì khi bỏ check
         category.setActive("on".equalsIgnoreCase(activeParam) || "true".equalsIgnoreCase(activeParam));
 
+        // --- Validate ---
         if (category.getCategoryCode() == null || category.getCategoryCode().isEmpty()) {
             req.setAttribute("error", "Mã danh mục không được để trống.");
         } else if (category.getCategoryName() == null || category.getCategoryName().isEmpty()) {
@@ -139,10 +170,12 @@ public class AssetCategoryEditServlet extends HttpServlet {
             } catch (SQLException e) {
                 e.printStackTrace();
                 // Trường hợp phổ biến: categoryCode bị unique constraint
-                req.setAttribute("error", "Có lỗi xảy ra khi cập nhật danh mục. Kiểm tra lại mã danh mục có bị trùng không.");
+                req.setAttribute("error",
+                        "Có lỗi xảy ra khi cập nhật danh mục. Kiểm tra lại mã danh mục có bị trùng không.");
             }
         }
 
+        // Forward lại form với dữ liệu hiện tại và thông báo kết quả
         req.setAttribute("category", category);
         req.getRequestDispatcher("/views/assetcategory/assetcategory-form.jsp").forward(req, resp);
     }

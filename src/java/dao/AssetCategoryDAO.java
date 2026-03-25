@@ -102,6 +102,31 @@ public class AssetCategoryDAO {
         }
     }
 
+    /**
+     * Đếm số tài sản đang thuộc danh mục này (bất kể trạng thái active/inactive của danh mục).
+     * Dùng để validate trước khi xoá: không được xoá nếu còn tài sản.
+     *
+     * @param categoryId ID danh mục cần kiểm tra
+     * @return số lượng tài sản thuộc danh mục
+     */
+    public int countAssetsByCategoryId(long categoryId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Assets WHERE CategoryId = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, categoryId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    /**
+     * Xoá danh mục tài sản theo ID.
+     * Lưu ý: nên gọi {@link #countAssetsByCategoryId(long)} trước để đảm bảo không còn tài sản.
+     *
+     * @param categoryId ID danh mục cần xoá
+     * @return {@code true} nếu xoá thành công
+     */
     public boolean deleteCategory(long categoryId) throws SQLException {
         String sql = "DELETE FROM AssetCategories WHERE CategoryId = ?";
 

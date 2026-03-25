@@ -10,16 +10,30 @@
     String error = (String) request.getAttribute("error");
     @SuppressWarnings("unchecked")
     List<Asset> assetsInRoom = (List<Asset>) request.getAttribute("assetsInRoom");
+
+    int totalAssets  = (request.getAttribute("totalAssets")  != null) ? (int) request.getAttribute("totalAssets")  : 0;
+    int totalPages   = (request.getAttribute("totalPages")   != null) ? (int) request.getAttribute("totalPages")   : 1;
+    int currentPage  = (request.getAttribute("currentPage")  != null) ? (int) request.getAttribute("currentPage")  : 1;
+
+    long roomId = (room != null) ? room.getRoomId() : 0;
 %>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Room detail | School Asset Management</title>
+    <title>Xem chi tiết phòng | School Asset Management</title>
 
     <link href="${pageContext.request.contextPath}/assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <style>
+        .page-link { color: #4e73df; }
+        .page-item.active .page-link { background-color: #4e73df; border-color: #4e73df; }
+        .page-item.disabled .page-link { color: #b7b9cc; }
+        .asset-code { font-family: monospace; color: #e74a3b; font-size:.88rem; }
+        .pagination-info { color: #858796; font-size: .85rem; }
+    </style>
 </head>
 
 <body id="page-top">
@@ -37,10 +51,10 @@
 
                 <div class="d-sm-flex align-items-center justify-content-between mb-4">
                     <h1 class="h3 mb-0 text-gray-800">
-                        <i class="fas fa-door-open text-primary"></i> View Detail room
+                        <i class="fas fa-door-open text-primary"></i> Xem chi tiết phòng
                     </h1>
                     <a href="${pageContext.request.contextPath}/rooms" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i> Back to list
+                        <i class="fas fa-arrow-left"></i> Quay lại danh sách
                     </a>
                 </div>
 
@@ -54,6 +68,8 @@
                 <% } %>
 
                 <% if (room != null) { %>
+
+                    <!-- ======= THÔNG TIN PHÒNG ======= -->
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">
@@ -61,38 +77,43 @@
                             </h6>
                         </div>
                         <div class="card-body">
-                            <dl class="row">
-                                <dt class="col-sm-3">Room name</dt>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">Tên phòng</dt>
                                 <dd class="col-sm-9"><%= room.getRoomName() %></dd>
 
-                                <dt class="col-sm-3">Location</dt>
+                                <dt class="col-sm-3">Vị trí</dt>
                                 <dd class="col-sm-9"><%= room.getLocation() != null ? room.getLocation() : "-" %></dd>
-
                             </dl>
 
                             <hr>
 
                             <a href="${pageContext.request.contextPath}/rooms/config?id=<%= room.getRoomId() %>"
-                               class="btn btn-warning">
-                                <i class="fas fa-cog"></i> Config Room
+                               class="btn btn-warning btn-sm">
+                                <i class="fas fa-cog"></i> Cấu hình phòng
                             </a>
                         </div>
                     </div>
 
+                    <!-- ======= DANH SÁCH TÀI SẢN (CÓ PHÂN TRANG) ======= -->
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3">
+                        <div class="card-header py-3 d-flex align-items-center justify-content-between">
                             <h6 class="m-0 font-weight-bold text-primary">
                                 <i class="fas fa-boxes"></i> Tài sản đang sử dụng trong phòng
-                                <span class="badge badge-primary">
-                                    <%= (assetsInRoom != null) ? assetsInRoom.size() : 0 %>
-                                </span>
+                                <span class="badge badge-primary ml-1"><%= totalAssets %></span>
                             </h6>
+                            <% if (totalPages > 1) { %>
+                            <span class="pagination-info">
+                                Trang <%= currentPage %> / <%= totalPages %>
+                                &nbsp;|&nbsp; Hiển thị <%= assetsInRoom != null ? assetsInRoom.size() : 0 %> / <%= totalAssets %> tài sản
+                            </span>
+                            <% } %>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                <table class="table table-bordered table-hover mb-3" width="100%" cellspacing="0">
                                     <thead class="thead-light">
                                         <tr>
+                                            <th style="width:40px">#</th>
                                             <th>Mã tài sản</th>
                                             <th>Tên tài sản</th>
                                             <th>Danh mục</th>
@@ -106,16 +127,19 @@
                                             if (assetsInRoom == null || assetsInRoom.isEmpty()) {
                                         %>
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted">
-                                                    Chưa có tài sản nào trong phòng này.
+                                                <td colspan="7" class="text-center text-muted py-4">
+                                                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                                                    <p class="mb-0">Chưa có tài sản nào trong phòng này.</p>
                                                 </td>
                                             </tr>
                                         <%
                                             } else {
+                                                int rowNum = (currentPage - 1) * 10 + 1;
                                                 for (Asset asset : assetsInRoom) {
                                         %>
                                             <tr>
-                                                <td><code><%= asset.getAssetCode() %></code></td>
+                                                <td class="text-muted text-center"><%= rowNum++ %></td>
+                                                <td><span class="asset-code"><%= asset.getAssetCode() %></span></td>
                                                 <td><strong><%= asset.getAssetName() %></strong></td>
                                                 <td><%= asset.getCategoryName() != null ? asset.getCategoryName() : "-" %></td>
                                                 <td><%= asset.getSerialNumber() != null ? asset.getSerialNumber() : "-" %></td>
@@ -138,8 +162,56 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- ======= PAGINATION ======= -->
+                            <% if (totalPages > 1) { %>
+                            <div class="d-flex justify-content-center mt-2">
+                                <nav aria-label="Phân trang tài sản">
+                                    <ul class="pagination pagination-sm mb-0">
+
+                                        <%-- Nút Đầu & Trước --%>
+                                        <li class="page-item <%= (currentPage == 1) ? "disabled" : "" %>">
+                                            <a class="page-link" href="?id=<%= roomId %>&page=1" title="Trang đầu">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item <%= (currentPage == 1) ? "disabled" : "" %>">
+                                            <a class="page-link" href="?id=<%= roomId %>&page=<%= currentPage - 1 %>" title="Trang trước">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+
+                                        <%-- Các số trang (hiện tối đa 5 trang xung quanh trang hiện tại) --%>
+                                        <%
+                                            int startPage = Math.max(1, currentPage - 2);
+                                            int endPage   = Math.min(totalPages, currentPage + 2);
+                                            for (int p = startPage; p <= endPage; p++) {
+                                        %>
+                                        <li class="page-item <%= (p == currentPage) ? "active" : "" %>">
+                                            <a class="page-link" href="?id=<%= roomId %>&page=<%= p %>"><%= p %></a>
+                                        </li>
+                                        <% } %>
+
+                                        <%-- Nút Sau & Cuối --%>
+                                        <li class="page-item <%= (currentPage == totalPages) ? "disabled" : "" %>">
+                                            <a class="page-link" href="?id=<%= roomId %>&page=<%= currentPage + 1 %>" title="Trang sau">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item <%= (currentPage == totalPages) ? "disabled" : "" %>">
+                                            <a class="page-link" href="?id=<%= roomId %>&page=<%= totalPages %>" title="Trang cuối">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+
+                                    </ul>
+                                </nav>
+                            </div>
+                            <% } %>
+
                         </div>
                     </div>
+
                 <% } %>
 
             </div>
@@ -158,4 +230,3 @@
 
 </body>
 </html>
-

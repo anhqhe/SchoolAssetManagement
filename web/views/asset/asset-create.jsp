@@ -164,6 +164,23 @@
                                                 <label for="originNote">Ghi chú nguồn gốc</label>
                                                 <textarea class="form-control" id="originNote" name="originNote" rows="3"><%= asset != null && asset.getOriginNote() != null ? asset.getOriginNote() : ""%></textarea>
                                             </div>
+
+                                            <!-- Nguồn gốc tăng tài sản -->
+                                            <div class="form-group">
+                                                <label for="sourceType">Nguồn gốc nhập <span class="text-danger">*</span></label>
+                                                <%
+                                                    String selectedSource = request.getParameter("sourceType");
+                                                    if (selectedSource == null || selectedSource.trim().isEmpty()) {
+                                                        selectedSource = "Mua mới";
+                                                    }
+                                                %>
+                                                <select class="form-control" id="sourceType" name="sourceType" required>
+                                                    <option value="Mua mới" <%= "Mua mới".equals(selectedSource) ? "selected" : "" %>>Mua mới</option>
+                                                    <option value="Tiếp nhận" <%= "Tiếp nhận".equals(selectedSource) ? "selected" : "" %>>Tiếp nhận / Viện trợ</option>
+                                                    <option value="Tặng" <%= "Tặng".equals(selectedSource) ? "selected" : "" %>>Tặng / Biếu</option>
+                                                    <option value="Khác" <%= "Khác".equals(selectedSource) ? "selected" : "" %>>Khác</option>
+                                                </select>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-6">
