@@ -22,9 +22,9 @@ public class UserDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     boolean isActive = rs.getBoolean("IsActive");
-                    if (!isActive) return null;
 
                     User user = new User();
+                    user.setActive(isActive);
                     user.setUserId(rs.getLong("UserId"));
                     user.setUsername(rs.getString("Username"));
                     user.setFullName(rs.getString("FullName"));
