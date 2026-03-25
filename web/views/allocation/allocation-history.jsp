@@ -59,58 +59,69 @@
                                                 <form action="${pageContext.request.contextPath}/board/allocation-history" method="get" id="filterForm">
                                                 </c:otherwise>
                                             </c:choose>
-                                            <div class="form-row">
-                                                <div class="form-group col-md-3 mb-2">
+                                            <div class="form-row align-items-end">
+
+                                                <!-- Keyword -->
+                                                <div class="form-group col-md-3">
+                                                    <label>Tìm kiếm</label>
                                                     <input type="text"
                                                            name="keyword"
                                                            class="form-control"
-                                                           placeholder="Tìm kiếm tài sản,..."
+                                                           placeholder="Tìm kiếm tài sản..."
                                                            value="${keyword}">
                                                 </div>
 
-                                                <div class="form-group col-md-3 mb-2">
+                                                <!-- Status -->
+                                                <div class="form-group col-md-2">
+                                                    <label>Trạng thái</label>
                                                     <select name="status" class="form-control">
-                                                        <option value="">-- Tất cả trạng thái --</option>
+                                                        <option value="">-- Tất cả --</option>
                                                         <option value="ACTIVE" ${status == 'ACTIVE' ? 'selected' : ''}>Đã cấp phát</option>
                                                         <option value="RETURNED" ${status == 'RETURNED' ? 'selected' : ''}>Đã thu hồi</option>
                                                         <option value="COMPLETED" ${status == 'COMPLETED' ? 'selected' : ''}>Hoàn tất</option>
                                                     </select>
                                                 </div>
-                                                <div class="form-group col-md-3 mb-2">
+
+                                                <!-- Date From -->
+                                                <div class="form-group col-md-2">
+                                                    <label>Từ ngày</label>
                                                     <input type="date" name="dateFrom" class="form-control" value="${dateFrom}">
                                                 </div>
-                                            </div>
 
-                                            <div class="form-row">
-                                                <div class="form-group col-md-3 mb-2">
+                                                <!-- Date To -->
+                                                <div class="form-group col-md-2">
+                                                    <label>Đến ngày</label>
                                                     <input type="date" name="dateTo" class="form-control" value="${dateTo}">
                                                 </div>
-                                            </div>
 
-                                            <div class="form-row">
-                                                <div class="form-group col-md-3 mb-2">
+                                                <!-- Buttons -->
+                                                <div class="form-group col-md-3">
                                                     <button type="submit" class="btn btn-primary mr-2">
                                                         <i class="fas fa-search"></i> Tìm kiếm
                                                     </button>
 
                                                     <c:choose>
                                                         <c:when test="${isTeacher}">
-                                                            <a href="${pageContext.request.contextPath}/teacher/allocation-history" class="btn btn-secondary">
+                                                            <a href="${pageContext.request.contextPath}/teacher/allocation-history"
+                                                               class="btn btn-outline-secondary">
                                                                 <i class="fas fa-redo"></i> Đặt lại
                                                             </a>
                                                         </c:when>
                                                         <c:when test="${isStaff}">
-                                                            <a href="${pageContext.request.contextPath}/staff/allocation-history" class="btn btn-secondary">
+                                                            <a href="${pageContext.request.contextPath}/staff/allocation-history"
+                                                               class="btn btn-outline-secondary">
                                                                 <i class="fas fa-redo"></i> Đặt lại
                                                             </a>
                                                         </c:when>
                                                         <c:otherwise>
-                                                            <a href="${pageContext.request.contextPath}/board/allocation-history" class="btn btn-secondary">
+                                                            <a href="${pageContext.request.contextPath}/board/allocation-history"
+                                                               class="btn btn-outline-secondary">
                                                                 <i class="fas fa-redo"></i> Đặt lại
                                                             </a>
                                                         </c:otherwise>
                                                     </c:choose>
                                                 </div>
+
                                             </div>
                                         </form>
                                         </div>
