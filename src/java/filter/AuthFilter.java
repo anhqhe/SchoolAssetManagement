@@ -62,7 +62,8 @@ public class AuthFilter implements Filter {
 
         // Chỉ ADMIN được vào một số trang quản trị sâu
         if (path.startsWith("/admin/user")
-                || path.startsWith("/admin/reports")) {
+                || path.startsWith("/admin/reports")
+               ) {
             allowed = roles.contains("ADMIN");
         }
 
@@ -73,7 +74,7 @@ public class AuthFilter implements Filter {
                 || path.startsWith("/assets")
                 || path.startsWith("/asset-report")
                 || path.startsWith("/transfers/")) {
-            allowed = roles.contains("ASSET_STAFF") || roles.contains("ADMIN") || roles.contains("BOARD");
+            allowed = roles.contains("ASSET_STAFF") || roles.contains("ADMIN")|| roles.contains("BOARD");
         }
 
         // Nhóm TEACHER
