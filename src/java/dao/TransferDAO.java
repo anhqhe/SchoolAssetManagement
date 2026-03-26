@@ -262,17 +262,84 @@ public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNot
 
 
 public boolean approveTransfer(int transferId, int version) throws SQLException {
-    String sql = "UPDATE AssetTransfers " +
-                 "SET Status = 'APPROVED', UpdatedAt = GETDATE(), Version = Version + 1 " +
-                 "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
-    try (Connection conn = DBUtil.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, transferId);
-        ps.setInt(2, version);
-        return ps.executeUpdate() > 0;
+    Connection conn = null;
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false);
+
+        // 1. Lấy ToRoomId
+        String selectTransfer = "SELECT ToRoomId FROM AssetTransfers " +
+                                "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
+        Integer toRoomId = null;
+
+        try (PreparedStatement ps = conn.prepareStatement(selectTransfer)) {
+            ps.setInt(1, transferId);
+            ps.setInt(2, version);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    toRoomId = rs.getInt("ToRoomId");
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        // 2. Lấy danh sách asset
+        String selectAssets = "SELECT AssetId FROM AssetTransferItems WHERE TransferId = ?";
+        List<Integer> assetIds = new ArrayList<>();
+
+        try (PreparedStatement ps = conn.prepareStatement(selectAssets)) {
+            ps.setInt(1, transferId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    assetIds.add(rs.getInt("AssetId"));
+                }
+            }
+        }
+
+        // 3. Update transfer -> APPROVED
+        String updateTransfer = "UPDATE AssetTransfers " +
+                                "SET Status = 'APPROVED', UpdatedAt = GETDATE(), Version = Version + 1 " +
+                                "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(updateTransfer)) {
+            ps.setInt(1, transferId);
+            ps.setInt(2, version);
+
+            int updated = ps.executeUpdate();
+            if (updated == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        // 4. Update assets -> chuyển room + IN_USE
+        if (!assetIds.isEmpty() && toRoomId != null) {
+            String updateAsset = "UPDATE Assets SET CurrentRoomId = ?, Status = ? WHERE AssetId = ?";
+
+            try (PreparedStatement ps = conn.prepareStatement(updateAsset)) {
+                for (Integer assetId : assetIds) {
+                    ps.setInt(1, toRoomId);
+                    ps.setString(2, "IN_USE");
+                    ps.setInt(3, assetId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException ex) {
+        if (conn != null) conn.rollback();
+        throw ex;
+    } finally {
+        if (conn != null) conn.setAutoCommit(true);
+        if (conn != null) conn.close();
     }
 }
-
 public boolean rejectTransfer(int transferId, int version) throws SQLException {
     Connection conn = null;
     try {
@@ -322,7 +389,7 @@ public boolean rejectTransfer(int transferId, int version) throws SQLException {
         }
 
         // 4Rollback các asset về FromRoomId
-        if (!assetIds.isEmpty() && fromRoomId != null) {
+         if (!assetIds.isEmpty() && fromRoomId != null) {
             String updateAsset = "UPDATE Assets SET CurrentRoomId = ? WHERE AssetId = ?";
             try (PreparedStatement ps = conn.prepareStatement(updateAsset)) {
                 for (Integer assetId : assetIds) {
