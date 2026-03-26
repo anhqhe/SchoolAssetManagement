@@ -85,12 +85,7 @@
     <!-- ADMIN ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("ADMIN")) { %>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/assets?action=list">
-            <i class="fas fa-fw fa-boxes"></i>
-            <span>Quản lý tài sản</span>
-        </a>
-    </li>
+    
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/rooms">
@@ -134,12 +129,6 @@
         </a>
     </li>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/asset-increase">
-            <i class="fas fa-fw fa-plus-circle"></i>
-            <span>Lịch sử ghi tăng TS</span>
-        </a>
-    </li>
     <% } %>
 
     <!-- ASSET_STAFF ONLY -->
