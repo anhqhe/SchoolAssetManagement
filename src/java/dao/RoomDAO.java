@@ -70,8 +70,12 @@ public class RoomDAO {
 }
 
     public Room getRoomById(long roomId) throws SQLException {
-        // Lấy thông tin cơ bản của phòng theo ID (dùng PreparedStatement để tránh SQL injection)
-        String sql = "SELECT RoomId, RoomName, Location FROM Rooms WHERE RoomId = ?";
+        // Lấy thông tin cơ bản của phòng và tên giáo viên phụ trách (dùng PreparedStatement để tránh SQL injection)
+        String sql = "SELECT r.RoomId, r.RoomName, r.Location, u.FullName AS HeadTeacherName "
+                   + "FROM Rooms r "
+                   + "LEFT JOIN TeacherRoomAssignments tra ON r.RoomId = tra.RoomId AND tra.IsPrimary = 1 "
+                   + "LEFT JOIN Users u ON tra.TeacherId = u.UserId "
+                   + "WHERE r.RoomId = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, roomId);
@@ -81,6 +85,7 @@ public class RoomDAO {
                 r.setRoomId(rs.getInt("RoomId"));
                 r.setRoomName(rs.getString("RoomName"));
                 r.setLocation(rs.getString("Location"));
+                r.setHeadTeacherName(rs.getString("HeadTeacherName"));
                 return r;
             }
         }
@@ -214,5 +219,32 @@ public class RoomDAO {
                 conn.setAutoCommit(true);
             }
         }
+    }
+
+    /**
+     * Lấy danh sách các phòng mà giáo viên được phân công làm trưởng phòng (IsPrimary = 1)
+     */
+    public List<Room> getRoomsByTeacherId(long teacherId) throws SQLException {
+        List<Room> list = new ArrayList<>();
+        String sql = "SELECT r.RoomId, r.RoomName, r.Location "
+                   + "FROM Rooms r "
+                   + "JOIN TeacherRoomAssignments tra ON r.RoomId = tra.RoomId "
+                   + "WHERE tra.TeacherId = ? AND tra.IsPrimary = 1 "
+                   + "ORDER BY r.RoomName ASC";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, teacherId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Room r = new Room();
+                    r.setRoomId(rs.getInt("RoomId"));
+                    r.setRoomName(rs.getString("RoomName"));
+                    r.setLocation(rs.getString("Location"));
+                    list.add(r);
+                }
+            }
+        }
+        return list;
     }
 }

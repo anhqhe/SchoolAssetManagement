@@ -53,7 +53,7 @@
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-door-open text-primary"></i> Xem chi tiết phòng
                     </h1>
-                    <a href="${pageContext.request.contextPath}/rooms" class="btn btn-secondary btn-sm">
+                    <a href="${pageContext.request.contextPath}/teacher/myrooms" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Quay lại danh sách
                     </a>
                 </div>
@@ -83,23 +83,7 @@
 
                                 <dt class="col-sm-3">Vị trí</dt>
                                 <dd class="col-sm-9"><%= room.getLocation() != null ? room.getLocation() : "-" %></dd>
-
-                                <dt class="col-sm-3">Giáo viên phụ trách</dt>
-                                <dd class="col-sm-9">
-                                    <% if (room.getHeadTeacherName() != null) { %>
-                                        <span class="badge badge-success"><i class="fas fa-user-tie"></i> <%= room.getHeadTeacherName() %></span>
-                                    <% } else { %>
-                                        <span class="text-muted font-italic">Chưa phân công</span>
-                                    <% } %>
-                                </dd>
                             </dl>
-
-                            <hr>
-
-                            <a href="${pageContext.request.contextPath}/rooms/config?id=<%= room.getRoomId() %>"
-                               class="btn btn-warning btn-sm">
-                                <i class="fas fa-cog"></i> Cấu hình phòng
-                            </a>
                         </div>
                     </div>
 

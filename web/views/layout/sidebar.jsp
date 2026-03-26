@@ -215,6 +215,13 @@
     <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
 
     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/myrooms">
+            <i class="fas fa-fw fa-door-open"></i>
+            <span>Phòng của tôi</span>
+        </a>
+    </li>
+
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
             <i class="fas fa-fw fa-comments"></i>
             <span>Danh sách đánh giá</span>
