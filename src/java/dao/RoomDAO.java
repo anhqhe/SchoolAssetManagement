@@ -122,6 +122,51 @@ public class RoomDAO {
         }
     }
 
+    /**
+     * Kiểm kê tổng quát: trả về số lượng tài sản (IsActive=1) cho từng phòng.
+     * Key = RoomId, Value = totalCount
+     */
+    public java.util.Map<Integer, Integer> getAssetCountPerRoom() throws SQLException {
+        java.util.Map<Integer, Integer> map = new java.util.LinkedHashMap<>();
+        String sql = "SELECT r.RoomId, r.RoomName, COUNT(a.AssetId) AS TotalAssets "
+                   + "FROM Rooms r "
+                   + "LEFT JOIN Assets a ON a.CurrentRoomId = r.RoomId AND a.IsActive = 1 "
+                   + "GROUP BY r.RoomId, r.RoomName "
+                   + "ORDER BY r.RoomName ASC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                map.put(rs.getInt("RoomId"), rs.getInt("TotalAssets"));
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Kiểm kê chi tiết theo danh mục cho 1 phòng.
+     * Trả về List map {categoryName, count} sắp xếp theo categoryName.
+     */
+    public List<Object[]> getAssetCountByCategoryForRoom(long roomId) throws SQLException {
+        List<Object[]> result = new ArrayList<>();
+        String sql = "SELECT c.CategoryName, COUNT(a.AssetId) AS Cnt "
+                   + "FROM Assets a "
+                   + "JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                   + "WHERE a.CurrentRoomId = ? AND a.IsActive = 1 "
+                   + "GROUP BY c.CategoryName "
+                   + "ORDER BY c.CategoryName ASC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, roomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new Object[]{rs.getString("CategoryName"), rs.getInt("Cnt")});
+                }
+            }
+        }
+        return result;
+    }
+
     public void setPrimaryTeacherForRoom(long roomId, Long teacherId) throws SQLException {
         /*
          * Gán (hoặc huỷ gán) trưởng phòng:

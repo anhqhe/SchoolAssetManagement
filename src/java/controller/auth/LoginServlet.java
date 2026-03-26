@@ -82,6 +82,12 @@ public class LoginServlet extends HttpServlet {
                 req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
                 return;
             }
+            
+            if (!user.isActive()) {
+                req.setAttribute("error", "Tài khoản của bạn đã bị khóa, hãy liên hệ admin để được hỗ trợ");
+                req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
+                return;
+            }
 
             // Lưu vào session
             HttpSession session = req.getSession(true);

@@ -203,12 +203,6 @@
     <!-- TEACHER ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("TEACHER") && !sidebarRoles.contains("ADMIN")) { %>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
-            <i class="fas fa-fw fa-comments"></i>
-            <span>Danh sách đánh giá</span>
-        </a>
-    </li>
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
@@ -229,13 +223,6 @@
 
     <!-- BOARD ONLY -->
     <% if (sidebarRoles != null && sidebarRoles.contains("BOARD") && !sidebarRoles.contains("ADMIN")) { %>
-
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/board/approvals">
-            <i class="fas fa-fw fa-check-square"></i>
-            <span>Phê duyệt yêu cầu</span>
-        </a>
-    </li>
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/board/request-list">
