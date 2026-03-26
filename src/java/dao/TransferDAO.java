@@ -234,6 +234,17 @@ public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNot
                 ps.addBatch();
             }
             ps.executeBatch();
+            
+            String updateAssets = "UPDATE Assets SET CurrentRoomId = ? WHERE AssetId = ?";
+
+            try (PreparedStatement ps2 = conn.prepareStatement(updateAssets)) {
+                for (Integer assetId : assetNoteMap.keySet()) {
+                    ps2.setLong(1, t.getToRoomId());
+                    ps2.setLong(2, assetId);
+                    ps2.addBatch();
+                }
+                ps2.executeBatch();
+            }
         }
 
         conn.commit();
@@ -263,16 +274,78 @@ public boolean approveTransfer(int transferId, int version) throws SQLException 
 }
 
 public boolean rejectTransfer(int transferId, int version) throws SQLException {
-    String sql = "UPDATE AssetTransfers " +
-                 "SET Status = 'REJECTED', UpdatedAt = GETDATE(), Version = Version + 1 " +
-                 "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
-    try (Connection conn = DBUtil.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, transferId);
-        ps.setInt(2, version);
-        return ps.executeUpdate() > 0;
+    Connection conn = null;
+    try {
+        conn = DBUtil.getConnection();
+        conn.setAutoCommit(false); 
+
+        // Lấy FromRoomId của phiếu
+        String selectTransfer = "SELECT FromRoomId FROM AssetTransfers " +
+                                "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
+        Integer fromRoomId = null;
+        try (PreparedStatement ps = conn.prepareStatement(selectTransfer)) {
+            ps.setInt(1, transferId);
+            ps.setInt(2, version);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    fromRoomId = rs.getInt("FromRoomId");
+                } else {
+                    return false; 
+                }
+            }
+        }
+
+        // 2 Lấy danh sách asset trong phiếu
+        String selectAssets = "SELECT AssetId FROM AssetTransferItems WHERE TransferId = ?";
+        List<Integer> assetIds = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(selectAssets)) {
+            ps.setInt(1, transferId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    assetIds.add(rs.getInt("AssetId"));
+                }
+            }
+        }
+
+        // 3 Cập nhật trạng thái phiếu thành REJECTED
+        String updateTransfer = "UPDATE AssetTransfers " +
+                                "SET Status = 'REJECTED', UpdatedAt = GETDATE(), Version = Version + 1 " +
+                                "WHERE TransferId = ? AND Status = 'PENDING' AND Version = ?";
+        try (PreparedStatement ps = conn.prepareStatement(updateTransfer)) {
+            ps.setInt(1, transferId);
+            ps.setInt(2, version);
+            int updated = ps.executeUpdate();
+            if (updated == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        // 4Rollback các asset về FromRoomId
+        if (!assetIds.isEmpty() && fromRoomId != null) {
+            String updateAsset = "UPDATE Assets SET CurrentRoomId = ? WHERE AssetId = ?";
+            try (PreparedStatement ps = conn.prepareStatement(updateAsset)) {
+                for (Integer assetId : assetIds) {
+                    ps.setInt(1, fromRoomId);
+                    ps.setInt(2, assetId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+
+        conn.commit();
+        return true;
+
+    } catch (SQLException ex) {
+        if (conn != null) conn.rollback();
+        throw ex;
+    } finally {
+        if (conn != null) conn.setAutoCommit(true);
+        if (conn != null) conn.close();
     }
 }
+
 
 
 public boolean completeTransfer(int transferId, int version) throws SQLException {
@@ -438,47 +511,72 @@ public boolean updateTransferWithItems(Transfer t, Map<Integer, String> assetNot
 }
 
 public boolean deleteTransfer(int transferId) throws SQLException {
-
-    String sqlDeleteItems =
-            "DELETE FROM AssetTransferItems WHERE TransferId=?";
-
-    String sqlDeleteTransfer =
-            "DELETE FROM AssetTransfers WHERE TransferId=? AND Status='PENDING'";
-
     Connection conn = null;
-
     try {
         conn = DBUtil.getConnection();
         conn.setAutoCommit(false);
 
-        // 1. delete items
-        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteItems)) {
+        // 1. Lấy FromRoomId và danh sách AssetId của phiếu
+        String selectTransfer = "SELECT FromRoomId FROM AssetTransfers WHERE TransferId = ?";
+        int fromRoomId;
+        try (PreparedStatement ps = conn.prepareStatement(selectTransfer)) {
+            ps.setInt(1, transferId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    fromRoomId = rs.getInt("FromRoomId");
+                } else {
+                    return false; // phiếu không tồn tại
+                }
+            }
+        }
+
+        List<Integer> assetIds = new ArrayList<>();
+        String selectAssets = "SELECT AssetId FROM AssetTransferItems WHERE TransferId = ?";
+        try (PreparedStatement ps = conn.prepareStatement(selectAssets)) {
+            ps.setInt(1, transferId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    assetIds.add(rs.getInt("AssetId"));
+                }
+            }
+        }
+
+        // 2. Rollback asset về FromRoomId
+        if (!assetIds.isEmpty()) {
+            String updateAssets = "UPDATE Assets SET CurrentRoomId = ? WHERE AssetId = ?";
+            try (PreparedStatement ps = conn.prepareStatement(updateAssets)) {
+                for (int assetId : assetIds) {
+                    ps.setInt(1, fromRoomId);
+                    ps.setInt(2, assetId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+
+        // 3. Xóa chi tiết phiếu
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM AssetTransferItems WHERE TransferId = ?")) {
             ps.setInt(1, transferId);
             ps.executeUpdate();
         }
 
-        // 2. delete transfer
-        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteTransfer)) {
+        // 4. Xóa phiếu
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM AssetTransfers WHERE TransferId = ?")) {
             ps.setInt(1, transferId);
-
-            if (ps.executeUpdate() == 0) {
-                conn.rollback();
-                return false;
-            }
+            ps.executeUpdate();
         }
 
         conn.commit();
         return true;
 
-    } catch (SQLException e) {
+    } catch (SQLException ex) {
         if (conn != null) conn.rollback();
-        throw e;
+        throw ex;
     } finally {
-        if (conn != null) {
-            conn.setAutoCommit(true);
-            conn.close();
-        }
+        if (conn != null) conn.setAutoCommit(true);
+        if (conn != null) conn.close();
     }
 }
-
 }
