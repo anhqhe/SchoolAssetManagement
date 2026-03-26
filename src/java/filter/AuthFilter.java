@@ -32,7 +32,6 @@ import model.User;
 )
 public class AuthFilter implements Filter {
 
-
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -61,34 +60,26 @@ public class AuthFilter implements Filter {
         boolean allowed = true;
 
         // Chỉ ADMIN được vào một số trang quản trị sâu
-        if (path.startsWith("/admin/user")
-                || path.startsWith("/admin/reports")) {
+        if (path.startsWith("/admin/user")) {
             allowed = roles.contains("ADMIN");
-        }
-
-        // Nhóm ASSET_STAFF (và BOARD +  ADMIN) cho các URL quản lý tài sản
-        else if ( path.startsWith("/staff/")
-
-                || path.startsWith("/transfers/")
+        } else if (path.startsWith("/asset-report")) {
+            allowed = roles.contains("ADMIN")
+                    || roles.contains("ASSET_STAFF")
+                    || roles.contains("BOARD");
+        } // Nhóm ASSET_STAFF (và BOARD +  ADMIN) cho các URL quản lý tài sản
+        else if (path.startsWith("/staff/")
                 || path.startsWith("/assets")
-                || path.startsWith("/asset-report")
                 || path.startsWith("/transfers/")) {
-            allowed = roles.contains("ASSET_STAFF") || roles.contains("ADMIN") || roles.contains("BOARD");
-        }
-
-        // Nhóm TEACHER
+            allowed = roles.contains("ASSET_STAFF") || roles.contains("BOARD");
+        } // Nhóm TEACHER
         else if (path.startsWith("/teacher/")) {
-            allowed = roles.contains("TEACHER") || roles.contains("ADMIN");
-        }
-
-        // Nhóm BOARD
-        else if (path.startsWith("/board/")
-                || path.startsWith("/asset-report")) {
-            allowed = roles.contains("BOARD") || roles.contains("ADMIN");
+            allowed = roles.contains("TEACHER");
+        } // Nhóm BOARD
+        else if (path.startsWith("/board/")) {
+            allowed = roles.contains("BOARD");
         }
 
         // /admin/dashboard, /change-password, ...: chỉ cần đăng nhập là được
-
         if (!allowed) {
             res.setStatus(HttpServletResponse.SC_FORBIDDEN);
             req.setAttribute("errorMessage", "Bạn không có quyền truy cập trang này.");
@@ -99,4 +90,3 @@ public class AuthFilter implements Filter {
         chain.doFilter(request, response);
     }
 }
-
