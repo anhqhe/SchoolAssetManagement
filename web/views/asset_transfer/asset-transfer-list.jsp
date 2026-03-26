@@ -374,9 +374,9 @@
                                     <th width="220px">Ghi chú</th>
                                 </tr>
                                 </thead>
-                                <tbody>
+                               <tbody>
                                 <c:forEach var="a" items="${assets}">
-                                    <tr>
+                                    <tr data-room-id="${a.currentRoomId}">
                                         <td>
                                             <input type="checkbox" name="assetIds"
                                                    value="${a.assetId}" class="asset-checkbox">
@@ -545,6 +545,20 @@
     $('input[name="toDate"]').attr('min', fromDate);
 });
 $(document).ready(function () {
+    
+        $('#fromRoom').change(function () {
+            const fromRoomId = $(this).val();
+
+            // reset checkbox + note
+            $('.asset-checkbox').prop('checked', false);
+            $('.asset-note').prop('disabled', true).val('');
+
+            $('#createTransferModal tbody tr').each(function () {
+                const roomId = $(this).data('room-id');
+
+                $(this).toggle(roomId == fromRoomId);
+            });
+        });
 
     // ===================== Tooltip =====================
     $('body').tooltip({ selector: '[data-toggle="tooltip"]' });
@@ -920,25 +934,55 @@ $('#editTransferModal').on('hidden.bs.modal', function () {
 
     // ===================== Asset Search in Create Modal =====================
     function filterAssets() {
-        const val = $('#assetSearch').val().toLowerCase();
-        $('#createTransferModal table tbody tr').each(function () {
-            $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+       const val = $('#assetSearch').val().toLowerCase();
+       const fromRoomId = $('#fromRoom').val();
+
+       $('#createTransferModal tbody tr').each(function () {
+           const text = $(this).text().toLowerCase();
+           const roomId = $(this).data('room-id');
+
+           const matchSearch = text.indexOf(val) > -1;
+           const matchRoom = roomId == fromRoomId;
+
+           $(this).toggle(matchSearch && matchRoom);
+       });
+   }
+
+    $('#fromRoom').change(function () {
+        const fromRoomId = $(this).val();
+
+        // reset checkbox + note
+        $('.asset-checkbox').prop('checked', false);
+        $('.asset-note').prop('disabled', true).val('');
+
+        $('#createTransferModal tbody tr').each(function () {
+            const roomId = $(this).data('room-id');
+
+            $(this).toggle(roomId == fromRoomId);
         });
-    }
+    });
 
     $('#btnSearchAsset').click(filterAssets);
     $('#assetSearch').keypress(function (e) {
         if (e.which === 13) { e.preventDefault(); filterAssets(); }
     });
     $('#btnResetAsset').click(function () {
-        $('#assetSearch').val('');
-        $('#createTransferModal table tbody tr').show();
-    });
+       $('#assetSearch').val('');
+       $('#fromRoom').trigger('change'); // re-filter theo room
+   });
+
 
     $('#createTransferModal').on('shown.bs.modal', function () {
-        $('#assetSearch').val('');
-        $('#createTransferModal tbody tr').show();
-    });
+      $('#assetSearch').val('');
+      $('#fromRoom').val('');
+      $('#createTransferModal tbody tr').hide();
+  });
+$(document).on('change', '.asset-checkbox', function () {
+    const note = $(this).closest('tr').find('.asset-note');
+    note.prop('disabled', !this.checked);
+
+    if (!this.checked) note.val('');
+});
 $('#deleteTransferBtn').click(function () {
     if (!editId) return;
 

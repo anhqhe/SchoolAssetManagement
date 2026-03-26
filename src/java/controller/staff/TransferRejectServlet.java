@@ -30,8 +30,7 @@ public class TransferRejectServlet extends HttpServlet {
 
         // Kiểm tra quyền
         boolean isAuthorized = currentUser.getRoles() != null &&
-                (currentUser.getRoles().contains("ADMIN") ||
-                 currentUser.getRoles().contains("BOARD"));
+                (currentUser.getRoles().contains("BOARD"));
         if (!isAuthorized) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write("{\"success\":false,\"message\":\"Không có quyền từ chối\"}");
