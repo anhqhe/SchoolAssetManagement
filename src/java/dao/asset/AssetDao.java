@@ -106,8 +106,8 @@ public class AssetDao {
         String sql = "INSERT INTO Assets ("
                 + "AssetCode, AssetName, CategoryId, SerialNumber, Model, Brand, OriginNote, "
                 + "PurchaseDate, ReceivedDate, ConditionNote, Status, "
-                + "CurrentRoomId, CurrentHolderId, IsActive, Unit"
-                + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                + "CurrentRoomId, CurrentHolderId, IsActive"
+                + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection con = DBUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, a.getAssetCode());
