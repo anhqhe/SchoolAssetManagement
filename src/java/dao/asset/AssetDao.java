@@ -258,7 +258,7 @@ public class AssetDao {
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, r.Location AS RoomLocation, "
                 + "a.CurrentHolderId, u.FullName AS HolderName, "
-                + "a.IsActive, a.CreatedAt, a.UpdatedAt, a.DeletedAt"
+                + "a.IsActive, a.CreatedAt, a.UpdatedAt, a.DeletedAt "
                 + "FROM Assets a "
                 + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
                 + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
