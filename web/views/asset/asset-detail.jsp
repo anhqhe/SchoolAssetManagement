@@ -191,6 +191,20 @@
                                                         </c:choose>
                                                     </div>
                                                 </div>
+
+                                                <c:if test="${asset.deletedAt != null}">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4 detail-label" style="color: #e74a3b;">
+                                                            <i class="fas fa-trash-alt text-danger"></i> Ngày xóa:
+                                                        </div>
+                                                        <div class="col-md-8 detail-value">
+                                                            <span class="badge badge-danger" style="font-size: 13px; padding: 6px 10px;">
+                                                                <i class="fas fa-calendar-times"></i>
+                                                                <fmt:formatDate value="${asset.deletedAtAsDate}" pattern="dd/MM/yyyy HH:mm"/>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </c:if>
                                             </div>
                                         </div>
 
@@ -420,15 +434,15 @@
         <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
 
         <script>
-                                function showChangeStatusModal() {
-                                    $('#changeStatusModal').modal('show');
-                                }
+                                                        function showChangeStatusModal() {
+                                                            $('#changeStatusModal').modal('show');
+                                                        }
 
-                                function confirmDelete() {
-                                    if (confirm('Bạn có chắc chắn muốn xóa tài sản "${asset.assetCode} - ${asset.assetName}"?\n\nHành động này không thể hoàn tác!')) {
-                                        window.location.href = '${pageContext.request.contextPath}/assets?action=delete&id=${asset.assetId}';
-                                                }
-                                            }
+                                                        function confirmDelete() {
+                                                            if (confirm('Bạn có chắc chắn muốn xóa tài sản "${asset.assetCode} - ${asset.assetName}"?\n\nHành động này không thể hoàn tác!')) {
+                                                                window.location.href = '${pageContext.request.contextPath}/assets?action=delete&id=${asset.assetId}';
+                                                                        }
+                                                                    }
         </script>
 
     </body>
