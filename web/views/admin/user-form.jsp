@@ -107,7 +107,7 @@
                                            value="<%= fPhone %>"
                                            inputmode="tel"
                                            placeholder="0912345678 hoặc +84 912345678"
-                                           pattern="^(\\+84\\s?\\d{9}|84\\d{9}|0\\d{9})$">
+                                           pattern="^(\+84\s?\d{9}|84\d{9}|0\d{9})$">
                                     <small class="form-text text-muted">Cho phép `0xxxxxxxxx`, `84xxxxxxxxx`, hoặc `+84xxxxxxxxx`.</small>
                                 </div>
                             </div>
