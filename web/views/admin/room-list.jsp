@@ -320,9 +320,12 @@
 
                 $.each(data, function (i, room) {
                     var badgeClass = room.totalAssets > 0 ? 'badge-count' : 'badge-count badge-zero';
-                    html += '<tr>'
-                          + '<td class="text-muted">' + (i + 1) + '</td>'
-                          + '<td><strong>' + escHtml(room.roomName) + '</strong></td>'
+                    var rowStyle = room.roomId === -1 ? 'style="background-color: #fce4ec; border-left: 4px solid #e91e63;"' : '';
+                    var icon = room.roomId === -1 ? '<i class="fas fa-boxes mr-1 text-danger"></i>' : '';
+                    
+                    html += '<tr ' + rowStyle + '>'
+                          + '<td class="text-muted">' + (room.roomId === -1 ? '<i class="fas fa-star text-warning"></i>' : (i + 1)) + '</td>'
+                          + '<td>' + icon + '<strong>' + escHtml(room.roomName) + '</strong></td>'
                           + '<td class="text-muted">' + (room.location || '-') + '</td>'
                           + '<td class="text-center"><span class="' + badgeClass + '">' + room.totalAssets + '</span></td>'
                           + '</tr>';
