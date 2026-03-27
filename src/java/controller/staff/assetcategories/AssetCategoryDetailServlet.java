@@ -34,7 +34,7 @@ import java.util.List;
  * </ul>
  *
  * <p>
- * Quyền truy cập: ASSET_STAFF hoặc ADMIN.
+ * Quyền truy cập: ASSET_STAFF.
  * </p>
  */
 @WebServlet(name = "AssetCategoryDetailServlet", urlPatterns = { "/admin/categories/detail" })
@@ -66,7 +66,7 @@ public class AssetCategoryDetailServlet extends HttpServlet {
             return;
         }
 
-        // --- 2. Kiểm tra quyền ---
+        // --- 2. Kiểm tra quyền: Chỉ ASSET_STAFF được phép xem chi tiết ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {
