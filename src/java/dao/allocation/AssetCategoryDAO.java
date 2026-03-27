@@ -70,9 +70,12 @@ public class AssetCategoryDAO {
     public List<AssetCategory> getAllActiveCategories() {
         List<AssetCategory> activeList = new ArrayList<>();
 
-        String sql = "SELECT CategoryId, CategoryCode, CategoryName, ParentCategoryId, IsActive "
-                + "FROM AssetCategories "
-                + "WHERE IsActive = 1";
+        String sql = """
+                     SELECT CategoryId, CategoryCode, CategoryName, ParentCategoryId, IsActive
+                     FROM AssetCategories 
+                     WHERE IsActive = 1
+                     AND ParentCategoryId is not null
+                     """;
 
         try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql); 
                 ResultSet rs = ps.executeQuery()) {

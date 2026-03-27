@@ -144,6 +144,7 @@ public class AssetDao {
                 ps.setNull(13, Types.INTEGER);
             }
             ps.setBoolean(14, a.isIsActive());
+            ps.setString(15, a.getUnit());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
