@@ -25,7 +25,7 @@ import java.util.List;
  * và forward về {@code assetcategory-list.jsp} với thông báo kết quả.
  * </p>
  *
- * <p>Quyền truy cập: ASSET_STAFF hoặc ADMIN.</p>
+ * <p>Quyền truy cập: ASSET_STAFF.</p>
  */
 @WebServlet(name = "AssetCategoryDeleteServlet", urlPatterns = {"/admin/categories/delete"})
 public class AssetCategoryDeleteServlet extends HttpServlet {
@@ -60,7 +60,7 @@ public class AssetCategoryDeleteServlet extends HttpServlet {
             return;
         }
 
-        // --- 2. Kiểm tra quyền ---
+        // --- 2. Kiểm tra quyền: Chỉ ASSET_STAFF được phép xóa ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {

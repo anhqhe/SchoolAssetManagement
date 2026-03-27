@@ -63,7 +63,7 @@ public class AssetCategoryCreateServlet extends HttpServlet {
             return;
         }
 
-        // --- 2. Kiểm tra quyền ---
+        // --- 2. Kiểm tra quyền: Chỉ ASSET_STAFF mới được phép tạo danh mục ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {
@@ -106,7 +106,7 @@ public class AssetCategoryCreateServlet extends HttpServlet {
             return;
         }
 
-        // --- 2. Kiểm tra quyền ---
+        // --- 2. Kiểm tra quyền: Chỉ ASSET_STAFF được phép tạo ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {
