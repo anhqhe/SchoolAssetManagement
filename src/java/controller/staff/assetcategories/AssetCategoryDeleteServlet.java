@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.AssetCategory;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -31,6 +32,9 @@ public class AssetCategoryDeleteServlet extends HttpServlet {
 
     /** DAO thao tác với bảng AssetCategory. */
     private final AssetCategoryDAO categoryDAO = new AssetCategoryDAO();
+    
+    private static final String DELETE_BLOCKED_MESSAGE =
+            "Không thể xóa danh mục này vì mã danh mục đang được sử dụng hoặc vẫn còn tài sản thuộc danh mục.";
 
     /**
      * Xử lý xoá danh mục tài sản (POST).
@@ -74,22 +78,26 @@ public class AssetCategoryDeleteServlet extends HttpServlet {
 
         try {
             long id = Long.parseLong(idParam);
+            AssetCategory category = categoryDAO.getCategoryById(id);
+            String categoryCode = (category != null) ? category.getCategoryCode() : null;
+            String blockedMessage = (categoryCode != null && !categoryCode.trim().isEmpty())
+                    ? "Không thể xóa danh mục '" + categoryCode
+                    + "' vì mã danh mục đang được sử dụng hoặc vẫn còn tài sản thuộc danh mục."
+                    : DELETE_BLOCKED_MESSAGE;
 
             // --- 4. Validate: kiểm tra tài sản còn tồn tại trong danh mục ---
             // Quy tắc: không được xoá danh mục khi còn bất kỳ tài sản nào thuộc về nó,
             // dù danh mục đó đang active hay inactive.
             int assetCount = categoryDAO.countAssetsByCategoryId(id);
             if (assetCount > 0) {
-                req.setAttribute("error",
-                    "Không thể xóa danh mục này vì vẫn còn " + assetCount +
-                    " tài sản thuộc danh mục. Vui lòng chuyển hoặc xóa các tài sản đó trước.");
+                req.setAttribute("error", blockedMessage);
             } else {
                 // --- 5. Thực hiện xoá ---
                 boolean deleted = categoryDAO.deleteCategory(id);
                 if (deleted) {
                     req.setAttribute("success", "Đã xóa danh mục tài sản.");
                 } else {
-                    req.setAttribute("error", "Không thể xóa danh mục tài sản.");
+                    req.setAttribute("error", blockedMessage);
                 }
             }
         } catch (NumberFormatException e) {
@@ -98,7 +106,7 @@ public class AssetCategoryDeleteServlet extends HttpServlet {
             return;
         } catch (SQLException e) {
             e.printStackTrace();
-            req.setAttribute("error", "Có lỗi xảy ra khi xóa danh mục. Vui lòng thử lại sau.");
+            req.setAttribute("error", DELETE_BLOCKED_MESSAGE);
         }
 
         // --- 5. Reload danh sách để hiển thị trạng thái mới nhất sau khi xoá ---
