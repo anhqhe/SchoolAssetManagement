@@ -1,6 +1,7 @@
 package controller.admin.room;
 
 import dao.RoomDAO;
+import dao.UserDAO;
 import model.Room;
 import model.User;
 
@@ -32,6 +33,7 @@ public class RoomListServlet extends HttpServlet {
 
     /** DAO thao tác với bảng Room trong database. */
     private final RoomDAO roomDAO = new RoomDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     /**
      * Xử lý GET /rooms.
@@ -66,6 +68,8 @@ public class RoomListServlet extends HttpServlet {
             // (DataTables đang làm sort/search phía client – không cần giới hạn ở đây)
             List<Room> rooms = roomDAO.getAllRooms();
             req.setAttribute("rooms", rooms);
+            req.setAttribute("teachers", userDAO.getAllTeachers());
+            setAssignMessage(req);
         } catch (SQLException e) {
             e.printStackTrace();
             // Không leak thông tin lỗi SQL ra UI; chỉ trả thông báo chung cho người dùng
@@ -74,5 +78,38 @@ public class RoomListServlet extends HttpServlet {
 
         // Forward sang view để render HTML
         req.getRequestDispatcher("/views/admin/room-list.jsp").forward(req, resp);
+    }
+
+    private void setAssignMessage(HttpServletRequest req) {
+        String assign = req.getParameter("assign");
+        if ("success".equals(assign)) {
+            req.setAttribute("success", "Gán giáo viên cho phòng thành công.");
+            return;
+        }
+
+        String assignError = req.getParameter("assignError");
+        if (assignError == null || assignError.isEmpty()) {
+            return;
+        }
+
+        String message;
+        switch (assignError) {
+            case "invalid_room":
+                message = "Phòng không hợp lệ.";
+                break;
+            case "invalid_teacher":
+                message = "Giáo viên không hợp lệ.";
+                break;
+            case "room_not_found":
+                message = "Không tìm thấy phòng cần gán.";
+                break;
+            case "teacher_not_found":
+                message = "Không tìm thấy giáo viên để gán.";
+                break;
+            default:
+                message = "Không thể gán giáo viên cho phòng. Vui lòng thử lại.";
+                break;
+        }
+        req.setAttribute("error", message);
     }
 }

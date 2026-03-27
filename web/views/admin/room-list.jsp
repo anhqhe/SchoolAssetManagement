@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="model.User" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Room" %>
@@ -14,7 +14,10 @@
 
     @SuppressWarnings("unchecked")
     List<Room> roomList = (List<Room>) request.getAttribute("rooms");
+    @SuppressWarnings("unchecked")
+    List<User> teacherList = (List<User>) request.getAttribute("teachers");
     String error = (String) request.getAttribute("error");
+    String success = (String) request.getAttribute("success");
 %>
 
 <!DOCTYPE html>
@@ -109,6 +112,14 @@
                         </button>
                     </div>
                 <% } %>
+                <% if (success != null && !success.isEmpty()) { %>
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <i class="fas fa-check-circle"></i> <%= success %>
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                <% } %>
 
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
@@ -127,6 +138,7 @@
                                     <th>ID</th>
                                     <th>Tên phòng</th>
                                     <th>Vị trí</th>
+                                    <th>Giáo viên phụ trách</th>
                                     <th>Thao tác</th>
                                 </tr>
                                 </thead>
@@ -135,7 +147,7 @@
                                     if (roomList == null || roomList.isEmpty()) {
                                 %>
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted">
+                                        <td colspan="5" class="text-center text-muted">
                                             <i class="fas fa-inbox fa-3x mb-3 mt-3"></i>
                                             <p>Chưa có phòng nào</p>
                                         </td>
@@ -148,6 +160,7 @@
                                         <td><%= room.getRoomId() %></td>
                                         <td><strong><%= room.getRoomName() %></strong></td>
                                         <td><%= (room.getLocation() != null ? room.getLocation() : "-") %></td>
+                                        <td><%= (room.getHeadTeacherName() != null && !room.getHeadTeacherName().isEmpty()) ? room.getHeadTeacherName() : "-" %></td>
                                         <td class="text-center" style="white-space:nowrap;">
                                             <!-- View Detail room -->
                                             <a href="<%= request.getContextPath() %>/rooms/detail?id=<%= room.getRoomId() %>"
@@ -165,6 +178,13 @@
 
                                             <!-- Config Room -->
                                             <% if (canManageRoom) { %>
+                                                <button class="btn btn-sm btn-secondary btn-assign-teacher"
+                                                        data-room-id="<%= room.getRoomId() %>"
+                                                        data-room-name="<%= room.getRoomName() %>"
+                                                        data-current-teacher="<%= room.getHeadTeacherName() != null ? room.getHeadTeacherName() : "" %>"
+                                                        title="Assign teacher">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </button>
                                                 <a href="<%= request.getContextPath() %>/rooms/config?id=<%= room.getRoomId() %>"
                                                    class="btn btn-sm btn-warning" title="Config Room">
                                                     <i class="fas fa-cog"></i>
@@ -188,6 +208,59 @@
 
         <%@ include file="/views/layout/footer.jsp" %>
 
+    </div>
+</div>
+
+<!-- =========================================================
+     MODAL 0: ASSIGN TEACHER CHO PHÒNG
+     ========================================================= -->
+<div class="modal fade" id="modalAssignTeacher" tabindex="-1" role="dialog"
+     aria-labelledby="modalAssignTeacherLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" action="${pageContext.request.contextPath}/rooms/assign-teacher">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAssignTeacherLabel">
+                        <i class="fas fa-user-plus mr-2"></i>Assign teacher
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="roomId" id="assignRoomId">
+                    <div class="mb-2 text-muted">
+                        Phòng: <strong id="assignRoomName"></strong>
+                    </div>
+                    <div class="mb-3">
+                        Hiện tại: <span id="assignCurrentTeacher" class="font-weight-bold text-primary">-</span>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="assignTeacherId">Chọn giáo viên</label>
+                        <select class="form-control" id="assignTeacherId" name="teacherId">
+                            <option value="">-- Bỏ gán giáo viên --</option>
+                            <%
+                                if (teacherList != null) {
+                                    for (User teacher : teacherList) {
+                            %>
+                                <option value="<%= teacher.getUserId() %>">
+                                    <%= teacher.getFullName() %> (<%= teacher.getUsername() %>)
+                                </option>
+                            <%
+                                    }
+                                }
+                            %>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i>Lưu phân công
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -273,6 +346,18 @@
             },
             "pageLength": 10
         });
+    });
+
+    $(document).on('click', '.btn-assign-teacher', function () {
+        var roomId = $(this).data('room-id');
+        var roomName = $(this).data('room-name');
+        var currentTeacher = $(this).data('current-teacher');
+
+        $('#assignRoomId').val(roomId);
+        $('#assignRoomName').text(roomName || '');
+        $('#assignCurrentTeacher').text(currentTeacher || '-');
+        $('#assignTeacherId').val('');
+        $('#modalAssignTeacher').modal('show');
     });
 
     /* ====================================================
@@ -387,3 +472,4 @@
 
 </body>
 </html>
+
