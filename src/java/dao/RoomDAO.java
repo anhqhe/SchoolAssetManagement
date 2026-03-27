@@ -149,6 +149,21 @@ public class RoomDAO {
     }
 
     /**
+     * Đếm số tài sản chưa được phân bổ vào phòng nào (CurrentRoomId IS NULL).
+     */
+    public int getUnassignedAssetCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Assets WHERE CurrentRoomId IS NULL AND IsActive = 1";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Kiểm kê chi tiết theo danh mục cho 1 phòng.
      * Trả về List map {categoryName, count} sắp xếp theo categoryName.
      */
