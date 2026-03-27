@@ -20,6 +20,7 @@ import java.sql.Types;
 import util.DBUtil;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import model.asset.AssetLifecycleEvent;
 
 /**
  *
@@ -107,8 +108,7 @@ public class AssetDao {
                 + "PurchaseDate, ReceivedDate, ConditionNote, Status, "
                 + "CurrentRoomId, CurrentHolderId, IsActive, Unit"
                 + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
             ps.setLong(3, a.getCategoryId());
@@ -240,7 +240,9 @@ public class AssetDao {
                 ps.setLong(2, assetId);
                 ps.executeUpdate();
             }
-            String histSql = "INSERT INTO AssetStatusHistory (AssetId, OldStatus, NewStatus, Reason, ChangedByUserId, ChangedAt) VALUES (?, ?, ?, ?, ?, SYSDATETIME())";
+            String histSql = "INSERT INTO AssetStatusHistory "
+                    + "(AssetId, Type, OldStatus, NewStatus, Reason, ChangedByUserId, ChangedAt) "
+                    + "VALUES (?, 'STATUS_CHANGE', ?, ?, ?, ?, SYSDATETIME())";
             try (PreparedStatement ps = con.prepareStatement(histSql)) {
                 ps.setLong(1, assetId);
                 ps.setString(2, oldStatus);
@@ -319,7 +321,7 @@ public class AssetDao {
                         a.setUpdatedAt(uAt.toLocalDateTime());
                     }
                     Timestamp dAt = rs.getTimestamp("DeletedAt");
-                    if(dAt != null){
+                    if (dAt != null) {
                         a.setDeletedAt(dAt.toLocalDateTime());
                     }
                     a.setCategoryName(rs.getString("CategoryName"));
@@ -696,16 +698,16 @@ public class AssetDao {
     // ============================================================
     // ===== ASSET INCREASE METHODS
     // ============================================================
-
-    /** Sinh mã phiếu ghi tăng: TG-yyyyMMdd-XXXX */
+    /**
+     * Sinh mã phiếu ghi tăng: TG-yyyyMMdd-XXXX
+     */
     public String generateIncreaseCode() throws SQLException {
         String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String prefix = "TG-" + datePart + "-";
         String sql = "SELECT TOP 1 IncreaseCode FROM AssetIncreaseRecords "
                 + "WHERE IncreaseCode LIKE ? ORDER BY IncreaseCode DESC";
         int nextSeq = 1;
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, prefix + "%");
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -722,15 +724,16 @@ public class AssetDao {
         return prefix + String.format("%04d", nextSeq);
     }
 
-    /** Insert phiếu ghi tăng, trả về IncreaseId */
+    /**
+     * Insert phiếu ghi tăng, trả về IncreaseId
+     */
     public long insertIncreaseRecord(String increaseCode, String sourceType,
             String sourceDetail, LocalDate receivedDate,
             long createdByUserId, String note) throws SQLException {
         String sql = "INSERT INTO AssetIncreaseRecords "
                 + "(IncreaseCode, SourceType, SourceDetail, ReceivedDate, CreatedByUserId, Note) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, increaseCode);
             ps.setString(2, sourceType);
             ps.setString(3, sourceDetail);
@@ -751,11 +754,12 @@ public class AssetDao {
         return -1;
     }
 
-    /** Insert chi tiết tài sản vào phiếu ghi tăng */
+    /**
+     * Insert chi tiết tài sản vào phiếu ghi tăng
+     */
     public void insertIncreaseItem(long increaseId, long assetId, String note) throws SQLException {
         String sql = "INSERT INTO AssetIncreaseItems (IncreaseId, AssetId, Note) VALUES (?, ?, ?)";
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, increaseId);
             ps.setLong(2, assetId);
             ps.setString(3, note);
@@ -763,7 +767,9 @@ public class AssetDao {
         }
     }
 
-    /** Lấy danh sách phiếu ghi tăng (có search, filter ngày, phân trang) */
+    /**
+     * Lấy danh sách phiếu ghi tăng (có search, filter ngày, phân trang)
+     */
     public List<AssetIncreaseRecord> getIncreaseRecords(
             String keyword, String fromDate, String toDate,
             int offset, int limit) throws SQLException {
@@ -799,8 +805,7 @@ public class AssetDao {
         params.add(limit);
 
         List<AssetIncreaseRecord> list = new ArrayList<>();
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -812,12 +817,16 @@ public class AssetDao {
                     rec.setSourceType(rs.getString("SourceType"));
                     rec.setSourceDetail(rs.getString("SourceDetail"));
                     Date rd = rs.getDate("ReceivedDate");
-                    if (rd != null) rec.setReceivedDate(rd.toLocalDate());
+                    if (rd != null) {
+                        rec.setReceivedDate(rd.toLocalDate());
+                    }
                     rec.setCreatedByUserId(rs.getLong("CreatedByUserId"));
                     rec.setCreatedByName(rs.getString("CreatedByName"));
                     rec.setNote(rs.getString("Note"));
                     Timestamp ca = rs.getTimestamp("CreatedAt");
-                    if (ca != null) rec.setCreatedAt(ca.toLocalDateTime());
+                    if (ca != null) {
+                        rec.setCreatedAt(ca.toLocalDateTime());
+                    }
                     rec.setItemCount(rs.getInt("ItemCount"));
                     list.add(rec);
                 }
@@ -826,7 +835,9 @@ public class AssetDao {
         return list;
     }
 
-    /** Đếm tổng phiếu ghi tăng (cho phân trang) */
+    /**
+     * Đếm tổng phiếu ghi tăng (cho phân trang)
+     */
     public int countIncreaseRecords(String keyword, String fromDate, String toDate) throws SQLException {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM AssetIncreaseRecords r WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
@@ -845,19 +856,22 @@ public class AssetDao {
             sql.append("AND CAST(r.ReceivedDate AS DATE) <= ? ");
             params.add(toDate.trim());
         }
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         }
         return 0;
     }
 
-    /** Lấy thông tin 1 phiếu ghi tăng theo ID */
+    /**
+     * Lấy thông tin 1 phiếu ghi tăng theo ID
+     */
     public AssetIncreaseRecord getIncreaseRecordById(long increaseId) throws SQLException {
         String sql = "SELECT r.IncreaseId, r.IncreaseCode, r.SourceType, r.SourceDetail, "
                 + "r.ReceivedDate, r.CreatedByUserId, u.FullName AS CreatedByName, "
@@ -866,8 +880,7 @@ public class AssetDao {
                 + "FROM AssetIncreaseRecords r "
                 + "LEFT JOIN Users u ON r.CreatedByUserId = u.UserId "
                 + "WHERE r.IncreaseId = ?";
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, increaseId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -877,12 +890,16 @@ public class AssetDao {
                     rec.setSourceType(rs.getString("SourceType"));
                     rec.setSourceDetail(rs.getString("SourceDetail"));
                     Date rd = rs.getDate("ReceivedDate");
-                    if (rd != null) rec.setReceivedDate(rd.toLocalDate());
+                    if (rd != null) {
+                        rec.setReceivedDate(rd.toLocalDate());
+                    }
                     rec.setCreatedByUserId(rs.getLong("CreatedByUserId"));
                     rec.setCreatedByName(rs.getString("CreatedByName"));
                     rec.setNote(rs.getString("Note"));
                     Timestamp ca = rs.getTimestamp("CreatedAt");
-                    if (ca != null) rec.setCreatedAt(ca.toLocalDateTime());
+                    if (ca != null) {
+                        rec.setCreatedAt(ca.toLocalDateTime());
+                    }
                     rec.setItemCount(rs.getInt("ItemCount"));
                     return rec;
                 }
@@ -891,7 +908,9 @@ public class AssetDao {
         return null;
     }
 
-    /** Lấy danh sách tài sản trong 1 phiếu ghi tăng */
+    /**
+     * Lấy danh sách tài sản trong 1 phiếu ghi tăng
+     */
     public List<AssetIncreaseItem> getIncreaseItems(long increaseId) throws SQLException {
         String sql = "SELECT i.IncreaseItemId, i.IncreaseId, i.AssetId, "
                 + "a.AssetCode, a.AssetName, i.Note "
@@ -900,8 +919,7 @@ public class AssetDao {
                 + "WHERE i.IncreaseId = ? "
                 + "ORDER BY a.AssetCode";
         List<AssetIncreaseItem> list = new ArrayList<>();
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, increaseId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -918,4 +936,88 @@ public class AssetDao {
         }
         return list;
     }
+
+    /**
+     * Lấy toàn bộ lịch sử vòng đời của một tài sản. File:
+     * src/java/dao/asset/AssetDao.java Thêm import: import
+     * model.asset.AssetLifecycleEvent;
+     */
+    public List<AssetLifecycleEvent> getLifecycleEvents(long assetId) throws SQLException {
+        String sql = "SELECT h.HistoryId, h.AssetId, h.Type, h.OldStatus, h.NewStatus, "
+                + "h.Reason, h.ChangedByUserId, u.FullName AS ChangedByName, h.ChangedAt, "
+                + "h.OldRoomId, h.NewRoomId, "
+                + "ro.RoomName AS OldRoomName, rn.RoomName AS NewRoomName "
+                + "FROM AssetStatusHistory h "
+                + "LEFT JOIN Users u ON h.ChangedByUserId = u.UserId "
+                + "LEFT JOIN Rooms ro ON h.OldRoomId = ro.RoomId "
+                + "LEFT JOIN Rooms rn ON h.NewRoomId = rn.RoomId "
+                + "WHERE h.AssetId = ? "
+                + "ORDER BY h.ChangedAt ASC";
+        List<AssetLifecycleEvent> list = new java.util.ArrayList<>();
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, assetId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssetLifecycleEvent e = new AssetLifecycleEvent();
+                    e.setHistoryId(rs.getLong("HistoryId"));
+                    e.setAssetId(rs.getLong("AssetId"));
+                    e.setType(rs.getString("Type"));
+                    e.setOldStatus(rs.getString("OldStatus"));
+                    e.setNewStatus(rs.getString("NewStatus"));
+                    e.setReason(rs.getString("Reason"));
+                    e.setChangedByUserId(rs.getLong("ChangedByUserId"));
+                    e.setChangedByName(rs.getString("ChangedByName"));
+                    Timestamp ts = rs.getTimestamp("ChangedAt");
+                    if (ts != null) {
+                        e.setChangedAt(ts.toLocalDateTime());
+                    }
+                    long oldRoom = rs.getLong("OldRoomId");
+                    if (!rs.wasNull()) {
+                        e.setOldRoomId(oldRoom);
+                    }
+                    long newRoom = rs.getLong("NewRoomId");
+                    if (!rs.wasNull()) {
+                        e.setNewRoomId(newRoom);
+                    }
+                    e.setOldRoomName(rs.getString("OldRoomName"));
+                    e.setNewRoomName(rs.getString("NewRoomName"));
+                    list.add(e);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Ghi một sự kiện vào AssetStatusHistory với Type. Dùng cho: tạo mới (NEW),
+     * xóa (DELETED), và các luồng khác.
+     */
+    public void insertLifecycleEvent(long assetId, String type,
+            String oldStatus, String newStatus,
+            String reason, long changedByUserId,
+            Long oldRoomId, Long newRoomId) throws SQLException {
+        String sql = "INSERT INTO AssetStatusHistory "
+                + "(AssetId, Type, OldStatus, NewStatus, Reason, ChangedByUserId, ChangedAt, OldRoomId, NewRoomId) "
+                + "VALUES (?, ?, ?, ?, ?, ?, SYSDATETIME(), ?, ?)";
+        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, assetId);
+            ps.setString(2, type);
+            ps.setString(3, oldStatus);
+            ps.setString(4, newStatus);
+            ps.setString(5, reason);
+            ps.setLong(6, changedByUserId);
+            if (oldRoomId != null) {
+                ps.setLong(7, oldRoomId);
+            } else {
+                ps.setNull(7, Types.BIGINT);
+            }
+            if (newRoomId != null) {
+                ps.setLong(8, newRoomId);
+            } else {
+                ps.setNull(8, Types.BIGINT);
+            }
+            ps.executeUpdate();
+        }
+    }
+
 }

@@ -310,7 +310,11 @@
                                                         <i class="fas fa-edit"></i> Cập nhật thông tin
                                                     </a>                                                  
                                                     <hr>
-
+                                                    <a href="${pageContext.request.contextPath}/asset-lifecycle?id=${asset.assetId}"
+                                                       class="btn btn-info btn-block mb-2">
+                                                        <i class="fas fa-history"></i> Xem vòng đời
+                                                    </a>
+                                                    <hr>
                                                     <button class="btn btn-danger btn-block" onclick="confirmDelete()">
                                                         <i class="fas fa-trash"></i> Xóa tài sản
                                                     </button>

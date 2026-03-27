@@ -242,27 +242,41 @@ public class AssetServlet_CRUD extends HttpServlet {
             for (String code : codes) {
                 Asset a = cloneAsset(template);
                 a.setAssetCode(code);
-                long assetId = assetDao.insert(a); 
-                if(assetId > 0){
+                long assetId = assetDao.insert(a);
+                if (assetId > 0) {
                     insertedAssetIds.add(assetId);
                 }
             }
             int inserted = insertedAssetIds.size();
-            
-            if(inserted > 0){
+
+            if (inserted > 0) {
                 String increaseCode = assetDao.generateIncreaseCode();
-                LocalDate receivedDate = template.getReceivedDate() != null 
-                        ? template.getReceivedDate().toLocalDate() 
+                LocalDate receivedDate = template.getReceivedDate() != null
+                        ? template.getReceivedDate().toLocalDate()
                         : LocalDate.now();
                 long increaseID = assetDao.insertIncreaseRecord(increaseCode, sourceType.trim(),
                         null, receivedDate, userId, null);
-                if(increaseID > 0){
-                    for(long assetId : insertedAssetIds){
+                if (increaseID > 0) {
+                    for (long assetId : insertedAssetIds) {
                         assetDao.insertIncreaseItem(increaseID, assetId, null);
                     }
+                    // Ghi lifecycle event "NEW" cho mỗi tài sản vừa tạo
+                    for (long assetId : insertedAssetIds) {
+                        assetDao.insertLifecycleEvent(
+                                assetId,
+                                "NEW", // type
+                                null, // oldStatus (không có)
+                                "IN_STOCK", // newStatus
+                                "Tạo mới tài sản", // reason
+                                userId,
+                                null, // oldRoomId
+                                null // newRoomId
+                        );
+                    }
+
                 }
             }
-            
+
             response.sendRedirect(request.getContextPath() + "/assets?action=list&created=" + inserted);
         } catch (SQLException e) {
             Asset assetForForm = buildAssetFromRequestSafe(request);
@@ -328,7 +342,23 @@ public class AssetServlet_CRUD extends HttpServlet {
             throws ServletException, IOException {
         try {
             int id = Integer.parseInt(request.getParameter("id"));
+            // Lấy userId người thực hiện
+            jakarta.servlet.http.HttpSession session = request.getSession(false);
+            User currentUser = session != null
+                    ? (User) session.getAttribute("currentUser") : null;
+            long userId = (currentUser != null) ? currentUser.getUserId() : 0;
             assetDao.delete(id);
+            // Ghi lifecycle event DELETED
+            assetDao.insertLifecycleEvent(
+                    id,
+                    "DELETED", // type
+                    null, // oldStatus
+                    "DELETED", // newStatus
+                    "Xóa tài sản", // reason
+                    userId,
+                    null,
+                    null
+            );
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
             throw new ServletException(e);
