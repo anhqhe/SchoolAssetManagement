@@ -99,12 +99,6 @@
         </a>
     </li>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/settings">
-            <i class="fas fa-fw fa-cogs"></i>
-            <span>Cài đặt</span>
-        </a>
-    </li>
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/asset-report?type=inventory">
