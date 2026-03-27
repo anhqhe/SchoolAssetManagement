@@ -209,6 +209,13 @@
         </a>
     </li>
 
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/asset-list">
+            <i class="fas fa-box-open"></i>
+            <span>Tài sản được cấp</span>
+        </a>
+    </li>
+
 
     <% } %>
 
