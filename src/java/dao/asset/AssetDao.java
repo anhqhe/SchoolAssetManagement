@@ -28,7 +28,6 @@ import java.time.format.DateTimeFormatter;
 public class AssetDao {
 
     public List<Asset> findAll() throws SQLException {
-        // DB hiện tại không có cột [Unit] trong bảng Assets -> luôn trả NULL AS Unit để tránh lỗi
         String sql = "SELECT a.AssetId, a.AssetCode, a.AssetName, NULL AS Unit, a.CategoryId, "
                 + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.OriginNote, "
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
@@ -202,7 +201,15 @@ public class AssetDao {
     }
 
     public void delete(int assetId) throws SQLException {
-        String sql = "UPDATE Assets SET IsActive = 0, UpdatedAt = SYSDATETIME() WHERE AssetId = ?";
+        // Chuyển status sang DELETED, xóa liên kết phòng và người giữ, ghi ngày xóa
+        String sql = "UPDATE Assets SET "
+                + "Status = 'DELETED',"
+                + "IsActive = 0,"
+                + "CurrentRoomId = NULL,"
+                + "CurrentholderId = NULL,"
+                + "DeletedAt = SYSDATETIME(),"
+                + "UpdatedAt = SYSDATETIME()"
+                + "WHERE AssetId = ?";
         try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, assetId);
             ps.executeUpdate();
@@ -251,7 +258,7 @@ public class AssetDao {
                 + "a.PurchaseDate, a.ReceivedDate, a.ConditionNote, a.Status, "
                 + "a.CurrentRoomId, r.RoomName, r.Location AS RoomLocation, "
                 + "a.CurrentHolderId, u.FullName AS HolderName, "
-                + "a.IsActive, a.CreatedAt, a.UpdatedAt "
+                + "a.IsActive, a.CreatedAt, a.UpdatedAt, a.DeletedAt"
                 + "FROM Assets a "
                 + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
                 + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
@@ -310,6 +317,10 @@ public class AssetDao {
                     Timestamp uAt = rs.getTimestamp("UpdatedAt");
                     if (uAt != null) {
                         a.setUpdatedAt(uAt.toLocalDateTime());
+                    }
+                    Timestamp dAt = rs.getTimestamp("DeletedAt");
+                    if(dAt != null){
+                        a.setDeletedAt(dAt.toLocalDateTime());
                     }
                     a.setCategoryName(rs.getString("CategoryName"));
                     a.setRoomName(rs.getString("RoomName"));

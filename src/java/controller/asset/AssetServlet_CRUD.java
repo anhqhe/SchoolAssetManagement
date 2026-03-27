@@ -236,29 +236,33 @@ public class AssetServlet_CRUD extends HttpServlet {
                 sourceType = "Mua mới";
             }
 
-            // Tạo phiếu ghi tăng
-            String increaseCode = assetDao.generateIncreaseCode();
-            java.time.LocalDate receivedDate = null;
-            if (template.getReceivedDate() != null) {
-                receivedDate = template.getReceivedDate().toLocalDate();
-            } else {
-                receivedDate = java.time.LocalDate.now();
-            }
-            long increaseId = assetDao.insertIncreaseRecord(
-                    increaseCode, sourceType.trim(), null, receivedDate, userId, null);
-
             List<String> codes = assetDao.generateAssetCodes(template.getCategoryId(), quantity);
-            int inserted = 0;
+            List<Long> insertedAssetIds = new ArrayList<>();
+
             for (String code : codes) {
                 Asset a = cloneAsset(template);
                 a.setAssetCode(code);
-                long assetId = assetDao.insert(a);
-                // Ghi chi tiết vào phiếu ghi tăng
-                if (increaseId > 0 && assetId > 0) {
-                    assetDao.insertIncreaseItem(increaseId, assetId, null);
+                long assetId = assetDao.insert(a); 
+                if(assetId > 0){
+                    insertedAssetIds.add(assetId);
                 }
-                inserted++;
             }
+            int inserted = insertedAssetIds.size();
+            
+            if(inserted > 0){
+                String increaseCode = assetDao.generateIncreaseCode();
+                LocalDate receivedDate = template.getReceivedDate() != null 
+                        ? template.getReceivedDate().toLocalDate() 
+                        : LocalDate.now();
+                long increaseID = assetDao.insertIncreaseRecord(increaseCode, sourceType.trim(),
+                        null, receivedDate, userId, null);
+                if(increaseID > 0){
+                    for(long assetId : insertedAssetIds){
+                        assetDao.insertIncreaseItem(increaseID, assetId, null);
+                    }
+                }
+            }
+            
             response.sendRedirect(request.getContextPath() + "/assets?action=list&created=" + inserted);
         } catch (SQLException e) {
             Asset assetForForm = buildAssetFromRequestSafe(request);
