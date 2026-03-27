@@ -201,7 +201,6 @@ public class AllocateAssets extends HttpServlet {
             }
 
             //Save to database sucessfully
-            
             boolean isComplete = checkRequestCompleted(requestId);
             String message, title;
             if (isComplete) {
@@ -275,6 +274,7 @@ public class AllocateAssets extends HttpServlet {
 
         return req;
     }
+
     private void validateSelectedAssets(long requestId, List<Long> assetIds)
             throws Exception {
 
@@ -350,10 +350,11 @@ public class AllocateAssets extends HttpServlet {
             int selected = selectedByCategory.getOrDefault(categoryId, 0);
             if (allocated + selected > required) {
                 throw new IllegalArgumentException(
-                       "Tổng số lượng tài sản được cấp vượt quá số lượng yêu cầu.");
+                        "Tổng số lượng tài sản được cấp vượt quá số lượng yêu cầu.");
             }
         }
     }
+
     // Save data to database
     public boolean processAllocation(long requestId, long staffId, String note, List<Long> assetIds) {
         Connection conn = null;
@@ -389,6 +390,20 @@ public class AllocateAssets extends HttpServlet {
                 // Save data to table AssetAllocationItem
                 boolean itemSuccess = allocItemDAO.insertAllocationItem(conn, allocationId, assetId);
 
+                Long oldRoomId = assetDAO.findById(assetId).getCurrentRoomId();
+                String oldSatus = assetDAO.findById(assetId).getStatus();
+                // Save data to table AssetStatusHistory
+                statusHistoryDAO.insertStatusHistory(
+                        conn,
+                        assetId,
+                        oldSatus,
+                        "IN_USE",
+                        "Cấp phát cho yêu cầu #" + requestId,
+                        staffId,
+                        "ALLOCATION",
+                        oldRoomId,
+                         req.getRequestedRoomId());
+
                 // update table Asset
                 boolean assetSuccess = assetDAO.updateAsset(
                         conn,
@@ -396,14 +411,6 @@ public class AllocateAssets extends HttpServlet {
                         req.getRequestedRoomId(),
                         req.getTeacherId(),
                         "IN_USE");
-
-                // Save data to table AssetStatusHistory
-                statusHistoryDAO.insertStatusHistory(
-                        conn,
-                        assetId,
-                        "IN_USE",
-                        "Cấp phát cho yêu cầu #" + requestId,
-                        staffId);
 
                 if (!itemSuccess || !assetSuccess) {
                     conn.rollback();
