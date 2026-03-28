@@ -90,6 +90,27 @@
                                            value="<%= locationValue %>">
                                 </div>
 
+                                <div class="form-group">
+                                    <label for="teacherId">Teacher in Charge</label>
+                                    <select id="teacherId" name="teacherId" class="form-control">
+                                        <option value="">-- No Teacher Assigned --</option>
+                                        <% 
+                                           java.util.List<model.User> teachers = (java.util.List<model.User>) request.getAttribute("teachers");
+                                           model.User primaryTeacher = (model.User) request.getAttribute("primaryTeacher");
+                                           Long assignedId = (primaryTeacher != null) ? primaryTeacher.getUserId() : null;
+                                           if (teachers != null) {
+                                               for (model.User t : teachers) {
+                                                   boolean isSelected = (assignedId != null && assignedId.equals(t.getUserId()));
+                                        %>
+                                        <option value="<%= t.getUserId() %>" <%= isSelected ? "selected" : "" %>>
+                                            <%= t.getFullName() %> (<%= t.getUsername() %>)
+                                        </option>
+                                        <%     } 
+                                           } 
+                                        %>
+                                    </select>
+                                </div>
+
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Update config room
                                 </button>

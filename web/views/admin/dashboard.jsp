@@ -316,9 +316,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <a href="${pageContext.request.contextPath}/assets" class="btn btn-primary btn-sm">
-                                    Xem tất cả <i class="fas fa-arrow-right"></i>
-                                </a>
+                                
                             </div>
                         </div>
                     </div>
@@ -364,34 +362,8 @@
                             </div>
                         </div>
 
-                        <!-- Quick Actions -->
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">
-                                    <i class="fas fa-bolt"></i> Thao tác nhanh
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <a href="${pageContext.request.contextPath}/assets/list" class="btn btn-primary btn-icon-split btn-sm btn-block mb-2">
-                                    <span class="icon text-white-50">
-                                        <i class="fas fa-plus"></i>
-                                    </span>
-                                    <span class="text">Quản lý tài sản</span>
-                                </a>
-                                <a href="${pageContext.request.contextPath}/staff/request-list" class="btn btn-success btn-icon-split btn-sm btn-block mb-2">
-                                    <span class="icon text-white-50">
-                                        <i class="fas fa-clipboard-list"></i>
-                                    </span>
-                                    <span class="text">Phiếu yêu cầu tài sản</span>
-                                </a>
-                                <a href="${pageContext.request.contextPath}/transfers/list" class="btn btn-info btn-icon-split btn-sm btn-block mb-2">
-                                    <span class="icon text-white-50">
-                                        <i class="fas fa-file-alt"></i>
-                                    </span>
-                                    <span class="text">Phiếu điều chuyển tài sản</span>
-                                </a>
-                            </div>
-                        </div>
+                        
+                        
                     </div>
                 </div>
 

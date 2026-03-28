@@ -6,6 +6,7 @@ package dao.allocation;
 
 import dto.AssetDTO;
 import dto.AllocationHistoryDTO;
+import dto.TeacherAssignedAssetDTO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -385,5 +386,112 @@ public class AllocationDAO {
             }
         }
         return null;
+    }
+
+    public List<TeacherAssignedAssetDTO> getAssignedAssetsByTeacher(long teacherId, String keyword, String status, String fromDate, String toDate) throws SQLException {
+        List<TeacherAssignedAssetDTO> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
+                SELECT
+                    a.AssetId,
+                    a.AssetCode,
+                    a.AssetName,
+                    c.CategoryName,
+                    a.SerialNumber,
+                    a.Status,
+                    a.ConditionNote,
+                    r.RoomName AS CurrentRoomName,
+                    alloc.AllocationCode,
+                    alloc.AllocatedAt,
+                    rf.RoomName AS FromRoomName
+                FROM Assets a
+                LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId
+                LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId
+                OUTER APPLY (
+                    SELECT TOP 1
+                        aa.AllocationCode,
+                        aa.AllocatedAt,
+                        aa.FromRoomId
+                    FROM AssetAllocationItems aai
+                    JOIN AssetAllocations aa ON aai.AllocationId = aa.AllocationId
+                    WHERE aai.AssetId = a.AssetId
+                      AND aa.ReceiverId = ?
+                    ORDER BY aa.AllocatedAt DESC
+                ) alloc
+                LEFT JOIN Rooms rf ON alloc.FromRoomId = rf.RoomId
+                WHERE a.CurrentHolderId = ?
+                  AND a.IsActive = 1
+                """);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+                    AND (
+                        a.AssetCode LIKE ?
+                        OR a.AssetName LIKE ?
+                        OR a.SerialNumber LIKE ?
+                        OR c.CategoryName LIKE ?
+                        OR r.RoomName LIKE ?
+                    )
+                    """);
+        }
+
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append(" AND a.Status = ? ");
+        }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append(" AND alloc.AllocatedAt >= CAST(? AS DATE) ");
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append(" AND alloc.AllocatedAt < DATEADD(DAY, 1, CAST(? AS DATE)) ");
+        }
+
+        sql.append(" ORDER BY alloc.AllocatedAt DESC, a.AssetName ASC ");
+
+        try (PreparedStatement ps = DBUtil.getConnection().prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setLong(idx++, teacherId);
+            ps.setLong(idx++, teacherId);
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String like = "%" + keyword.trim() + "%";
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+            }
+
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(idx++, status.trim());
+            }
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                ps.setString(idx++, fromDate.trim());
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                ps.setString(idx++, toDate.trim());
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TeacherAssignedAssetDTO dto = new TeacherAssignedAssetDTO();
+                    dto.setAssetId(rs.getLong("AssetId"));
+                    dto.setAssetCode(rs.getString("AssetCode"));
+                    dto.setAssetName(rs.getString("AssetName"));
+                    dto.setCategoryName(rs.getString("CategoryName"));
+                    dto.setSerialNumber(rs.getString("SerialNumber"));
+                    dto.setStatus(rs.getString("Status"));
+                    dto.setConditionNote(rs.getString("ConditionNote"));
+                    dto.setCurrentRoomName(rs.getString("CurrentRoomName"));
+                    dto.setAllocationCode(rs.getString("AllocationCode"));
+                    dto.setFromRoomName(rs.getString("FromRoomName"));
+                    if (rs.getTimestamp("AllocatedAt") != null) {
+                        dto.setAllocatedAt(rs.getTimestamp("AllocatedAt").toLocalDateTime());
+                    }
+                    list.add(dto);
+                }
+            }
+        }
+
+        return list;
     }
 }

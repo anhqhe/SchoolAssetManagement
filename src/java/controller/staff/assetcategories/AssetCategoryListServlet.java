@@ -23,7 +23,7 @@ import java.util.List;
  * Lấy toàn bộ danh mục từ DB và forward sang JSP để render bảng.
  * </p>
  *
- * <p>Quyền truy cập: ASSET_STAFF hoặc ADMIN.</p>
+ * <p>Quyền truy cập: ASSET_STAFF.</p>
  */
 @WebServlet(name = "AssetCategoryListServlet", urlPatterns = {"/admin/categories"})
 public class AssetCategoryListServlet extends HttpServlet {
@@ -35,7 +35,7 @@ public class AssetCategoryListServlet extends HttpServlet {
      * Xử lý GET /admin/categories.
      * <ol>
      *   <li>Kiểm tra session hợp lệ – nếu không, redirect về trang đăng nhập.</li>
-     *   <li>Kiểm tra quyền (ASSET_STAFF hoặc ADMIN) – trả về 403 nếu không đủ quyền.</li>
+     *   <li>Kiểm tra quyền (ASSET_STAFF) – trả về 403 nếu không đủ quyền.</li>
      *   <li>Tải danh sách tất cả danh mục và đặt vào request attribute {@code "categories"}.</li>
      *   <li>Forward sang {@code /views/assetcategory/assetcategory-list.jsp}.</li>
      * </ol>
@@ -50,7 +50,7 @@ public class AssetCategoryListServlet extends HttpServlet {
             return;
         }
 
-        // --- 2. Kiểm tra quyền: ASSET_STAFF hoặc ADMIN đều được phép xem ---
+        // --- 2. Kiểm tra quyền: Chỉ ASSET_STAFF mới được phép xem ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {

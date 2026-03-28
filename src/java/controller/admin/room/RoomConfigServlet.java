@@ -1,6 +1,7 @@
 package controller.admin.room;
 
 import dao.RoomDAO;
+import dao.UserDAO;
 import model.Room;
 import model.User;
 
@@ -22,11 +23,6 @@ import java.util.List;
  * <ul>
  *   <li>GET  /rooms/config?id={roomId} – Hiển thị form với dữ liệu phòng hiện tại.</li>
  *   <li>POST /rooms/config             – Lưu cập nhật RoomName và Location.</li>
- * </ul>
- *
- * <p>Quyền truy cập: chỉ ADMIN.</p>
- *
- * <p>
  * <strong>Lưu ý bảo mật:</strong> Hiện chưa có CSRF token cho form này.
  * Nếu triển khai production nên bổ sung CSRF protection.
  * </p>
@@ -36,6 +32,7 @@ public class RoomConfigServlet extends HttpServlet {
 
     /** DAO thao tác với bảng Room. */
     private final RoomDAO roomDAO = new RoomDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     /**
      * Hiển thị form cấu hình phòng (GET).
@@ -144,6 +141,14 @@ public class RoomConfigServlet extends HttpServlet {
         // Chuẩn hoá input: trim và cho phép location là null (không bắt buộc)
         String cleanName     = roomName.trim();
         String cleanLocation = (location != null) ? location.trim() : null;
+        String teacherIdParam = req.getParameter("teacherId");
+        Long teacherId = null;
+        if (teacherIdParam != null && !teacherIdParam.trim().isEmpty()) {
+            try {
+                teacherId = Long.parseLong(teacherIdParam.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
 
         // --- 6. Thực hiện cập nhật DB ---
         try {
@@ -151,6 +156,7 @@ public class RoomConfigServlet extends HttpServlet {
             if (!updated) {
                 req.setAttribute("error", "Không thể cập nhật thông tin phòng.");
             } else {
+                roomDAO.setPrimaryTeacherForRoom(roomId, teacherId);
                 req.setAttribute("success", "Cập nhật thông tin phòng thành công.");
             }
         } catch (SQLException e) {
@@ -180,6 +186,13 @@ public class RoomConfigServlet extends HttpServlet {
             long roomId = Long.parseLong(roomIdParam.trim());
             Room room = roomDAO.getRoomById(roomId);
             req.setAttribute("room", room);
+            
+            List<User> teachers = userDAO.getAllTeachers();
+            req.setAttribute("teachers", teachers);
+            
+            User primaryTeacher = roomDAO.getPrimaryTeacherByRoomId(roomId);
+            req.setAttribute("primaryTeacher", primaryTeacher);
+            
         } catch (Exception e) {
             // Fail-soft: nếu id lỗi hoặc DB lỗi, để room = null và báo lỗi chung
             req.setAttribute("room", null);

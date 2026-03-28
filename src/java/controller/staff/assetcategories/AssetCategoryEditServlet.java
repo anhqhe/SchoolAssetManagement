@@ -33,7 +33,7 @@ import java.util.List;
  * </p>
  *
  * <p>
- * Quyền truy cập: ASSET_STAFF hoặc ADMIN.
+ * Quyền truy cập: ASSET_STAFF.
  * </p>
  */
 @WebServlet(name = "AssetCategoryEditServlet", urlPatterns = { "/admin/categories/edit" })
@@ -59,7 +59,7 @@ public class AssetCategoryEditServlet extends HttpServlet {
             return;
         }
 
-        // --- Kiểm tra quyền ---
+        // --- Kiểm tra quyền: Chỉ ASSET_STAFF được phép ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {
@@ -115,7 +115,7 @@ public class AssetCategoryEditServlet extends HttpServlet {
             return;
         }
 
-        // --- Kiểm tra quyền ---
+        // --- Kiểm tra quyền: Chỉ ASSET_STAFF được phép ---
         User currentUser = (User) session.getAttribute("currentUser");
         List<String> roles = (currentUser != null) ? currentUser.getRoles() : null;
         if (roles == null || !roles.contains("ASSET_STAFF")) {

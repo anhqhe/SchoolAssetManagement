@@ -8,8 +8,7 @@
     @SuppressWarnings("unchecked")
     List<String> allRoles = (List<String>) request.getAttribute("allRoles");
 
-    @SuppressWarnings("unchecked")
-    List<String> selectedRoles = (List<String>) request.getAttribute("selectedRoles");
+    String selectedRole = request.getAttribute("selectedRole") != null ? (String) request.getAttribute("selectedRole") : "";
 
     String fUsername = request.getAttribute("f_username") != null ? (String) request.getAttribute("f_username") : "";
     String fFullName = request.getAttribute("f_fullName") != null ? (String) request.getAttribute("f_fullName") : "";
@@ -130,11 +129,11 @@
                                     <%
                                         } else {
                                             for (String rc : allRoles) {
-                                                boolean checked = (selectedRoles != null && selectedRoles.contains(rc));
+                                                boolean checked = rc.equals(selectedRole);
                                     %>
-                                    <div class="custom-control custom-checkbox mb-1">
-                                        <input type="checkbox" class="custom-control-input"
-                                               id="role_<%= rc %>" name="roles" value="<%= rc %>"
+                                    <div class="custom-control custom-radio mb-1">
+                                        <input type="radio" class="custom-control-input"
+                                               id="role_<%= rc %>" name="role" value="<%= rc %>"
                                                <%= checked ? "checked" : "" %>>
                                         <label class="custom-control-label" for="role_<%= rc %>"><%= rc %></label>
                                     </div>

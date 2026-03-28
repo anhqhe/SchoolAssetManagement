@@ -24,7 +24,7 @@ import model.User;
             "/transfers/*",
             "/settings",
             "/change-password",
-            "/assets",
+            "/assets/*",
             "/asset-report",
             "/profile",
             "/profile/*",

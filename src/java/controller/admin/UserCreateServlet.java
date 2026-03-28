@@ -9,8 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 import model.User;
 
 @WebServlet(name = "AdminUserCreateServlet", urlPatterns = {"/admin/user/create"})
@@ -61,8 +59,7 @@ public class UserCreateServlet extends HttpServlet {
         String phone    = req.getParameter("phone") != null ? req.getParameter("phone").trim() : "";
         boolean active  = "true".equals(req.getParameter("active"));
 
-        String[] rolesArr = req.getParameterValues("roles");
-        List<String> selectedRoles = rolesArr != null ? Arrays.asList(rolesArr) : null;
+        String selectedRole = req.getParameter("role") != null ? req.getParameter("role").trim() : "";
 
         // Load roles cho form
         try { req.setAttribute("allRoles", userDAO.getAllRoleCodes()); } catch (SQLException ignored) {}
@@ -70,87 +67,87 @@ public class UserCreateServlet extends HttpServlet {
         // Validate
         if (username.isEmpty()) {
             forwardError(req, resp, "Username không được để trống.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         if (username.length() < USERNAME_MIN_LEN || username.length() > USERNAME_MAX_LEN) {
             forwardError(req, resp,
                     "Username phải từ " + USERNAME_MIN_LEN + " đến " + USERNAME_MAX_LEN + " ký tự.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         if (password.isEmpty()) {
             forwardError(req, resp, "Mật khẩu không được để trống.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         if (!isValidPassword(password)) {
             forwardError(req, resp, "Mật khẩu phải có ít nhất 6 ký tự, chứa ít nhất 1 chữ hoa và 1 số.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         if (fullName.isEmpty()) {
             forwardError(req, resp, "Họ tên không được để trống.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         if (fullName.length() < FULLNAME_MIN_LEN || fullName.length() > FULLNAME_MAX_LEN) {
             forwardError(req, resp,
                     "Họ tên phải từ " + FULLNAME_MIN_LEN + " đến " + FULLNAME_MAX_LEN + " ký tự.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         if (email.isEmpty()) {
             forwardError(req, resp, "Email không được để trống.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
         String normalizedPhone = normalizePhone(phone);
         if (!phone.isEmpty() && normalizedPhone == null) {
             forwardError(req, resp, "Số điện thoại không hợp lệ. Ví dụ: 0912345678 hoặc +84 912345678.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
-        if (selectedRoles == null || selectedRoles.isEmpty()) {
-            forwardError(req, resp, "Vui lòng chọn ít nhất một vai trò.",
-                    username, fullName, email, phone, active, selectedRoles);
+        if (selectedRole.isEmpty()) {
+            forwardError(req, resp, "Vui lòng chọn một vai trò.",
+                    username, fullName, email, phone, active, selectedRole);
             return;
         }
 
         try {
             if (userDAO.isUsernameTaken(username)) {
                 forwardError(req, resp, "Username đã tồn tại.",
-                        username, fullName, email, phone, active, selectedRoles);
+                        username, fullName, email, phone, active, selectedRole);
                 return;
             }
             if (userDAO.isEmailTaken(email)) {
                 forwardError(req, resp, "Email đã tồn tại.",
-                        username, fullName, email, phone, active, selectedRoles);
+                        username, fullName, email, phone, active, selectedRole);
                 return;
             }
             if (normalizedPhone != null && userDAO.isPhoneTaken(normalizedPhone, -1)) {
                 forwardError(req, resp, "Số điện thoại đã tồn tại.",
-                        username, fullName, email, phone, active, selectedRoles);
+                        username, fullName, email, phone, active, selectedRole);
                 return;
             }
 
             long newId = userDAO.createUser(username, password, fullName,
                     email,
                     normalizedPhone == null ? null : normalizedPhone,
-                    active, selectedRoles);
+                    active, selectedRole);
             resp.sendRedirect(req.getContextPath() + "/admin/user?success=created");
 
         } catch (SQLException e) {
             e.printStackTrace();
             forwardError(req, resp, "Có lỗi xảy ra khi tạo tài khoản.",
-                    username, fullName, email, phone, active, selectedRoles);
+                    username, fullName, email, phone, active, selectedRole);
         }
     }
 
     private void forwardError(HttpServletRequest req, HttpServletResponse resp,
                               String error, String username, String fullName,
                               String email, String phone, boolean active,
-                              List<String> selectedRoles)
+                              String selectedRole)
             throws ServletException, IOException {
         req.setAttribute("error", error);
         req.setAttribute("f_username", username);
@@ -158,7 +155,7 @@ public class UserCreateServlet extends HttpServlet {
         req.setAttribute("f_email", email);
         req.setAttribute("f_phone", phone);
         req.setAttribute("f_active", active);
-        req.setAttribute("selectedRoles", selectedRoles);
+        req.setAttribute("selectedRole", selectedRole);
         req.getRequestDispatcher("/views/admin/user-form.jsp").forward(req, resp);
     }
 

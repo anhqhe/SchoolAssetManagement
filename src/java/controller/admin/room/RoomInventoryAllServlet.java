@@ -74,13 +74,16 @@ public class RoomInventoryAllServlet extends HttpServlet {
         PrintWriter out = resp.getWriter();
 
         try {
-            // Lấy danh sách tất cả phòng
+            // 1. Lấy danh sách tất cả phòng
             List<Room> rooms = roomDAO.getAllRooms();
 
-            // Map<roomId, totalAssets> – truy vấn một lần để tránh N+1
+            // 2. Map<roomId, totalAssets> – truy vấn một lần để tránh N+1
             Map<Integer, Integer> countMap = roomDAO.getAssetCountPerRoom();
 
-            // --- 3. Build JSON array thủ công (không dùng thư viện ngoài) ---
+            // 3. Lấy thêm số lượng tài sản chưa được phân bổ vào phòng (đang trong kho chung)
+            int unassignedCount = roomDAO.getUnassignedAssetCount();
+
+            // --- 4. Build JSON array thủ công (không dùng thư viện ngoài) ---
             StringBuilder json = new StringBuilder("[");
             boolean first = true;
             for (Room room : rooms) {
@@ -97,6 +100,18 @@ public class RoomInventoryAllServlet extends HttpServlet {
                     .append("\"totalAssets\":").append(count)
                     .append("}");
             }
+
+            // --- 5. Thêm mục "Tài sản lưu kho hệ thống" nếu có tài sản chưa gán phòng ---
+            if (unassignedCount > 0) {
+                if (!first) json.append(",");
+                json.append("{")
+                    .append("\"roomId\":-1,")
+                    .append("\"roomName\":\"").append(escapeJson("Tài sản hiện có trong kho hệ thống")).append("\",")
+                    .append("\"location\":\"").append(escapeJson("(Chưa phân phòng)")).append("\",")
+                    .append("\"totalAssets\":").append(unassignedCount)
+                    .append("}");
+            }
+
             json.append("]");
 
             out.print(json.toString());

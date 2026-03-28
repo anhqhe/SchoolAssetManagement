@@ -127,6 +127,7 @@
                                     <th>ID</th>
                                     <th>Tên phòng</th>
                                     <th>Vị trí</th>
+                                    <th>Giáo viên phụ trách</th>
                                     <th>Thao tác</th>
                                 </tr>
                                 </thead>
@@ -135,7 +136,7 @@
                                     if (roomList == null || roomList.isEmpty()) {
                                 %>
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted">
+                                        <td colspan="5" class="text-center text-muted">
                                             <i class="fas fa-inbox fa-3x mb-3 mt-3"></i>
                                             <p>Chưa có phòng nào</p>
                                         </td>
@@ -148,6 +149,13 @@
                                         <td><%= room.getRoomId() %></td>
                                         <td><strong><%= room.getRoomName() %></strong></td>
                                         <td><%= (room.getLocation() != null ? room.getLocation() : "-") %></td>
+                                        <td>
+                                            <% if (room.getHeadTeacherName() != null) { %>
+                                                <span class="badge badge-success"><i class="fas fa-user-tie"></i> <%= room.getHeadTeacherName() %></span>
+                                            <% } else { %>
+                                                <span class="text-muted font-italic">Chưa phân công</span>
+                                            <% } %>
+                                        </td>
                                         <td class="text-center" style="white-space:nowrap;">
                                             <!-- View Detail room -->
                                             <a href="<%= request.getContextPath() %>/rooms/detail?id=<%= room.getRoomId() %>"
@@ -312,9 +320,12 @@
 
                 $.each(data, function (i, room) {
                     var badgeClass = room.totalAssets > 0 ? 'badge-count' : 'badge-count badge-zero';
-                    html += '<tr>'
-                          + '<td class="text-muted">' + (i + 1) + '</td>'
-                          + '<td><strong>' + escHtml(room.roomName) + '</strong></td>'
+                    var rowStyle = room.roomId === -1 ? 'style="background-color: #fce4ec; border-left: 4px solid #e91e63;"' : '';
+                    var icon = room.roomId === -1 ? '<i class="fas fa-boxes mr-1 text-danger"></i>' : '';
+                    
+                    html += '<tr ' + rowStyle + '>'
+                          + '<td class="text-muted">' + (room.roomId === -1 ? '<i class="fas fa-star text-warning"></i>' : (i + 1)) + '</td>'
+                          + '<td>' + icon + '<strong>' + escHtml(room.roomName) + '</strong></td>'
                           + '<td class="text-muted">' + (room.location || '-') + '</td>'
                           + '<td class="text-center"><span class="' + badgeClass + '">' + room.totalAssets + '</span></td>'
                           + '</tr>';

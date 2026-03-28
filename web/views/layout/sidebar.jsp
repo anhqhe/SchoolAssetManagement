@@ -196,6 +196,21 @@
 
 
     <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/myrooms">
+            <i class="fas fa-fw fa-door-open"></i>
+            <span>Phòng của tôi</span>
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
+            <i class="fas fa-fw fa-comments"></i>
+            <span>Danh sách đánh giá</span>
+        </a>
+    </li>
+
+
+    <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
             <i class="fas fa-list"></i>
             <span>Danh sách yêu cầu</span>
@@ -206,6 +221,13 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/allocation-history">
             <i class="fas fa-history"></i>
             <span>Lịch sử cấp phát</span>
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/asset-list">
+            <i class="fas fa-box-open"></i>
+            <span>Tài sản được cấp</span>
         </a>
     </li>
 
