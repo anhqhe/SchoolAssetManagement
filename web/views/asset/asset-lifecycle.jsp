@@ -79,6 +79,14 @@
                 font-size: 12px;
                 color: #858796;
             }
+            .badge-update {
+                background-color: #9b59b6;
+                color: white;
+            }
+            .icon-update {
+                background: #9b59b6;
+            }
+
         </style>
     </head>
     <body id="page-top">
@@ -152,6 +160,12 @@
                                                                 <i class="fas fa-trash"></i>
                                                             </div>
                                                         </c:when>
+                                                        <c:when test="${ev.type == 'UPDATE_INFO'}">
+                                                            <div class="timeline-icon icon-update">
+                                                                <i class="fas fa-pen"></i>
+                                                            </div>
+                                                        </c:when>
+
                                                         <c:otherwise>
                                                             <div class="timeline-icon icon-other">
                                                                 <i class="fas fa-circle"></i>

@@ -82,6 +82,7 @@ public class AssetLifecycleEvent {
         switch (type) {
             case "NEW":           return "Tạo mới";
             case "STATUS_CHANGE": return "Đổi trạng thái";
+            case "UPDATE_INFO": return "Cập nhật thông tin";
             case "ALLOCATION":    return "Cấp phát";
             case "TRANSFER":      return "Điều chuyển";
             case "DELETED":       return "Xóa";
@@ -95,6 +96,7 @@ public class AssetLifecycleEvent {
         switch (type) {
             case "NEW":           return "badge-success";
             case "STATUS_CHANGE": return "badge-warning";
+            case "UPDATE_INFO": return "badge-update";
             case "ALLOCATION":    return "badge-info";
             case "TRANSFER":      return "badge-primary";
             case "DELETED":       return "badge-danger";

@@ -317,6 +317,23 @@ public class AssetServlet_CRUD extends HttpServlet {
             Asset asset = builtAssetFromRequest(request);
             asset.setAssetId(Integer.parseInt(request.getParameter("assetId")));
             assetDao.update(asset);
+            // Lấy userId người thực hiện
+            HttpSession session = request.getSession(false);
+            User currentUser = session != null ? (User) session.getAttribute("currentUser") : null;
+            long userId = (currentUser != null) ? currentUser.getUserId() : 0;
+
+            // Ghi lifecycle event UPDATE_INFO
+            assetDao.insertLifecycleEvent(
+                    asset.getAssetId(),
+                    "UPDATE_INFO",
+                    null,
+                    asset.getStatus(),
+                    "Cập nhật thông tin tài sản",
+                    userId,
+                    null,
+                    null
+            );
+
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
             Asset assetForForm = buildAssetFromRequestSafe(request);
