@@ -191,6 +191,20 @@
                                                         </c:choose>
                                                     </div>
                                                 </div>
+
+                                                <c:if test="${asset.deletedAt != null}">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4 detail-label" style="color: #e74a3b;">
+                                                            <i class="fas fa-trash-alt text-danger"></i> Ngày xóa:
+                                                        </div>
+                                                        <div class="col-md-8 detail-value">
+                                                            <span class="badge badge-danger" style="font-size: 13px; padding: 6px 10px;">
+                                                                <i class="fas fa-calendar-times"></i>
+                                                                <fmt:formatDate value="${asset.deletedAtAsDate}" pattern="dd/MM/yyyy HH:mm"/>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </c:if>
                                             </div>
                                         </div>
 
@@ -273,12 +287,13 @@
                                                 </div>
 
                                                 <!-- Change Status Button (ASSET_STAFF only) -->
-                                                <c:if test="${isAssetStaff}">
+                                                <c:if test="${isAssetStaff && asset.status != 'DELETED'}">
                                                     <hr>
                                                     <button class="btn btn-warning btn-block" onclick="showChangeStatusModal()">
                                                         <i class="fas fa-exchange-alt"></i> Thay đổi trạng thái
                                                     </button>
                                                 </c:if>
+
                                             </div>
                                         </div>
 
@@ -291,18 +306,39 @@
                                                     </h6>
                                                 </div>
                                                 <div class="card-body">
-                                                    <a href="${pageContext.request.contextPath}/assets?action=edit&id=${asset.assetId}" 
-                                                       class="btn btn-primary btn-block mb-2">
-                                                        <i class="fas fa-edit"></i> Cập nhật thông tin
-                                                    </a>                                                  
-                                                    <hr>
-
-                                                    <button class="btn btn-danger btn-block" onclick="confirmDelete()">
-                                                        <i class="fas fa-trash"></i> Xóa tài sản
-                                                    </button>
+                                                    <c:choose>
+                                                        <c:when test="${asset.status != 'DELETED'}">
+                                                            <a href="${pageContext.request.contextPath}/assets?action=edit&id=${asset.assetId}" 
+                                                               class="btn btn-primary btn-block mb-2">
+                                                                <i class="fas fa-edit"></i> Cập nhật thông tin
+                                                            </a>
+                                                            <hr>
+                                                            <a href="${pageContext.request.contextPath}/asset-lifecycle?id=${asset.assetId}"
+                                                               class="btn btn-info btn-block mb-2">
+                                                                <i class="fas fa-history"></i> Xem vòng đời
+                                                            </a>
+                                                            <hr>
+                                                            <button class="btn btn-danger btn-block" onclick="confirmDelete()">
+                                                                <i class="fas fa-trash"></i> Xóa tài sản
+                                                            </button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <a href="${pageContext.request.contextPath}/asset-lifecycle?id=${asset.assetId}"
+                                                               class="btn btn-info btn-block mb-2">
+                                                                <i class="fas fa-history"></i> Xem vòng đời
+                                                            </a>
+                                                            <hr>
+                                                            <div class="alert alert-danger mb-0 text-center">
+                                                                <i class="fas fa-ban"></i><br>
+                                                                Tài sản đã bị xóa<br>
+                                                                <small class="text-muted">Không thể chỉnh sửa</small>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                             </div>
                                         </c:if>
+
 
                                         <!-- Quick Info Card -->
                                         <div class="card shadow mb-4">
@@ -420,15 +456,15 @@
         <script src="${pageContext.request.contextPath}/assets/js/sb-admin-2.min.js"></script>
 
         <script>
-                                function showChangeStatusModal() {
-                                    $('#changeStatusModal').modal('show');
-                                }
+                                                                function showChangeStatusModal() {
+                                                                    $('#changeStatusModal').modal('show');
+                                                                }
 
-                                function confirmDelete() {
-                                    if (confirm('Bạn có chắc chắn muốn xóa tài sản "${asset.assetCode} - ${asset.assetName}"?\n\nHành động này không thể hoàn tác!')) {
-                                        window.location.href = '${pageContext.request.contextPath}/assets?action=delete&id=${asset.assetId}';
-                                                }
-                                            }
+                                                                function confirmDelete() {
+                                                                    if (confirm('Bạn có chắc chắn muốn xóa tài sản "${asset.assetCode} - ${asset.assetName}"?\n\nHành động này không thể hoàn tác!')) {
+                                                                        window.location.href = '${pageContext.request.contextPath}/assets?action=delete&id=${asset.assetId}';
+                                                                                }
+                                                                            }
         </script>
 
     </body>
