@@ -202,13 +202,6 @@
         </a>
     </li>
 
-    <li class="nav-item">
-        <a class="nav-link" href="${pageContext.request.contextPath}/teacher/feedback">
-            <i class="fas fa-fw fa-comments"></i>
-            <span>Danh sách đánh giá</span>
-        </a>
-    </li>
-
 
     <li class="nav-item">
         <a class="nav-link" href="${pageContext.request.contextPath}/teacher/request-list">
