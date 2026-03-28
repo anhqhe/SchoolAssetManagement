@@ -6,6 +6,7 @@ package model;
 
 
 import java.util.Date;
+import java.util.List;
 
 public class Transfer {
     private int transferId;
@@ -73,4 +74,14 @@ public class Transfer {
     public void setAssetNames(String assetNames) { this.assetNames = assetNames; }
 
     public void setVersion(int version) { this.version = version; }
+    
+    private List<Integer> assetIds;
+
+    public List<Integer> getAssetIds() {
+        return assetIds;
+    }
+
+    public void setAssetIds(List<Integer> assetIds) {
+        this.assetIds = assetIds;
+}
 }

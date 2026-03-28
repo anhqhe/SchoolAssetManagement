@@ -1,6 +1,8 @@
 package controller.staff;
 
+import dao.AssetDAO;
 import dao.TransferDAO;
+import dao.allocation.AssetStatusHistoryDAO;
 import model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -8,12 +10,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+import model.Transfer;
 
 @WebServlet("/transfers/approve")
 public class TransferApproveServlet extends HttpServlet {
 
     private final TransferDAO transferDAO = new TransferDAO();
-
+    private final AssetStatusHistoryDAO assetStatusHistoryDAO = new AssetStatusHistoryDAO();
+    private final AssetDAO assetDAO = new AssetDAO();
+    
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -55,9 +61,33 @@ public class TransferApproveServlet extends HttpServlet {
             int version    = Integer.parseInt(versionParam.trim());
 
             boolean updated = transferDAO.approveTransfer(transferId, version); 
-
+            Transfer transferInfo = transferDAO.getTransferInfor(transferId);
+             List<Integer> listAssetIds = transferInfo.getAssetIds();
+             
+         
             if (updated) {
                 response.getWriter().write("{\"success\":true,\"message\":\"Phê duyệt thành công\"}");
+               
+            for (Integer assetId : listAssetIds) {
+
+                    String currentAssetStatus = assetDAO.getAssetStatusDetails(
+                        assetId,
+                        transferInfo.getToRoomId()
+                    );
+
+                    assetStatusHistoryDAO.insertStatusHistory(
+                        null,
+                        assetId,
+                        currentAssetStatus,
+                        "IN_USE",
+                        transferInfo.getReason(),
+                        currentUser.getUserId(),
+                        "Điều chuyển",
+                        Long.valueOf(transferInfo.getFromRoomId()),
+                        Long.valueOf(transferInfo.getToRoomId())
+                    );
+             }
+            
             } else {
                 response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
                 response.getWriter().write("{\"success\":false,\"message\":\"Phiếu không tồn tại hoặc đã được xử lý bởi người khác\"}");
