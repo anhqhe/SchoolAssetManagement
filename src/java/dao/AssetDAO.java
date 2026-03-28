@@ -271,9 +271,17 @@ public class AssetDAO {
     }
 public List<Asset> getAvailableAssets() throws SQLException {
     List<Asset> list = new ArrayList<>();
-    // Chỉ lấy các tài sản có trạng thái cho phép điều chuyển 
-   String sql = "SELECT AssetId, AssetName, AssetCode, CurrentRoomId FROM Assets WHERE Status != 'Disposed'";
-
+  // Lấy các tài sản khả dụng để điều chuyển ( không thuộc transfer PENDING)
+    String sql = "SELECT a.AssetId, a.AssetName, a.AssetCode, a.CurrentRoomId " +
+                 "FROM Assets a " +
+                 "WHERE a.Status != '' " +
+                 "AND NOT EXISTS ( " +
+                 "    SELECT 1 " +
+                 "    FROM AssetTransferItems ati " +
+                 "    INNER JOIN AssetTransfers at ON at.TransferId = ati.TransferId " +
+                 "    WHERE ati.AssetId = a.AssetId " +
+                 "      AND at.Status = 'PENDING' " +
+                 ")";
     
     try (Connection conn = DBUtil.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql);
