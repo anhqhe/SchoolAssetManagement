@@ -326,8 +326,8 @@ public class AssetServlet_CRUD extends HttpServlet {
             assetDao.insertLifecycleEvent(
                     asset.getAssetId(),
                     "UPDATE_INFO",
-                    null,
-                    asset.getStatus(),
+                    null, // oldStatus → null
+                    null, // newStatus → null (bỏ, không hiển thị gì)
                     "Cập nhật thông tin tài sản",
                     userId,
                     null,
