@@ -184,6 +184,92 @@ private Transfer mapResultSetToTransfer(ResultSet rs) throws SQLException {
     }
     return t;
 }
+public Transfer getTransferInfor(int id) throws SQLException {
+    String sql = "SELECT t.TransferId, t.TransferCode," +
+                 " t.RequestedById, t.FromRoomId, t.ToRoomId," +
+                 " t.Status, t.Reason, t.Version," +
+                 " t.CreatedAt," +
+                 " u.FullName AS RequestedByName," +
+                 " fr.RoomName AS FromRoomName," +
+                 " tr2.RoomName AS ToRoomName," +
+                 " STRING_AGG(CAST(a.AssetId AS VARCHAR), ', ') AS AssetIds" +
+                 " FROM AssetTransfers t" +
+                 " LEFT JOIN Users u ON t.RequestedById = u.UserId" +
+                 " LEFT JOIN Rooms fr ON t.FromRoomId = fr.RoomId" +
+                 " LEFT JOIN Rooms tr2 ON t.ToRoomId = tr2.RoomId" +
+                 " LEFT JOIN AssetTransferItems ti ON t.TransferId = ti.TransferId" +
+                 " LEFT JOIN Assets a ON ti.AssetId = a.AssetId" +
+                 " WHERE t.TransferId = ?" +
+                 " GROUP BY t.TransferId, t.TransferCode," +
+                 "  t.RequestedById, t.FromRoomId, t.ToRoomId," +
+                 "  t.Status, t.Reason, t.CreatedAt, t.Version," +
+                 "  u.FullName, fr.RoomName, tr2.RoomName";
+
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, id);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return mapResultSetToTransferInfor(rs);
+            }
+        }
+    }
+    return null;
+}
+
+private Transfer mapResultSetToTransferInfor(ResultSet rs) throws SQLException {
+    Transfer t = new Transfer();
+    t.setTransferId(rs.getInt("TransferId"));
+    t.setTransferCode(rs.getString("TransferCode"));
+    t.setFromRoomId(rs.getInt("FromRoomId"));   
+    t.setToRoomId(rs.getInt("ToRoomId"));     
+    t.setFromRoomName(rs.getString("FromRoomName"));
+    t.setToRoomName(rs.getString("ToRoomName"));
+    t.setRequestedByName(rs.getString("RequestedByName"));
+    t.setReason(rs.getString("Reason"));
+    t.setStatus(rs.getString("Status"));
+    t.setCreatedAt(rs.getTimestamp("CreatedAt"));
+    t.setVersion(rs.getInt("Version")); 
+
+    String assetIdsStr = rs.getString("AssetIds");
+    if (assetIdsStr != null && !assetIdsStr.trim().isEmpty()) {
+        List<Integer> assetIds = Arrays.stream(assetIdsStr.split(","))
+                .map(String::trim)
+                .map(Integer::parseInt)
+                .toList();
+        t.setAssetIds(assetIds);
+    } else {
+        t.setAssetIds(new ArrayList<>());
+    }
+
+    if (t.getStatus() != null) {
+        switch (t.getStatus().toUpperCase()) {
+            case "PENDING":
+                t.setStatusText("Chờ duyệt");
+                t.setStatusBadgeClass("badge badge-warning");
+                break;
+            case "APPROVED":
+                t.setStatusText("Đã duyệt");
+                t.setStatusBadgeClass("badge badge-success");
+                break;
+            case "REJECTED":
+                t.setStatusText("Từ chối");
+                t.setStatusBadgeClass("badge badge-danger");
+                break;
+            case "COMPLETED":
+                t.setStatusText("Hoàn tất");
+                t.setStatusBadgeClass("badge badge-primary");
+                break;
+            default:
+                t.setStatusText(t.getStatus());
+                t.setStatusBadgeClass("badge badge-secondary");
+        }
+    }
+
+    return t;
+}
+
+
 public List<Integer> getAssetIdsByTransferId(int transferId) throws SQLException {
     List<Integer> ids = new ArrayList<>();
     String sql = "SELECT AssetId FROM AssetTransferItems WHERE TransferId = ?";

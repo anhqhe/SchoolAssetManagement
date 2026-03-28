@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import util.DBUtil;
 
 /**
  *
@@ -24,7 +25,10 @@ public class AssetStatusHistoryDAO {
             String type,
             Long oldRoomId,
             Long newRoomId) throws SQLException {
-
+        
+        if(conn == null){
+            conn = DBUtil.getConnection();
+        }
         String sql = """
                      INSERT INTO [dbo].[AssetStatusHistory]
                                 ([AssetId]
@@ -62,4 +66,5 @@ public class AssetStatusHistoryDAO {
             return ps.executeUpdate() > 0;
         }
     }
+    
 }
