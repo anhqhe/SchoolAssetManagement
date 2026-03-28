@@ -41,7 +41,9 @@ public class AssetDao {
                 + "WHERE a.IsActive = 1 "
                 + "ORDER BY a.CreatedAt DESC";
         List<Asset> list = new ArrayList<>();
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Asset a = new Asset();
                 a.setAssetId(rs.getLong("AssetId"));
@@ -108,7 +110,8 @@ public class AssetDao {
                 + "PurchaseDate, ReceivedDate, ConditionNote, Status, "
                 + "CurrentRoomId, CurrentHolderId, IsActive, Unit"
                 + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, a.getAssetCode());
             ps.setString(2, a.getAssetName());
             ps.setLong(3, a.getCategoryId());
@@ -116,13 +119,13 @@ public class AssetDao {
             ps.setString(5, a.getModel());
             ps.setString(6, a.getBrand());
             ps.setString(7, a.getOriginNote());
-            //Purchase Date
+            // Purchase Date
             if (a.getPurchaseDate() != null) {
                 ps.setDate(8, Date.valueOf(a.getPurchaseDate().toLocalDate()));
             } else {
                 ps.setNull(8, Types.DATE);
             }
-            //Received Date
+            // Received Date
             if (a.getReceivedDate() != null) {
                 ps.setDate(9, Date.valueOf(a.getReceivedDate().toLocalDate()));
             } else {
@@ -130,13 +133,13 @@ public class AssetDao {
             }
             ps.setString(10, a.getConditionNote());
             ps.setString(11, a.getStatus());
-            //CurrentRoomId
+            // CurrentRoomId
             if (a.getCurrentRoomId() != 0) {
                 ps.setLong(12, a.getCurrentRoomId());
             } else {
                 ps.setNull(12, Types.INTEGER);
             }
-            //CurrentHolderId
+            // CurrentHolderId
             if (a.getCurrentHolderId() != 0) {
                 ps.setLong(13, a.getCurrentHolderId());
             } else {
@@ -168,13 +171,13 @@ public class AssetDao {
             ps.setString(5, a.getModel());
             ps.setString(6, a.getBrand());
             ps.setString(7, a.getOriginNote());
-            //Purchase Date
+            // Purchase Date
             if (a.getPurchaseDate() != null) {
                 ps.setDate(8, Date.valueOf(a.getPurchaseDate().toLocalDate()));
             } else {
                 ps.setNull(8, Types.DATE);
             }
-            //Received Date
+            // Received Date
             if (a.getReceivedDate() != null) {
                 ps.setDate(9, Date.valueOf(a.getReceivedDate().toLocalDate()));
             } else {
@@ -182,13 +185,13 @@ public class AssetDao {
             }
             ps.setString(10, a.getConditionNote());
             ps.setString(11, a.getStatus());
-            //CurrentRoomId
+            // CurrentRoomId
             if (a.getCurrentRoomId() != 0) {
                 ps.setLong(12, a.getCurrentRoomId());
             } else {
                 ps.setNull(12, Types.INTEGER);
             }
-            //CurrentHolderId
+            // CurrentHolderId
             if (a.getCurrentHolderId() != 0) {
                 ps.setLong(13, a.getCurrentHolderId());
             } else {
@@ -335,19 +338,19 @@ public class AssetDao {
         return null;
     }
 
-    public List<Asset> searchAssets(String keyword, String status, Long categoryId, Boolean isActive) throws SQLException {
+    public List<Asset> searchAssets(String keyword, String status, Long categoryId, Boolean isActive)
+            throws SQLException {
         List<Asset> assets = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT a.AssetId, a.AssetCode, a.AssetName, NULL AS Unit, a.CategoryId, "
-                + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
-                + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
-                + "a.ConditionNote, a.IsActive, a.CreatedAt, "
-                + "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId AND a2.IsActive = 1) AS Quantity "
-                + "FROM Assets a "
-                + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
-                + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
-                + "WHERE 1=1 "
-        );
+                        + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
+                        + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
+                        + "a.ConditionNote, a.IsActive, a.CreatedAt, "
+                        + "(SELECT COUNT(*) FROM Assets a2 WHERE a2.AssetName = a.AssetName AND a2.CategoryId = a.CategoryId AND a2.IsActive = 1) AS Quantity "
+                        + "FROM Assets a "
+                        + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                        + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
+                        + "WHERE 1=1 ");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND (a.AssetName LIKE ? OR a.AssetCode LIKE ? OR a.SerialNumber LIKE ?) ");
@@ -424,7 +427,7 @@ public class AssetDao {
         return assets;
     }
 
-    //Generated auto mã sản phẩm 
+    // Generated auto mã sản phẩm
     public List<String> generateAssetCodes(long categoryId, int count) throws SQLException {
         String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String prefix = "TS-" + datePart + "-";
@@ -458,10 +461,12 @@ public class AssetDao {
         return codes;
     }
 
-// Đếm tổng số tài sản đang active (dùng cho phân trang không filter)
+    // Đếm tổng số tài sản đang active (dùng cho phân trang không filter)
     public int countAllAssets() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Assets WHERE IsActive = 1";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -469,7 +474,7 @@ public class AssetDao {
         return 0;
     }
 
-// Đếm tổng bản ghi theo bộ lọc (keyword, status, categoryId, isActive)
+    // Đếm tổng bản ghi theo bộ lọc (keyword, status, categoryId, isActive)
     public int countSearchAssets(String keyword, String status, Long categoryId, Boolean isActive) throws SQLException {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Assets a WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
@@ -599,18 +604,17 @@ public class AssetDao {
         List<Asset> assets = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT a.AssetId, a.AssetCode, a.AssetName, a.Unit, a.CategoryId, "
-                + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
-                + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
-                + "a.ConditionNote, a.IsActive, a.CreatedAt, "
-                + "(SELECT COUNT(*) FROM Assets a2 "
-                + " WHERE a2.AssetName = a.AssetName "
-                + "   AND a2.CategoryId = a.CategoryId "
-                + "   AND a2.IsActive = 1) AS Quantity "
-                + "FROM Assets a "
-                + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
-                + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
-                + "WHERE 1=1 "
-        );
+                        + "c.CategoryName, a.SerialNumber, a.Model, a.Brand, a.Status, "
+                        + "a.CurrentRoomId, r.RoomName, a.PurchaseDate, a.ReceivedDate, "
+                        + "a.ConditionNote, a.IsActive, a.CreatedAt, "
+                        + "(SELECT COUNT(*) FROM Assets a2 "
+                        + " WHERE a2.AssetName = a.AssetName "
+                        + "   AND a2.CategoryId = a.CategoryId "
+                        + "   AND a2.IsActive = 1) AS Quantity "
+                        + "FROM Assets a "
+                        + "LEFT JOIN AssetCategories c ON a.CategoryId = c.CategoryId "
+                        + "LEFT JOIN Rooms r ON a.CurrentRoomId = r.RoomId "
+                        + "WHERE 1=1 ");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND (a.AssetName LIKE ? OR a.AssetCode LIKE ? OR a.SerialNumber LIKE ?) ");
@@ -733,7 +737,8 @@ public class AssetDao {
         String sql = "INSERT INTO AssetIncreaseRecords "
                 + "(IncreaseCode, SourceType, SourceDetail, ReceivedDate, CreatedByUserId, Note) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection con = DBUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection con = DBUtil.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, increaseCode);
             ps.setString(2, sourceType);
             ps.setString(3, sourceDetail);
