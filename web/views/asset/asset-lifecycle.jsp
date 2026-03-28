@@ -182,10 +182,10 @@
                                                                 <c:if test="${ev.newStatus != null}">
                                                                     <c:if test="${ev.oldStatus != null}">
                                                                         <small class="text-muted">
-                                                                            ${ev.oldStatus} →
+                                                                            ${ev.oldStatusText} →
                                                                         </small>
                                                                     </c:if>
-                                                                    <strong>${ev.newStatus}</strong>
+                                                                    <strong>${ev.newStatusText}</strong>
                                                                 </c:if>
                                                             </div>
                                                             <span class="timeline-time">

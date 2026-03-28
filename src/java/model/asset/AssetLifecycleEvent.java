@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package model.asset;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -11,8 +12,6 @@ import java.util.Date;
  *
  * @author An
  */
-
-
 public class AssetLifecycleEvent {
 
     private long historyId;
@@ -30,78 +29,193 @@ public class AssetLifecycleEvent {
     private String newRoomName;  // JOIN từ Rooms
 
     // --- Getters / Setters ---
+    public long getHistoryId() {
+        return historyId;
+    }
 
-    public long getHistoryId() { return historyId; }
-    public void setHistoryId(long historyId) { this.historyId = historyId; }
+    public void setHistoryId(long historyId) {
+        this.historyId = historyId;
+    }
 
-    public long getAssetId() { return assetId; }
-    public void setAssetId(long assetId) { this.assetId = assetId; }
+    public long getAssetId() {
+        return assetId;
+    }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public void setAssetId(long assetId) {
+        this.assetId = assetId;
+    }
 
-    public String getOldStatus() { return oldStatus; }
-    public void setOldStatus(String oldStatus) { this.oldStatus = oldStatus; }
+    public String getType() {
+        return type;
+    }
 
-    public String getNewStatus() { return newStatus; }
-    public void setNewStatus(String newStatus) { this.newStatus = newStatus; }
+    public void setType(String type) {
+        this.type = type;
+    }
 
-    public String getReason() { return reason; }
-    public void setReason(String reason) { this.reason = reason; }
+    public String getOldStatus() {
+        return oldStatus;
+    }
 
-    public long getChangedByUserId() { return changedByUserId; }
-    public void setChangedByUserId(long changedByUserId) { this.changedByUserId = changedByUserId; }
+    public void setOldStatus(String oldStatus) {
+        this.oldStatus = oldStatus;
+    }
 
-    public String getChangedByName() { return changedByName; }
-    public void setChangedByName(String changedByName) { this.changedByName = changedByName; }
+    public String getNewStatus() {
+        return newStatus;
+    }
 
-    public LocalDateTime getChangedAt() { return changedAt; }
-    public void setChangedAt(LocalDateTime changedAt) { this.changedAt = changedAt; }
+    public void setNewStatus(String newStatus) {
+        this.newStatus = newStatus;
+    }
 
-    public Long getOldRoomId() { return oldRoomId; }
-    public void setOldRoomId(Long oldRoomId) { this.oldRoomId = oldRoomId; }
+    public String getReason() {
+        return reason;
+    }
 
-    public Long getNewRoomId() { return newRoomId; }
-    public void setNewRoomId(Long newRoomId) { this.newRoomId = newRoomId; }
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
 
-    public String getOldRoomName() { return oldRoomName; }
-    public void setOldRoomName(String oldRoomName) { this.oldRoomName = oldRoomName; }
+    public long getChangedByUserId() {
+        return changedByUserId;
+    }
 
-    public String getNewRoomName() { return newRoomName; }
-    public void setNewRoomName(String newRoomName) { this.newRoomName = newRoomName; }
+    public void setChangedByUserId(long changedByUserId) {
+        this.changedByUserId = changedByUserId;
+    }
 
-    /** Dùng cho fmt:formatDate trong JSP */
+    public String getChangedByName() {
+        return changedByName;
+    }
+
+    public void setChangedByName(String changedByName) {
+        this.changedByName = changedByName;
+    }
+
+    public LocalDateTime getChangedAt() {
+        return changedAt;
+    }
+
+    public void setChangedAt(LocalDateTime changedAt) {
+        this.changedAt = changedAt;
+    }
+
+    public Long getOldRoomId() {
+        return oldRoomId;
+    }
+
+    public void setOldRoomId(Long oldRoomId) {
+        this.oldRoomId = oldRoomId;
+    }
+
+    public Long getNewRoomId() {
+        return newRoomId;
+    }
+
+    public void setNewRoomId(Long newRoomId) {
+        this.newRoomId = newRoomId;
+    }
+
+    public String getOldRoomName() {
+        return oldRoomName;
+    }
+
+    public void setOldRoomName(String oldRoomName) {
+        this.oldRoomName = oldRoomName;
+    }
+
+    public String getNewRoomName() {
+        return newRoomName;
+    }
+
+    public void setNewRoomName(String newRoomName) {
+        this.newRoomName = newRoomName;
+    }
+
+    /**
+     * Dùng cho fmt:formatDate trong JSP
+     */
     public Date getChangedAtAsDate() {
         return changedAt == null ? null
                 : Date.from(changedAt.atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    /** Text hiển thị loại sự kiện */
+    /**
+     * Text hiển thị loại sự kiện
+     */
     public String getTypeText() {
-        if (type == null) return "Không xác định";
+        if (type == null) {
+            return "Không xác định";
+        }
         switch (type) {
-            case "NEW":           return "Tạo mới";
-            case "STATUS_CHANGE": return "Đổi trạng thái";
-            case "UPDATE_INFO": return "Cập nhật thông tin";
-            case "ALLOCATION":    return "Cấp phát";
-            case "TRANSFER":      return "Điều chuyển";
-            case "DELETED":       return "Xóa";
-            default: return type;
+            case "NEW":
+                return "Tạo mới";
+            case "STATUS_CHANGE":
+                return "Đổi trạng thái";
+            case "UPDATE_INFO":
+                return "Cập nhật thông tin";
+            case "ALLOCATION":
+                return "Cấp phát";
+            case "TRANSFER":
+                return "Điều chuyển";
+            case "DELETED":
+                return "Xóa";
+            default:
+                return type;
         }
     }
 
-    /** CSS badge class theo type */
+    /**
+     * CSS badge class theo type
+     */
     public String getTypeBadgeClass() {
-        if (type == null) return "badge-secondary";
+        if (type == null) {
+            return "badge-secondary";
+        }
         switch (type) {
-            case "NEW":           return "badge-success";
-            case "STATUS_CHANGE": return "badge-warning";
-            case "UPDATE_INFO": return "badge-update";
-            case "ALLOCATION":    return "badge-info";
-            case "TRANSFER":      return "badge-primary";
-            case "DELETED":       return "badge-danger";
-            default: return "badge-secondary";
+            case "NEW":
+                return "badge-success";
+            case "STATUS_CHANGE":
+                return "badge-warning";
+            case "UPDATE_INFO":
+                return "badge-update";
+            case "ALLOCATION":
+                return "badge-info";
+            case "TRANSFER":
+                return "badge-primary";
+            case "DELETED":
+                return "badge-danger";
+            default:
+                return "badge-secondary";
         }
     }
-}
 
+    /**
+     * Dịch status sang tiếng Việt
+     */
+    public static String translateStatus(String status) {
+        if (status == null) {
+            return "";
+        }
+        switch (status) {
+            case "IN_STOCK":
+                return "Trong kho";
+            case "IN_USE":
+                return "Đang sử dụng";
+            case "DELETED":
+                return "Đã xóa";
+            default:
+                return status; // fallback: giữ nguyên nếu không khớp
+        }
+    }
+
+    public String getOldStatusText() {
+        return translateStatus(oldStatus);
+    }
+
+    public String getNewStatusText() {
+        return translateStatus(newStatus);
+    }
+
+}
