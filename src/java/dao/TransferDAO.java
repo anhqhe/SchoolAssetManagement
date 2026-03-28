@@ -236,7 +236,7 @@ public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNot
             }
             ps.executeBatch();
             
-            String updateAssets = "UPDATE Assets SET CurrentRoomId = ? WHERE AssetId = ?";
+            String updateAssets = "UPDATE Assets SET CurrentRoomId = ?, UpdatedAt = CURRENT_TIMESTAMP WHERE AssetId = ?";
 
             try (PreparedStatement ps2 = conn.prepareStatement(updateAssets)) {
                 for (Integer assetId : assetNoteMap.keySet()) {
@@ -317,7 +317,7 @@ public boolean approveTransfer(int transferId, int version) throws SQLException 
 
         // 4. Update assets -> chuyển room + IN_USE
         if (!assetIds.isEmpty() && toRoomId != null) {
-            String updateAsset = "UPDATE Assets SET CurrentRoomId = ?, Status = ? WHERE AssetId = ?";
+            String updateAsset = "UPDATE Assets SET CurrentRoomId = ?, Status = ? , UpdatedAt = CURRENT_TIMESTAMP WHERE AssetId = ?";
 
             try (PreparedStatement ps = conn.prepareStatement(updateAsset)) {
                 for (Integer assetId : assetIds) {
@@ -389,9 +389,9 @@ public boolean rejectTransfer(int transferId, int version) throws SQLException {
             }
         }
 
-        // 4Rollback các asset về FromRoomId
+        // 4 .Rollback các asset về FromRoomId
          if (!assetIds.isEmpty() && fromRoomId != null) {
-            String updateAsset = "UPDATE Assets SET CurrentRoomId = ? WHERE AssetId = ?";
+            String updateAsset = "UPDATE Assets SET CurrentRoomId = ?, UpdatedAt = CURRENT_TIMESTAMP WHERE AssetId = ?";
             try (PreparedStatement ps = conn.prepareStatement(updateAsset)) {
                 for (Integer assetId : assetIds) {
                     ps.setInt(1, fromRoomId);
