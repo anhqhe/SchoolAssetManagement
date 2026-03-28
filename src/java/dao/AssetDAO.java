@@ -297,6 +297,7 @@ public List<Asset> getAvailableAssets() throws SQLException {
     }
     return list;
 }
+
 public List<Transfer> getAssetTransferHistoryPaging(
         String keyword, String fromDate, String toDate,
         int offset, int pageSize) throws SQLException {
@@ -527,6 +528,27 @@ public int countDistinctAssets(String keyword, String fromDate, String toDate) t
         return rs.next() ? rs.getInt(1) : 0;
     }
 }
+public String getAssetStatusDetails(int assetId, int currentRoomId) throws SQLException {
+    String status = null;
 
+    String sql = "SELECT a.Status " +
+                 "FROM Assets a " +
+                 "WHERE a.AssetId = ? AND a.CurrentRoomId = ?";
+
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, assetId);
+        ps.setInt(2, currentRoomId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                status = rs.getString("Status");
+            }
+        }
+    }
+
+    return status;
+}
 }
 
