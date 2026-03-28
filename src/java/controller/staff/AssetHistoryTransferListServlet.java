@@ -20,7 +20,7 @@ public class AssetHistoryTransferListServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // ===== PHÂN QUYỀN =====
+        // ===== AUTHORIZE =====
         User currentUser = (User) request.getSession().getAttribute("currentUser");
         boolean isAssetStaff = false;
         boolean canApprove   = false;

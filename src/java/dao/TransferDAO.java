@@ -74,8 +74,9 @@ String sql = " SELECT " +
         params.add(toRoomId);
     }
     sb.append(" GROUP BY t.TransferId, t.TransferCode, t.RequestedById, t.FromRoomId, t.ToRoomId, " +
-              "t.Status, t.Reason, t.CreatedAt, u.FullName, fr.RoomName, tr2.RoomName");
-    sb.append(" ORDER BY t.CreatedAt DESC");
+              "t.Status, t.Reason, t.CreatedAt,t.UpdatedAt, u.FullName, fr.RoomName, tr2.RoomName");
+    sb.append(" ORDER BY t.UpdatedAt DESC");
+
 
     List<Transfer> list = new ArrayList<>();
     try (Connection conn = DBUtil.getConnection();
@@ -197,8 +198,8 @@ public List<Integer> getAssetIdsByTransferId(int transferId) throws SQLException
 }
 public boolean insertTransferWithItems(Transfer t, Map<Integer, String> assetNoteMap) throws SQLException {
     String sqlTransfer = "INSERT INTO AssetTransfers (TransferCode, RequestedById, FromRoomId, ToRoomId, " +
-                         "Status, Reason, CreatedAt) " +
-                         "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+                         "Status, Reason, CreatedAt, UpdatedAt) " +
+                         "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)";
 
     String sqlItem = "INSERT INTO AssetTransferItems (TransferId, AssetId, Note) VALUES (?, ?, ?)";
 
@@ -433,12 +434,12 @@ public boolean completeTransfer(int transferId, int version) throws SQLException
                     toRoomId = rs.getInt("ToRoomId");
                 } else {
                     conn.rollback();
-                    return false; // version lỗi thời hoặc status không hợp lệ
+                    return false; 
                 }
             }
         }
 
-        // Bước 2: Cập nhật RoomId cho các tài sản trong phiếu
+
         String updateAssetSql =
             "UPDATE a " +
             "SET a.RoomId = ?, a.UpdatedAt = GETDATE() " +
