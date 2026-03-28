@@ -165,7 +165,8 @@
                                                     <% } %>
                                                 </td>
                                                 <td>
-                                                    <% if (isAssetStaff) {%>
+                                                    <% if (isAssetStaff) { %>
+                                                    <% if (!"DELETED".equals(a.getStatus())) { %>
                                                     <a href="${pageContext.request.contextPath}/assets?action=edit&id=<%= a.getAssetId()%>" 
                                                        class="btn btn-sm btn-warning">
                                                         <i class="fas fa-edit"></i> Sửa
@@ -175,7 +176,10 @@
                                                        onclick="return confirm('Bạn chắc chắn muốn xóa tài sản này?');">
                                                         <i class="fas fa-trash"></i> Xóa
                                                     </a>
-                                                    <% }%>
+                                                    <% } %>
+                                                    <% } %>
+
+
                                                     <a href="${pageContext.request.contextPath}/assets?action=detail&id=<%= a.getAssetId()%>" 
                                                        class="btn btn-sm btn-info" title="Chi tiết">
                                                         <i class="fas fa-eye"></i>

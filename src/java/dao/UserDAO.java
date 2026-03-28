@@ -375,7 +375,7 @@ public class UserDAO {
 
     public long createUser(String username, String password, String fullName,
                            String email, String phone, boolean active,
-                           List<String> roleCodes) throws SQLException {
+                           String roleCode) throws SQLException {
         String insertSql = "INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, IsActive) "
                          + "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection()) {
@@ -396,16 +396,13 @@ public class UserDAO {
                     }
                 }
 
-                if (roleCodes != null && !roleCodes.isEmpty()) {
-                    for (String roleCode : roleCodes) {
-                        if (roleCode == null || roleCode.trim().isEmpty()) continue;
-                        String roleSql = "INSERT INTO UserRoles (UserId, RoleId) "
-                                       + "SELECT ?, RoleId FROM Roles WHERE RoleCode = ?";
-                        try (PreparedStatement ps2 = conn.prepareStatement(roleSql)) {
-                            ps2.setLong(1, newId);
-                            ps2.setString(2, roleCode.trim());
-                            ps2.executeUpdate();
-                        }
+                if (roleCode != null && !roleCode.trim().isEmpty()) {
+                    String roleSql = "INSERT INTO UserRoles (UserId, RoleId) "
+                                   + "SELECT ?, RoleId FROM Roles WHERE RoleCode = ?";
+                    try (PreparedStatement ps2 = conn.prepareStatement(roleSql)) {
+                        ps2.setLong(1, newId);
+                        ps2.setString(2, roleCode.trim());
+                        ps2.executeUpdate();
                     }
                 }
 

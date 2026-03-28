@@ -30,7 +30,7 @@ import model.User;
  *
  * @author An
  */
-@WebServlet(name = "AssetServlet", urlPatterns = {"/assets"})
+@WebServlet(name = "AssetServlet", urlPatterns = { "/assets" })
 public class AssetServlet_CRUD extends HttpServlet {
 
     private AssetDao assetDao = new AssetDao();
@@ -236,29 +236,47 @@ public class AssetServlet_CRUD extends HttpServlet {
                 sourceType = "Mua mới";
             }
 
-            // Tạo phiếu ghi tăng
-            String increaseCode = assetDao.generateIncreaseCode();
-            java.time.LocalDate receivedDate = null;
-            if (template.getReceivedDate() != null) {
-                receivedDate = template.getReceivedDate().toLocalDate();
-            } else {
-                receivedDate = java.time.LocalDate.now();
-            }
-            long increaseId = assetDao.insertIncreaseRecord(
-                    increaseCode, sourceType.trim(), null, receivedDate, userId, null);
-
             List<String> codes = assetDao.generateAssetCodes(template.getCategoryId(), quantity);
-            int inserted = 0;
+            List<Long> insertedAssetIds = new ArrayList<>();
+
             for (String code : codes) {
                 Asset a = cloneAsset(template);
                 a.setAssetCode(code);
                 long assetId = assetDao.insert(a);
-                // Ghi chi tiết vào phiếu ghi tăng
-                if (increaseId > 0 && assetId > 0) {
-                    assetDao.insertIncreaseItem(increaseId, assetId, null);
+                if (assetId > 0) {
+                    insertedAssetIds.add(assetId);
                 }
-                inserted++;
             }
+            int inserted = insertedAssetIds.size();
+
+            if (inserted > 0) {
+                String increaseCode = assetDao.generateIncreaseCode();
+                LocalDate receivedDate = template.getReceivedDate() != null
+                        ? template.getReceivedDate().toLocalDate()
+                        : LocalDate.now();
+                long increaseID = assetDao.insertIncreaseRecord(increaseCode, sourceType.trim(),
+                        null, receivedDate, userId, null);
+                if (increaseID > 0) {
+                    for (long assetId : insertedAssetIds) {
+                        assetDao.insertIncreaseItem(increaseID, assetId, null);
+                    }
+                    // Ghi lifecycle event "NEW" cho mỗi tài sản vừa tạo
+                    for (long assetId : insertedAssetIds) {
+                        assetDao.insertLifecycleEvent(
+                                assetId,
+                                "NEW", // type
+                                null, // oldStatus (không có)
+                                "IN_STOCK", // newStatus
+                                "Tạo mới tài sản", // reason
+                                userId,
+                                null, // oldRoomId
+                                null // newRoomId
+                        );
+                    }
+
+                }
+            }
+
             response.sendRedirect(request.getContextPath() + "/assets?action=list&created=" + inserted);
         } catch (SQLException e) {
             Asset assetForForm = buildAssetFromRequestSafe(request);
@@ -299,6 +317,22 @@ public class AssetServlet_CRUD extends HttpServlet {
             Asset asset = builtAssetFromRequest(request);
             asset.setAssetId(Integer.parseInt(request.getParameter("assetId")));
             assetDao.update(asset);
+            // Lấy userId người thực hiện
+            HttpSession session = request.getSession(false);
+            User currentUser = session != null ? (User) session.getAttribute("currentUser") : null;
+            long userId = (currentUser != null) ? currentUser.getUserId() : 0;
+
+            // Ghi lifecycle event UPDATE_INFO
+            assetDao.insertLifecycleEvent(
+                    asset.getAssetId(),
+                    "UPDATE_INFO",
+                    null,
+                    asset.getStatus(),
+                    "Cập nhật thông tin tài sản",
+                    userId,
+                    null,
+                    null
+            );
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
             Asset assetForForm = buildAssetFromRequestSafe(request);
@@ -324,7 +358,23 @@ public class AssetServlet_CRUD extends HttpServlet {
             throws ServletException, IOException {
         try {
             int id = Integer.parseInt(request.getParameter("id"));
+            // Lấy userId người thực hiện
+            jakarta.servlet.http.HttpSession session = request.getSession(false);
+            User currentUser = session != null
+                    ? (User) session.getAttribute("currentUser")
+                    : null;
+            long userId = (currentUser != null) ? currentUser.getUserId() : 0;
             assetDao.delete(id);
+            // Ghi lifecycle event DELETED
+            assetDao.insertLifecycleEvent(
+                    id,
+                    "DELETED", // type
+                    null, // oldStatus
+                    "DELETED", // newStatus
+                    "Xóa tài sản", // reason
+                    userId,
+                    null,
+                    null);
             response.sendRedirect(request.getContextPath() + "/assets?action=list");
         } catch (SQLException e) {
             throw new ServletException(e);
@@ -347,7 +397,8 @@ public class AssetServlet_CRUD extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/assets?action=detail&id=" + assetId);
                 return;
             }
-            assetDao.updateStatus(assetId, newStatus.trim(), reason != null ? reason.trim() : "", currentUser.getUserId());
+            assetDao.updateStatus(assetId, newStatus.trim(), reason != null ? reason.trim() : "",
+                    currentUser.getUserId());
             response.sendRedirect(request.getContextPath() + "/assets?action=detail&id=" + assetId);
         } catch (SQLException e) {
             throw new ServletException(e);
@@ -385,12 +436,12 @@ public class AssetServlet_CRUD extends HttpServlet {
         a.setModel(request.getParameter("model"));
         a.setBrand(request.getParameter("brand"));
         a.setOriginNote(request.getParameter("originNote"));
-        //Purchase Date
+        // Purchase Date
         String pDateStr = request.getParameter("purchaseDate");
         if (pDateStr != null && !pDateStr.isEmpty()) {
             a.setPurchaseDate(LocalDate.parse(pDateStr).atStartOfDay());
         }
-        //Received Date
+        // Received Date
         String rDateStr = request.getParameter("receivedDate");
         if (rDateStr != null && !rDateStr.isEmpty()) {
             a.setReceivedDate(LocalDate.parse(rDateStr).atStartOfDay());
@@ -404,12 +455,12 @@ public class AssetServlet_CRUD extends HttpServlet {
             a.setStatus(statusParam);
         }
 
-        //Current Room Id
+        // Current Room Id
         String roomIdStr = request.getParameter("currentRoomId");
         if (roomIdStr != null && !roomIdStr.isEmpty()) {
             a.setCurrentRoomId(Integer.parseInt(roomIdStr));
         }
-        //Current Holder Id
+        // Current Holder Id
         String holderIdStr = request.getParameter("currentHolderId");
         if (holderIdStr != null && !holderIdStr.isEmpty()) {
             a.setCurrentHolderId(Integer.parseInt(holderIdStr));
@@ -484,12 +535,12 @@ public class AssetServlet_CRUD extends HttpServlet {
         a.setModel(request.getParameter("model"));
         a.setBrand(request.getParameter("brand"));
         a.setOriginNote(request.getParameter("originNote"));
-        //Purchase Date
+        // Purchase Date
         String pDateStr = request.getParameter("purchaseDate");
         if (pDateStr != null && !pDateStr.isEmpty()) {
             a.setPurchaseDate(LocalDate.parse(pDateStr).atStartOfDay());
         }
-        //Received Date
+        // Received Date
         String rDateStr = request.getParameter("receivedDate");
         if (rDateStr != null && !rDateStr.isEmpty()) {
             a.setReceivedDate(LocalDate.parse(rDateStr).atStartOfDay());
@@ -503,12 +554,12 @@ public class AssetServlet_CRUD extends HttpServlet {
             a.setStatus(statusParam);
         }
 
-        //Current Room Id
+        // Current Room Id
         String roomIdStr = request.getParameter("currentRoomId");
         if (roomIdStr != null && !roomIdStr.isEmpty()) {
             a.setCurrentRoomId(Integer.parseInt(roomIdStr));
         }
-        //Current Holder Id
+        // Current Holder Id
         String holderIdStr = request.getParameter("currentHolderId");
         if (holderIdStr != null && !holderIdStr.isEmpty()) {
             a.setCurrentHolderId(Integer.parseInt(holderIdStr));
@@ -542,7 +593,7 @@ public class AssetServlet_CRUD extends HttpServlet {
             return "Vui lòng chọn danh mục.";
         }
 
-        //Ngày mua phải sau ngày nhập
+        // Ngày mua phải sau ngày nhập
         try {
             if (pDateStr != null && !pDateStr.trim().isEmpty() && rDateStr != null && !rDateStr.trim().isEmpty()) {
                 LocalDate p = LocalDate.parse(pDateStr);
@@ -555,7 +606,7 @@ public class AssetServlet_CRUD extends HttpServlet {
             return "Định dạng ngày không hợp lệ";
         }
 
-        //Validate roomID tồn tại
+        // Validate roomID tồn tại
         if (roomIdStr != null && !roomIdStr.isEmpty()) {
             try {
                 long roomId = Long.parseLong(roomIdStr);
@@ -571,7 +622,7 @@ public class AssetServlet_CRUD extends HttpServlet {
 
         }
 
-        //Validate holderId tồn tại
+        // Validate holderId tồn tại
         if (holderIdStr != null && !holderIdStr.trim().isEmpty()) {
             try {
                 long holderId = Long.parseLong(holderIdStr);
@@ -621,7 +672,7 @@ public class AssetServlet_CRUD extends HttpServlet {
         if (categoryIdStr == null || categoryIdStr.trim().isEmpty()) {
             return "Vui lòng chọn danh mục.";
         }
-        //Ngày mua phải sau ngày nhập
+        // Ngày mua phải sau ngày nhập
         try {
             if (pDateStr != null && !pDateStr.trim().isEmpty() && rDateStr != null && !rDateStr.trim().isEmpty()) {
                 LocalDate p = LocalDate.parse(pDateStr);
@@ -634,7 +685,7 @@ public class AssetServlet_CRUD extends HttpServlet {
             return "Định dạng ngày không hợp lệ";
         }
 
-        //Validate roomID tồn tại
+        // Validate roomID tồn tại
         if (roomIdStr != null && !roomIdStr.isEmpty()) {
             try {
                 long roomId = Long.parseLong(roomIdStr);
@@ -650,7 +701,7 @@ public class AssetServlet_CRUD extends HttpServlet {
 
         }
 
-        //Validate holderId tồn tại
+        // Validate holderId tồn tại
         if (holderIdStr != null && !holderIdStr.trim().isEmpty()) {
             try {
                 long holderId = Long.parseLong(holderIdStr);

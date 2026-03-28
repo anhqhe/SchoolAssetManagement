@@ -271,9 +271,17 @@ public class AssetDAO {
     }
 public List<Asset> getAvailableAssets() throws SQLException {
     List<Asset> list = new ArrayList<>();
-    // Chỉ lấy các tài sản có trạng thái cho phép điều chuyển 
-   String sql = "SELECT AssetId, AssetName, AssetCode, CurrentRoomId FROM Assets WHERE Status != 'Disposed'";
-
+  // Lấy các tài sản khả dụng để điều chuyển ( không thuộc transfer PENDING)
+    String sql = "SELECT a.AssetId, a.AssetName, a.AssetCode, a.CurrentRoomId " +
+                 "FROM Assets a " +
+                 "WHERE a.Status != '' " +
+                 "AND NOT EXISTS ( " +
+                 "    SELECT 1 " +
+                 "    FROM AssetTransferItems ati " +
+                 "    INNER JOIN AssetTransfers at ON at.TransferId = ati.TransferId " +
+                 "    WHERE ati.AssetId = a.AssetId " +
+                 "      AND at.Status = 'PENDING' " +
+                 ")";
     
     try (Connection conn = DBUtil.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql);
@@ -413,7 +421,7 @@ public List<AssetTransferHistory> getAssetTransferHistoryGrouped(
         "FROM AssetTransferItems ti " +
         "JOIN Assets a ON ti.AssetId = a.AssetId " +
         "JOIN AssetTransfers t ON ti.TransferId = t.TransferId " +
-        "WHERE 1=1"
+        "WHERE 1=1 and t.Status = 'APPROVED' "
     );
     List<Object> params = new ArrayList<>();
     if (keyword != null && !keyword.isEmpty()) {
@@ -465,7 +473,7 @@ public List<AssetTransferHistory> getAssetTransferHistoryGrouped(
         "JOIN AssetTransfers t  ON ti.TransferId = t.TransferId " +
         "LEFT JOIN Rooms fr     ON t.FromRoomId  = fr.RoomId " +
         "LEFT JOIN Rooms tr2    ON t.ToRoomId    = tr2.RoomId " +
-        "WHERE a.AssetId IN (" + inClause + ") " +
+        "WHERE a.AssetId IN (" + inClause + ") AND t.Status = 'APPROVED' " +
         "ORDER BY a.AssetName, t.CreatedAt DESC";
 
     try (Connection conn = DBUtil.getConnection();
@@ -474,7 +482,7 @@ public List<AssetTransferHistory> getAssetTransferHistoryGrouped(
         while (rs.next()) {
             int assetId = rs.getInt("AssetId");
             Transfer t = new Transfer();
-            t.setTransferId(rs.getInt("TransferId"));   // ← THÊM
+            t.setTransferId(rs.getInt("TransferId"));
             t.setTransferCode(rs.getString("TransferCode"));
             t.setFromRoomName(rs.getString("FromRoomName"));
             t.setToRoomName(rs.getString("ToRoomName"));

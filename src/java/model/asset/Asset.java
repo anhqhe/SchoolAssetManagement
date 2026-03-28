@@ -37,8 +37,7 @@ public class Asset {
     private String holderName;     // từ JOIN Users
     private int quantity;         // số lượng loại tài sản (cùng AssetName + CategoryId)
     private String unit;
-
-    
+    private LocalDateTime deletedAt;   // ngày xóa (null nếu chưa xóa)
 
     public Asset() {
     }
@@ -218,13 +217,28 @@ public class Asset {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-    
+
     public String getUnit() {
         return unit;
     }
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    /**
+     * Helper cho JSP fmt:formatDate
+     */
+    public Date getDeletedAtAsDate() {
+        return deletedAt == null ? null : Date.from(deletedAt.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     public String getStatusBadgeClass() {
@@ -236,11 +250,13 @@ public class Asset {
                 return "badge-info";
             case "IN_USE":
                 return "badge-success";
+            case "DELETED":
+                return "badge-danger";
             default:
                 return "badge-secondary";
         }
     }
-    
+
     public String getStatusText() {
         if (status == null) {
             return "N/A";
@@ -250,6 +266,8 @@ public class Asset {
                 return "Trong kho";
             case "IN_USE":
                 return "Đang sử dụng";
+            case "DELETED":
+                return "Đã xóa";
             default:
                 return status;
         }
@@ -259,7 +277,9 @@ public class Asset {
         return isActive;
     }
 
-    /** Chuyển LocalDateTime sang Date cho JSP fmt:formatDate */
+    /**
+     * Chuyển LocalDateTime sang Date cho JSP fmt:formatDate
+     */
     public Date getPurchaseDateAsDate() {
         return purchaseDate == null ? null : Date.from(purchaseDate.atZone(ZoneId.systemDefault()).toInstant());
     }
