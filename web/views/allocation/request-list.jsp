@@ -119,6 +119,22 @@
                                                 </select>
                                             </div>
 
+
+                                            <div class="form-group mr-3 mb-2">
+                                                <label class="mr-2 mb-0">Từ ngày</label>
+                                                <input type="date"
+                                                       name="fromDate"
+                                                       class="form-control"
+                                                       value="${param.fromDate}">
+                                            </div>
+
+                                            <div class="form-group mr-3 mb-2">
+                                                <label class="mr-2 mb-0">Đến ngày</label>
+                                                <input type="date"
+                                                       name="toDate"
+                                                       class="form-control"
+                                                       value="${param.toDate}">
+                                            </div>
                                             <button type="submit" class="btn btn-primary mb-2 mr-2">
                                                 <i class="fas fa-search"></i> Tìm kiếm
                                             </button>
@@ -443,3 +459,4 @@
                                         </script>
                                         </body>
                                         </html>
+

@@ -47,10 +47,12 @@ public class RequestListStaff extends HttpServlet {
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
         String sortBy = request.getParameter("sortBy");
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
 
         List<AssetRequestDTO> list;
         try {
-            list = requestDAO.getRequestsForStaff(keyword, status, sortBy);
+            list = requestDAO.getRequestsForStaff(keyword, status, sortBy, fromDate, toDate);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE,
                     "Database error while loading staff asset request list. userId="

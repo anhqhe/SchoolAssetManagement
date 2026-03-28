@@ -15,24 +15,50 @@ import java.sql.SQLException;
  */
 public class AssetStatusHistoryDAO {
 
-    public boolean insertStatusHistory(Connection conn, long assetId, String status, String reason, long changedBy) throws SQLException {
+    public boolean insertStatusHistory(Connection conn,
+            long assetId,
+            String oldStatus,
+            String newStatus,
+            String reason,
+            long changedBy,
+            String type,
+            Long oldRoomId,
+            Long newRoomId) throws SQLException {
 
         String sql = """
                      INSERT INTO [dbo].[AssetStatusHistory]
                                 ([AssetId]
+                                ,[OldStatus]
                                 ,[NewStatus]
                                 ,[Reason]
                                 ,[ChangedByUserId]
-                                ,[ChangedAt])
+                                ,[ChangedAt]
+                                ,[Type]
+                                ,[OldRoomId]
+                                ,[NewRoomId])
                           VALUES
-                                (?,?,?,?,SYSDATETIME())
+                                (?,?,?,?,?,SYSDATETIME(),?,?,?)
                      """;
-        
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, assetId);
-            ps.setString(2, status);    // Ví dụ: 'IN_USE'
-            ps.setString(3, reason);      // Ví dụ: 'Cấp phát theo phiếu yêu cầu'
-            ps.setLong(4, changedBy);   // ID của Staff thực hiện
+            ps.setString(2, oldStatus);
+            ps.setString(3, newStatus);    
+            ps.setString(4, reason);      
+            ps.setLong(5, changedBy);   
+            ps.setString(6, type);
+            if (oldRoomId != null) {
+                ps.setLong(7, oldRoomId);
+            } else {
+                ps.setNull(7, java.sql.Types.BIGINT);
+            }
+
+            if (newRoomId != null) {
+                ps.setLong(8, newRoomId);
+            } else {
+                ps.setNull(8, java.sql.Types.BIGINT);
+            }
+            
             return ps.executeUpdate() > 0;
         }
     }

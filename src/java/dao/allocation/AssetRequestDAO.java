@@ -163,7 +163,7 @@ public class AssetRequestDAO {
     }
     
     //view in teacher/request-list
-    public List<AssetRequestDTO> getRequestsByTeacher(long userId, String keyword, String status, String sortBy) throws SQLException {
+    public List<AssetRequestDTO> getRequestsByTeacher(long userId, String keyword, String status, String sortBy, String fromDate, String toDate) throws SQLException {
         
         String orderClause;
         if(sortBy ==null || sortBy.isEmpty()) {
@@ -205,6 +205,12 @@ public class AssetRequestDAO {
         if (status != null && !status.isEmpty()) {
             sql.append(" AND r.Status = ? ");
         }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append(" AND r.CreatedAt >= CAST(? AS DATE) ");
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append(" AND r.CreatedAt < DATEADD(DAY, 1, CAST(? AS DATE)) ");
+        }
 
         sql.append(" ORDER BY ").append(orderClause);
         
@@ -221,6 +227,12 @@ public class AssetRequestDAO {
             }
             if (status != null && !status.isEmpty()) {
                 ps.setString(idx++, status);
+            }
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                ps.setString(idx++, fromDate.trim());
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                ps.setString(idx++, toDate.trim());
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -263,7 +275,7 @@ public class AssetRequestDAO {
     }
 
     // view in staff/request-list
-    public List<AssetRequestDTO> getRequestsForStaff(String keyword, String status, String sortBy) throws SQLException {
+    public List<AssetRequestDTO> getRequestsForStaff(String keyword, String status, String sortBy, String fromDate, String toDate) throws SQLException {
         
         String orderClause;
         if(sortBy ==null || sortBy.isEmpty()) {
@@ -309,6 +321,12 @@ public class AssetRequestDAO {
         if (status != null && !status.isEmpty()) {
             sql.append(" AND r.Status = ? ");
         }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append(" AND r.CreatedAt >= CAST(? AS DATE) ");
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append(" AND r.CreatedAt < DATEADD(DAY, 1, CAST(? AS DATE)) ");
+        }
 
         sql.append(" ORDER BY ").append(orderClause);
 
@@ -326,6 +344,12 @@ public class AssetRequestDAO {
             if (status != null && !status.isEmpty()) {
                 ps.setString(idx++, status);
             }
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                ps.setString(idx++, fromDate.trim());
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                ps.setString(idx++, toDate.trim());
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -341,6 +365,10 @@ public class AssetRequestDAO {
     
     //Filter in staff/allocation-list, board/approval-center
     public List<AssetRequestDTO> getRequestsAdvanced(String keyword, String status, String sortBy) throws SQLException {
+        return getRequestsAdvanced(keyword, status, sortBy, null, null);
+    }
+
+    public List<AssetRequestDTO> getRequestsAdvanced(String keyword, String status, String sortBy, String fromDate, String toDate) throws SQLException {
         
         String orderClause;
         if(sortBy ==null || sortBy.isEmpty()) {
@@ -382,6 +410,12 @@ public class AssetRequestDAO {
         if (status != null && !status.isEmpty()) {
             sql.append(" AND r.Status = ? ");
         }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append(" AND r.CreatedAt >= CAST(? AS DATE) ");
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append(" AND r.CreatedAt < DATEADD(DAY, 1, CAST(? AS DATE)) ");
+        }
 
         sql.append(" ORDER BY ").append(orderClause);
 
@@ -398,6 +432,12 @@ public class AssetRequestDAO {
             }
             if (status != null && !status.isEmpty()) {
                 ps.setString(idx++, status);
+            }
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                ps.setString(idx++, fromDate.trim());
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                ps.setString(idx++, toDate.trim());
             }
 
             try (ResultSet rs = ps.executeQuery()) {
