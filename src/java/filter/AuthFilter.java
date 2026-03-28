@@ -27,7 +27,8 @@ import model.User;
             "/assets",
             "/asset-report",
             "/profile",
-            "/profile/*"
+            "/profile/*",
+            "/asset-lifecycle"
         }
 )
 public class AuthFilter implements Filter {
@@ -66,10 +67,12 @@ public class AuthFilter implements Filter {
             allowed = roles.contains("ADMIN")
                     || roles.contains("ASSET_STAFF")
                     || roles.contains("BOARD");
-        } // Nhóm ASSET_STAFF (và BOARD +  ADMIN) cho các URL quản lý tài sản
+        } // Nhóm ASSET_STAFF (và BOARD) cho các URL quản lý tài sản
         else if (path.startsWith("/staff/")
                 || path.startsWith("/assets")
-                || path.startsWith("/transfers/")) {
+                || path.startsWith("/transfers/")
+                || path.startsWith("/asset-lifecycle")
+                || path.startsWith("/asset-increase")) {
             allowed = roles.contains("ASSET_STAFF") || roles.contains("BOARD");
         } // Nhóm TEACHER
         else if (path.startsWith("/teacher/")) {

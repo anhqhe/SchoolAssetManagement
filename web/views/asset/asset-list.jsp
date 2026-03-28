@@ -125,7 +125,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <%                                                if (assets != null && !assets.isEmpty()) {
+                                            <%  if (assets != null && !assets.isEmpty()) {
                                                     for (Asset a : assets) {
                                             %>
                                             <tr>
