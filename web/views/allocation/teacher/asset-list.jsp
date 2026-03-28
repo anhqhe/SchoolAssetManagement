@@ -111,7 +111,6 @@
                                                 <th>Phòng hiện tại</th>
                                                 <th>Thời gian cấp</th>
                                                 <th>Trạng thái</th>
-                                                <th>Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -147,12 +146,6 @@
                                                                         <span class="badge badge-info">${a.status}</span>
                                                                     </c:otherwise>
                                                                 </c:choose>
-                                                            </td>
-                                                            <td>
-                                                                <a href="${pageContext.request.contextPath}/assets/detail?id=${a.assetId}" 
-                                                                   class="btn btn-sm btn-info" title="Xem chi tiết">
-                                                                    <i class="fas fa-eye"></i>
-                                                                </a>
                                                             </td>
                                                         </tr>
                                                     </c:forEach>
